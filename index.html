@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enjoy Badagry — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<div id="loading"></div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-box">
+    <h2>Enjoy Badagry</h2>
+    <div class="sub">Admin Panel</div>
+    <div class="fg">
+      <label>Email</label>
+      <input id="login-email" type="email" placeholder="admin@enjoybadagry.com">
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <input id="login-pass" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-accent" onclick="doLogin()" id="loginBtn">Sign In</button>
+    <div id="loginErr" style="color:var(--red);font-size:12px;margin-top:12px;display:none"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+<header>
+  <div class="logo">Enjoy Badagry</div>
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('dest')">Destinations</button>
+    <button class="tab" onclick="switchTab('hotel')">Hotels</button>
+    <button class="tab" onclick="switchTab('food')">Food Menu</button>
+    <button class="tab" onclick="switchTab('orders')">Orders</button>
+    <button class="tab" onclick="switchTab('drivers')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/><path d="M3 11h18"/></svg>
+      Driver Registration
+    </button>
+  </div>
+  <div class="hdr-right">
+    <span class="conn"><span class="dot"></span> <span id="connTxt">Connected</span></span>
+    <input class="search" id="searchBox" placeholder="Search..." oninput="doSearch(this.value)">
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">Logout</button>
+  </div>
+</header>
+
+<!-- DESTINATIONS -->
+<div class="content on" id="panel-dest">
+  <div class="dest-page-header">
+    <div class="dest-page-info">
+      <h2 class="dest-page-title">Destinations</h2>
+      <span class="dest-page-count" id="d-count">0 places</span>
+    </div>
+    <button class="btn btn-accent" onclick="openDestModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Create Destination
+    </button>
+  </div>
+  <div class="items" id="d-list"></div>
+</div>
+
+<!-- DESTINATION CREATE/EDIT MODAL -->
+<div class="modal-bg dest-modal-bg" id="destModal">
+  <div class="modal dest-modal">
+    <div class="dest-modal-header">
+      <h3 class="dest-modal-title" id="destModalTitle">Create Destination</h3>
+      <button class="dest-modal-close" onclick="closeDestModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="dest-modal-body">
+      <form id="destForm" onsubmit="return false">
+        <input type="hidden" id="d-edit">
+        <div class="grid">
+          <div class="fg wide"><label>Name *</label><input id="d-name" required placeholder="e.g. Whispering Palms"></div>
+          <div class="fg"><label>Entrance Fee</label><input id="d-fee" placeholder="e.g. Free / 2000"></div>
+          <div class="fg wide">
+            <label>Categories * <span style="color:var(--text2);font-weight:400;text-transform:none">(press Enter to add)</span></label>
+            <div class="tag-input-wrap" id="d-cat-wrap" onclick="this.querySelector('input').focus()">
+              <input id="d-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'d-cat')">
+            </div>
+            <input type="hidden" id="d-cat" value="">
+          </div>
+          <div class="fg wide"><label>Cover Image URL *</label><input id="d-cover" type="url" required placeholder="https://..."></div>
+          <div class="fg wide"><label>Description *</label><textarea id="d-desc" required placeholder="About this place..."></textarea></div>
+          <div class="fg wide"><label>Address *</label><input id="d-addr" required placeholder="Full address"></div>
+          <div class="fg"><label>Maps Link</label><input id="d-maps" placeholder="https://maps.google.com/..."></div>
+          <div class="fg"><label>Coordinates</label><input id="d-coords" placeholder="lat, lng"></div>
+          <div class="fg"><label>Phone</label><input id="d-phone" placeholder="+234..."></div>
+          <div class="fg"><label>Email</label><input id="d-email" placeholder="info@..."></div>
+          <div class="fg"><label>Website</label><input id="d-web" placeholder="https://..."></div>
+          <div class="fg"><label>Hours</label><input id="d-hours" placeholder="9AM - 6PM"></div>
+          <div class="fg wide">
+            <label>Gallery Images</label>
+            <div class="img-add-list" id="d-gal-list">
+              <div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>
+            </div>
+            <button type="button" class="btn-add-img" onclick="addGalInput('d-gal-list')">+ Add Image</button>
+          </div>
+          <div class="fg wide">
+            <div class="tgl-row"><span>Featured</span><div class="tgl" id="d-feat" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="dest-modal-footer">
+      <button class="btn btn-ghost" onclick="closeDestModal()">Cancel</button>
+      <button class="btn btn-green" id="d-save" onclick="saveDest()">Save Destination</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOTELS -->
+<div class="content" id="panel-hotel">
+  <div class="hotel-page-header">
+    <div class="hotel-page-info">
+      <h2 class="hotel-page-title">Hotels</h2>
+      <span class="hotel-page-count" id="h-count">0 hotels</span>
+    </div>
+    <button class="btn btn-accent" onclick="openHotelModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Create Hotel
+    </button>
+  </div>
+  <div class="items" id="h-list"></div>
+</div>
+
+<!-- HOTEL CREATE/EDIT MODAL -->
+<div class="modal-bg hotel-modal-bg" id="hotelModal">
+  <div class="modal hotel-modal">
+    <div class="hotel-modal-header">
+      <h3 class="hotel-modal-title" id="hotelModalTitle">Create Hotel</h3>
+      <button class="hotel-modal-close" onclick="closeHotelModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="hotel-modal-body">
+      <form id="hotelForm" onsubmit="return false">
+        <input type="hidden" id="h-edit">
+        <div class="grid">
+          <div class="fg wide"><label>Name *</label><input id="h-name" required placeholder="e.g. Royal Oasis Hotel"></div>
+          <div class="fg wide">
+            <label>Categories * <span style="color:var(--text2);font-weight:400;text-transform:none">(press Enter to add)</span></label>
+            <div class="tag-input-wrap" id="h-cat-wrap" onclick="this.querySelector('input').focus()">
+              <input id="h-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'h-cat')">
+            </div>
+            <input type="hidden" id="h-cat" value="">
+          </div>
+          <div class="fg"><label>Star Rating</label>
+            <select id="h-rating">
+              <option value="">None</option>
+              <option>1 Star</option><option>2 Stars</option><option>3 Stars</option>
+              <option>4 Stars</option><option>5 Stars</option>
+            </select>
+          </div>
+          <div class="fg wide"><label>Cover Image URL *</label><input id="h-cover" type="url" required placeholder="https://..."></div>
+          <div class="fg wide"><label>Description *</label><textarea id="h-desc" required placeholder="About this hotel..."></textarea></div>
+          <div class="fg wide"><label>Address *</label><input id="h-addr" required placeholder="Full address"></div>
+          <div class="fg"><label>Maps Link</label><input id="h-maps" placeholder="https://maps.google.com/..."></div>
+          <div class="fg"><label>Coordinates</label><input id="h-coords" placeholder="lat, lng"></div>
+          <div class="fg"><label>Phone</label><input id="h-phone" placeholder="+234..."></div>
+          <div class="fg"><label>Email</label><input id="h-email" placeholder="info@..."></div>
+          <div class="fg"><label>Website</label><input id="h-web" placeholder="https://..."></div>
+          <div class="fg"><label>Check-in Time</label><input id="h-checkin" placeholder="e.g. 2:00 PM"></div>
+          <div class="fg"><label>Check-out Time</label><input id="h-checkout" placeholder="e.g. 12:00 PM"></div>
+          <div class="fg wide">
+            <label>Gallery Images</label>
+            <div class="img-add-list" id="h-gal-list">
+              <div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>
+            </div>
+            <button type="button" class="btn-add-img" onclick="addGalInput('h-gal-list')">+ Add Image</button>
+          </div>
+          <div class="fg wide">
+            <div class="tgl-row"><span>Featured</span><div class="tgl" id="h-feat" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="hotel-modal-footer">
+      <button class="btn btn-ghost" onclick="closeHotelModal()">Cancel</button>
+      <button class="btn btn-green" id="h-save" onclick="saveHotel()">Save Hotel</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOODS -->
+<div class="content" id="panel-food">
+  <div class="food-page-header">
+    <div class="food-page-info">
+      <h2 class="food-page-title">Food Menu</h2>
+      <span class="food-page-count" id="f-count">0 items</span>
+    </div>
+    <button class="btn btn-accent" onclick="openFoodModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Create Food Item
+    </button>
+  </div>
+  <div class="items" id="f-list"></div>
+</div>
+
+<!-- FOOD CREATE/EDIT MODAL -->
+<div class="modal-bg food-modal-bg" id="foodModal">
+  <div class="modal food-modal">
+    <div class="food-modal-header">
+      <h3 class="food-modal-title" id="foodModalTitle">Create Food Item</h3>
+      <button class="food-modal-close" onclick="closeFoodModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="food-modal-body">
+      <form id="foodForm" onsubmit="return false">
+        <input type="hidden" id="f-edit">
+        <div class="grid">
+          <div class="fg wide"><label>Name *</label><input id="f-name" required placeholder="e.g. Jollof Rice"></div>
+          <div class="fg wide">
+            <label>Categories * <span style="color:var(--text2);font-weight:400;text-transform:none">(press Enter to add)</span></label>
+            <div class="tag-input-wrap" id="f-cat-wrap" onclick="this.querySelector('input').focus()">
+              <input id="f-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'f-cat')">
+            </div>
+            <input type="hidden" id="f-cat" value="">
+          </div>
+          <div class="fg"><label>Destination</label><select id="f-dest"><option value="">None</option></select></div>
+          <div class="fg wide"><label>Cover Image URL *</label><input id="f-img" type="url" required placeholder="https://..."></div>
+          <div class="fg wide"><label>Description</label><textarea id="f-desc" placeholder="About this dish..."></textarea></div>
+          <div class="fg"><label>Price (NGN) *</label><input id="f-price" type="number" min="0" required placeholder="0"></div>
+          <div class="fg"><label>Prep Time</label><input id="f-prep" placeholder="e.g. 20 mins"></div>
+          <div class="fg wide"><label>Tags</label><input id="f-tags" placeholder="spicy, popular, special"></div>
+          <div class="fg wide">
+            <label>Gallery Images</label>
+            <div class="img-add-list" id="f-gal-list">
+              <div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>
+            </div>
+            <button type="button" class="btn-add-img" onclick="addGalInput('f-gal-list')">+ Add Image</button>
+          </div>
+          <div class="fg wide">
+            <div class="tgl-row"><span>Available</span><div class="tgl on" id="f-avail" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="fg wide">
+            <div class="tgl-row"><span>Featured</span><div class="tgl" id="f-feat" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="food-modal-footer">
+      <button class="btn btn-ghost" onclick="closeFoodModal()">Cancel</button>
+      <button class="btn btn-green" id="f-save" onclick="saveFood()">Save Food Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDERS -->
+<div class="content" id="panel-orders">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Food Orders</h2>
+      <span class="order-page-count" id="o-count">0 orders</span>
+    </div>
+    <div class="order-page-actions">
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <select id="o-filter" onchange="filterOrders()">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="preparing">Preparing</option>
+          <option value="ready">Ready</option>
+          <option value="assigned">Assigned</option>
+          <option value="ontheway">On The Way</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadAllData()" title="Refresh orders">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+  <div class="items" id="o-list"></div>
+</div>
+
+<!-- ORDER DETAILS MODAL -->
+<div class="modal-bg order-modal-bg" id="orderModal">
+  <div class="modal order-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="orderModalTitle">Order Details</h3>
+        <span class="order-modal-ref" id="orderModalRef"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeOrderModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="orderModalBody"></div>
+  </div>
+</div>
+
+<!-- DRIVER REGISTRATION -->
+<div class="content" id="panel-drivers">
+  <div class="driver-page-header">
+    <div class="driver-page-info">
+      <h2 class="driver-page-title">Driver Registration</h2>
+      <span class="driver-page-count" id="dri-count">0 drivers</span>
+    </div>
+    <button class="btn btn-accent" onclick="openDriverModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Register Driver
+    </button>
+  </div>
+  <div class="items" id="dri-list"></div>
+</div>
+
+<!-- DRIVER REGISTRATION MODAL -->
+<div class="modal-bg driver-modal-bg" id="driverModal">
+  <div class="modal driver-modal">
+    <div class="driver-modal-header">
+      <h3 class="driver-modal-title" id="driverModalTitle">Register New Driver</h3>
+      <button class="driver-modal-close" onclick="closeDriverModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="driver-modal-body">
+      <form id="driverForm" onsubmit="return false">
+
+        <!-- PERSONAL DETAILS -->
+        <div class="section">Personal Details</div>
+        <div class="grid">
+          <div class="fg wide"><label>Full Name *</label><input id="dri-name" required placeholder="e.g. John Okafor"></div>
+          <div class="fg"><label>Phone Number *</label><input id="dri-phone" type="tel" required placeholder="e.g. 08031234567"></div>
+          <div class="fg"><label>Email Address</label><input id="dri-email" type="email" placeholder="driver@example.com"></div>
+          <div class="fg"><label>Date of Birth *</label><input id="dri-dob" type="date" required></div>
+          <div class="fg"><label>Gender *</label>
+            <select id="dri-gender" required>
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+          <div class="fg"><label>State of Origin *</label>
+            <select id="dri-state" required>
+              <option value="">Select</option>
+              <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option><option>Anambra</option>
+              <option>Bauchi</option><option>Bayelsa</option><option>Benue</option><option>Borno</option>
+              <option>Cross River</option><option>Delta</option><option>Ebonyi</option><option>Edo</option>
+              <option>Ekiti</option><option>Enugu</option><option>FCT</option><option>Gombe</option>
+              <option>Imo</option><option>Jigawa</option><option>Kaduna</option><option>Kano</option>
+              <option>Katsina</option><option>Kebbi</option><option>Kogi</option><option>Kwara</option>
+              <option>Lagos</option><option>Nasarawa</option><option>Niger</option><option>Ogun</option>
+              <option>Ondo</option><option>Osun</option><option>Oyo</option><option>Plateau</option>
+              <option>Rivers</option><option>Sokoto</option><option>Taraba</option><option>Yobe</option>
+              <option>Zamfara</option>
+            </select>
+          </div>
+          <div class="fg"><label>Local Government Area *</label><input id="dri-lga" required placeholder="e.g. Ikeja"></div>
+          <div class="fg wide"><label>Residential Address *</label><textarea id="dri-address" required placeholder="Full residential address"></textarea></div>
+          <div class="fg"><label>Emergency Contact Name *</label><input id="dri-ec-name" required placeholder="e.g. Mary Okafor"></div>
+          <div class="fg"><label>Emergency Contact Phone *</label><input id="dri-ec-phone" type="tel" required placeholder="e.g. 08031234568"></div>
+        </div>
+
+        <!-- IDENTIFICATION -->
+        <div class="section">Identification</div>
+        <div class="grid">
+          <div class="fg"><label>NIN *</label><input id="dri-nin" required placeholder="11-digit NIN"></div>
+          <div class="fg"><label>BVN *</label><input id="dri-bvn" required placeholder="11-digit BVN"></div>
+          <div class="fg"><label>Driver's License Number *</label><input id="dri-license" required placeholder="License number"></div>
+          <div class="fg"><label>Driver's License Expiry Date *</label><input id="dri-license-expiry" type="date" required></div>
+        </div>
+
+        <!-- DRIVING DETAILS -->
+        <div class="section">Driving Details</div>
+        <div class="grid">
+          <div class="fg"><label>Driver Started Date *</label><input id="dri-started" type="date" required></div>
+          <div class="fg"><label>Years of Driving Experience *</label><input id="dri-experience" type="number" min="0" required placeholder="e.g. 5"></div>
+          <div class="fg wide"><label>Driver Type *</label>
+            <select id="dri-type" required>
+              <option value="">Select driver type</option>
+              <option>Car</option>
+              <option>Bike</option>
+              <option>Keke</option>
+              <option>Delivery</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- VEHICLE DETAILS -->
+        <div class="section">Vehicle Details</div>
+        <div class="grid">
+          <div class="fg"><label>Vehicle Make *</label><input id="dri-v-make" required placeholder="e.g. Toyota"></div>
+          <div class="fg"><label>Vehicle Model *</label><input id="dri-v-model" required placeholder="e.g. Camry"></div>
+          <div class="fg"><label>Vehicle Color *</label><input id="dri-v-color" required placeholder="e.g. White"></div>
+          <div class="fg"><label>Plate Number *</label><input id="dri-v-plate" required placeholder="e.g. ABC-123-XY"></div>
+          <div class="fg"><label>Vehicle Year *</label>
+            <select id="dri-v-year" required>
+              <option value="">Select year</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ACCOUNT STATUS -->
+        <div class="section">Account Status</div>
+        <div class="grid">
+          <div class="fg"><label>Status</label>
+            <select id="dri-status">
+              <option>Pending</option>
+              <option>Active</option>
+              <option>Suspended</option>
+            </select>
+          </div>
+        </div>
+
+      </form>
+    </div>
+    <div class="driver-modal-footer">
+      <button class="btn btn-ghost" onclick="closeDriverModal()">Cancel</button>
+      <button class="btn btn-green" id="dri-save" onclick="saveDriver()">Register Driver</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-bg" id="delModal">
+  <div class="modal">
+    <h3>Delete Item?</h3>
+    <p id="delTxt">This cannot be undone.</p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeDel()">Cancel</button>
+      <button class="btn btn-red" onclick="confirmDel()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-box"></div>
+</div>
+
+<script defer src="assets/js/utils.js"></script>
+<script defer src="assets/js/api.js"></script>
+<script defer src="assets/js/destinations.js"></script>
+<script defer src="assets/js/food.js"></script>
+<script defer src="assets/js/hotels.js"></script>
+<script defer src="assets/js/orders.js"></script>
+<script defer src="assets/js/drivers.js"></script>
+<script defer src="assets/js/auth.js"></script>
+</body>
+</html>
