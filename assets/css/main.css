@@ -27,6 +27,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .search{background:var(--input);border:1px solid var(--input-border);border-radius:var(--radius-sm);padding:8px 14px;color:var(--text);font-size:13px;width:220px;outline:none;font-family:inherit;transition:border .2s,box-shadow .2s}
 .search:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+
+/* Hamburger button - hidden on desktop */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;z-index:200;position:relative;color:var(--text)}
+.hamburger svg{display:none}
+.hamburger .hamburger-open{display:block}
+.hamburger.open .hamburger-open{display:none}
+.hamburger.open .hamburger-close{display:block}
 .btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
 .btn:active{transform:scale(.97)}
 .btn-accent{background:var(--accent);color:#fff}
@@ -79,7 +86,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .list-hdr{display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px}
 .list-hdr h3{font-size:14px;font-weight:600}
 .list-cnt{font-size:12px;color:var(--text2)}
-@media(max-width:768px){.grid{grid-template-columns:1fr}.items{grid-template-columns:1fr}.row{flex-direction:column}}
+@media(max-width:768px){.grid{grid-template-columns:1fr}.items{grid-template-columns:1fr}.row{flex-direction:column}.driver-card-top{flex-direction:column;align-items:flex-start;gap:10px}}
 .tag-pending{background:rgba(241,196,15,.15);color:#f1c40f}
 .tag-confirmed{background:rgba(46,204,113,.15);color:#2ecc71}
 .tag-preparing{background:rgba(52,152,219,.15);color:#3498db}
@@ -156,13 +163,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .dest-empty-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
 .dest-empty-text{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
 
-/* Responsive */
-@media(max-width:768px){
-  .dest-page-header{flex-direction:column;align-items:flex-start;gap:14px}
-  .dest-modal{max-height:calc(100vh - 40px);margin:10px}
-  .dest-modal-bg{padding-top:0}
-  .dest-card-img-wrap{height:160px}
-}
+/* Destination Responsive — handled in unified responsive section */
 
 /* ═══════════════ HOTEL PAGE ═══════════════ */
 
@@ -208,13 +209,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .hotel-empty-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
 .hotel-empty-text{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
 
-/* Hotel Responsive */
-@media(max-width:768px){
-  .hotel-page-header{flex-direction:column;align-items:flex-start;gap:14px}
-  .hotel-modal{max-height:calc(100vh - 40px);margin:10px}
-  .hotel-modal-bg{padding-top:0}
-  .hotel-card-img-wrap{height:160px}
-}
+/* Hotel Responsive — handled in unified responsive section */
 
 /* ═══════════════ FOOD PAGE ═══════════════ */
 
@@ -262,13 +257,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .food-empty-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
 .food-empty-text{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
 
-/* Food Responsive */
-@media(max-width:768px){
-  .food-page-header{flex-direction:column;align-items:flex-start;gap:14px}
-  .food-modal{max-height:calc(100vh - 40px);margin:10px}
-  .food-modal-bg{padding-top:0}
-  .food-card-img-wrap{height:160px}
-}
+/* Food Responsive — handled in unified responsive section */
 
 /* ═══════════════ DRIVER PAGE ═══════════════ */
 
@@ -324,13 +313,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .driver-empty-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
 .driver-empty-text{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
 
-/* Driver Responsive */
-@media(max-width:768px){
-  .driver-page-header{flex-direction:column;align-items:flex-start;gap:14px}
-  .driver-modal{max-height:calc(100vh - 40px);margin:10px}
-  .driver-modal-bg{padding-top:0}
-  .driver-card-top{flex-direction:column;align-items:flex-start;gap:10px}
-}
+/* Driver Responsive — handled in unified responsive section */
 
 /* ═══════════════ ORDER PAGE ═══════════════ */
 
@@ -412,15 +395,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .order-empty-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
 .order-empty-text{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
 
-/* Order Responsive */
-@media(max-width:768px){
-  .order-page-header{flex-direction:column;align-items:flex-start;gap:14px}
-  .order-page-actions{width:100%}
-  .order-filter-wrap{flex:1}
-  .order-modal{max-height:calc(100vh - 40px);margin:10px}
-  .order-modal-bg{padding-top:0}
-  .order-detail-grid{grid-template-columns:1fr}
-}
+/* Order Responsive — handled in unified responsive section */
 
 /* ═══════════════ DRIVER DETAILS SPA ═══════════════ */
 
@@ -566,27 +541,23 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .drv-error-text{font-size:13px;color:var(--text2);margin-bottom:20px}
 
 /* Tabs within driver details */
-.drv-tabs{display:flex;gap:4px;background:var(--input);padding:4px;border-radius:var(--radius-sm);margin-bottom:20px;overflow-x:auto}
-.drv-tab{padding:8px 16px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap}
+.drv-tabs{display:flex;gap:4px;background:var(--input);padding:4px;border-radius:var(--radius-sm);margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.drv-tabs::-webkit-scrollbar{display:none}
+.drv-tab{padding:8px 16px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;flex-shrink:0}
 .drv-tab.on{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(232,138,58,.3)}
 .drv-tab:hover:not(.on){color:var(--text);background:var(--card)}
 .drv-tab-panel{display:none}
 .drv-tab-panel.on{display:block}
 
-/* Driver Details Responsive */
-@media(max-width:768px){
-  .drv-profile-top{flex-direction:column;align-items:center;text-align:center}
-  .drv-profile-badges{justify-content:center}
-  .drv-quick-grid{grid-template-columns:1fr}
-  .drv-stats-grid{grid-template-columns:1fr 1fr}
-  .drv-earnings-grid{grid-template-columns:1fr 1fr}
-  .drv-vehicle-grid{grid-template-columns:1fr}
-  .drv-tabs{flex-wrap:nowrap}
-}
-@media(max-width:480px){
-  .drv-stats-grid{grid-template-columns:1fr}
-  .drv-earnings-grid{grid-template-columns:1fr}
-}
+/* Driver details mobile fixes */
+.drv-quick-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.drv-ride-route{overflow:hidden}
+.drv-ride-route-text{overflow:hidden;text-overflow:ellipsis}
+.drv-stat-value{word-break:break-word}
+.drv-earning-value{word-break:break-word}
+.drv-rating-big{flex-wrap:wrap}
+
+/* Driver Details Responsive — handled in unified responsive section */
 
 /* ═══════════════════════════════════════════════ */
 /* OVERVIEW / PLATFORM STATISTICS                  */
@@ -697,16 +668,599 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .ov-recent-item:nth-child(4){animation-delay:.2s}
 .ov-recent-item:nth-child(5){animation-delay:.25s}
 
-/* Responsive */
+/* ═══════════════════════════════════════════════ */
+/* COMPREHENSIVE RESPONSIVE STYLES                */
+/* ═══════════════════════════════════════════════ */
+
+/* ── 1280px: Large desktop ─────────────────────── */
+@media(max-width:1280px){
+  .tabs{gap:2px;margin-left:24px}
+  .tab{padding:8px 14px;font-size:12px}
+}
+
+/* ── 1024px: Laptop ────────────────────────────── */
 @media(max-width:1024px){
+  .tabs{gap:2px;margin-left:16px;overflow-x:auto;flex-shrink:1;min-width:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:7px 12px;font-size:12px;white-space:nowrap;flex-shrink:0}
+  .hdr-right{gap:8px}
+  .search{width:160px}
+  .conn span:not(.dot){display:none}
+  .content{padding:20px}
   .ov-cards{grid-template-columns:repeat(2,1fr)}
+  .ov-skel-cards{grid-template-columns:repeat(2,1fr)}
   .ov-two-col{grid-template-columns:1fr}
 }
-@media(max-width:600px){
+
+/* ── 768px: Tablet portrait ────────────────────── */
+@media(max-width:768px){
+  header{padding:0 16px;height:56px;gap:8px}
+  .logo{font-size:15px}
+  .tabs{margin-left:8px;padding:3px;border-radius:6px}
+  .tab{padding:6px 10px;font-size:11px}
+  .hdr-right{gap:6px}
+  .search{width:130px;padding:6px 10px;font-size:12px}
+  .btn-sm{padding:5px 8px;font-size:10px}
+  .conn{display:none}
+  .content{padding:16px}
+  .grid{gap:10px}
+
+  .dest-page-header,
+  .hotel-page-header,
+  .food-page-header,
+  .driver-page-header,
+  .order-page-header,
   .overview-page-header{flex-direction:column;align-items:flex-start;gap:12px}
-  .ov-cards{grid-template-columns:1fr}
+  .dest-page-title,
+  .hotel-page-title,
+  .food-page-title,
+  .driver-page-title,
+  .order-page-title,
+  .overview-page-title{font-size:18px}
+  .order-page-actions{width:100%}
+  .order-filter-wrap{flex:1}
+
+  .items{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+
+  .dest-modal,
+  .hotel-modal,
+  .food-modal,
+  .driver-modal,
+  .order-modal{max-width:100%;width:100%;max-height:100vh;border-radius:0;margin:0}
+  .dest-modal-bg,
+  .hotel-modal-bg,
+  .food-modal-bg,
+  .driver-modal-bg,
+  .order-modal-bg{padding:0;align-items:stretch}
+  .dest-modal-header,
+  .hotel-modal-header,
+  .food-modal-header,
+  .driver-modal-header,
+  .order-modal-header{padding:16px 20px}
+  .dest-modal-body,
+  .hotel-modal-body,
+  .food-modal-body,
+  .driver-modal-body,
+  .order-modal-body{padding:16px 20px}
+  .dest-modal-footer,
+  .hotel-modal-footer,
+  .food-modal-footer,
+  .driver-modal-footer{padding:12px 20px}
+
+  .drv-profile-top{flex-direction:column;align-items:center;text-align:center}
+  .drv-profile-badges{justify-content:center}
+  .driver-card-top{flex-direction:column;align-items:flex-start;gap:10px}
+  .drv-quick-grid{grid-template-columns:1fr 1fr}
+  .drv-stats-grid{grid-template-columns:1fr 1fr}
+  .drv-earnings-grid{grid-template-columns:1fr 1fr}
+  .drv-vehicle-grid{grid-template-columns:1fr 1fr}
+  .drv-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:2px;padding:3px}
+  .drv-tabs::-webkit-scrollbar{display:none}
+  .drv-tab{padding:6px 12px;font-size:11px}
+
+  .overview-page-count{font-size:11px}
+  .ov-card{padding:14px;gap:12px}
+  .ov-card-icon{width:38px;height:38px;border-radius:10px}
   .ov-card-value{font-size:18px}
+  .ov-card-label{font-size:10px}
+  .ov-section-title{font-size:12px}
+
   .ov-recent-item{padding:12px 16px;gap:12px}
-  .ov-recent-avatar{width:36px;height:36px;font-size:13px}
+  .ov-recent-avatar{width:36px;height:36px;font-size:13px;border-radius:10px}
   .ov-recent-header{padding:14px 16px}
+  .ov-recent-name{font-size:12px}
+  .ov-recent-time{font-size:10px}
+
+  .ov-skel-cards{grid-template-columns:1fr 1fr}
+  .ov-skel-card{height:80px}
+
+  .order-detail-grid{grid-template-columns:1fr}
+}
+
+/* ── 600px: Large phone ────────────────────────── */
+@media(max-width:600px){
+  header{
+    padding:0 12px;height:50px;
+    flex-wrap:nowrap;gap:0;
+    align-items:center;position:relative
+  }
+  .logo{font-size:14px;letter-spacing:-.2px;flex-shrink:0}
+
+  /* Show hamburger */
+  .hamburger{display:flex;flex-direction:column;align-items:center;justify-content:center;margin-left:8px}
+
+  /* Hide tabs by default, show as dropdown */
+  .tabs{
+    display:none;
+    position:absolute;top:50px;left:0;right:0;
+    background:var(--surface);border-bottom:1px solid var(--border);
+    padding:8px 12px;
+    flex-direction:column;gap:4px;
+    z-index:150;
+    box-shadow:0 8px 24px rgba(0,0,0,.4)
+  }
+  .tabs.open{display:flex}
+  .tab{
+    padding:10px 16px;font-size:13px;font-weight:500;
+    white-space:nowrap;text-align:left;width:100%;
+    border-radius:6px
+  }
+
+  .hdr-right{gap:6px;flex-shrink:0;margin-left:auto}
+  .search{width:110px;padding:6px 10px;font-size:11px}
+  .btn-sm{padding:5px 8px;font-size:10px}
+  .conn{display:none}
+
+  .content{padding:14px}
+  .grid{grid-template-columns:1fr;gap:12px}
+  .fg.wide{grid-column:1}
+
+  .items{grid-template-columns:1fr;gap:12px}
+
+  .dest-card-img-wrap,
+  .hotel-card-img-wrap,
+  .food-card-img-wrap{height:160px}
+
+  .ov-cards{grid-template-columns:1fr 1fr;gap:10px}
+  .ov-skel-cards{grid-template-columns:1fr 1fr}
+  .ov-card{padding:12px;gap:10px}
+  .ov-card-icon{width:36px;height:36px;border-radius:8px}
+  .ov-card-icon svg{width:16px;height:16px}
+  .ov-card-value{font-size:17px}
+  .ov-card-label{font-size:10px;letter-spacing:.2px}
+  .ov-section{margin-bottom:22px}
+  .ov-section-header{margin-bottom:10px}
+  .overview-content{gap:22px}
+  .overview-page-title{font-size:17px}
+  .overview-page-count{font-size:10px;padding:3px 8px}
+
+  .ov-recent-item{padding:12px 14px;gap:12px}
+  .ov-recent-avatar{width:36px;height:36px;font-size:12px;border-radius:10px}
+  .ov-recent-header{padding:14px}
+  .ov-recent-name{font-size:12px}
+  .ov-recent-detail{font-size:10px;gap:5px}
+  .ov-recent-badge{font-size:9px;padding:2px 6px;border-radius:5px}
+  .ov-recent-time{font-size:10px;white-space:normal;text-align:right;line-height:1.3}
+  .ov-two-col{gap:12px}
+
+  .drv-profile{padding:22px 16px}
+  .drv-profile-name{font-size:18px}
+  .drv-profile-avatar{width:64px;height:64px;font-size:22px}
+  .drv-quick-grid{grid-template-columns:1fr}
+  .drv-quick-item{padding:10px 14px}
+  .drv-stats-grid{grid-template-columns:1fr 1fr}
+  .drv-stat-card{padding:16px}
+  .drv-stat-value{font-size:20px}
+  .drv-earnings-grid{grid-template-columns:1fr 1fr}
+  .drv-earning-value{font-size:16px}
+  .drv-vehicle-grid{grid-template-columns:1fr}
+  .drv-rating-number{font-size:32px}
+  .drv-ride-card{padding:14px}
+  .drv-ride-meta{gap:8px}
+  .drv-ride-meta-item{font-size:11px}
+  .drv-tabs{gap:3px;padding:3px}
+  .drv-tab{padding:7px 14px;font-size:11px}
+  .drv-section{margin-bottom:20px}
+  .drv-section-title{font-size:14px}
+  .drv-rating-big{flex-wrap:wrap}
+  .drv-vehicle-header{gap:10px}
+  .drv-vehicle-icon{width:40px;height:40px}
+  .drv-vehicle-title{font-size:14px}
+
+  .dest-page-title,
+  .hotel-page-title,
+  .food-page-title,
+  .driver-page-title,
+  .order-page-title{font-size:16px}
+  .dest-page-count,
+  .hotel-page-count,
+  .food-page-count,
+  .driver-page-count,
+  .order-page-count{font-size:11px;padding:3px 8px}
+
+  .dest-card-acts,
+  .hotel-card-acts,
+  .food-card-acts,
+  .driver-card-acts{flex-direction:row;gap:8px}
+  .dest-card-acts .btn,
+  .hotel-card-acts .btn,
+  .food-card-acts .btn,
+  .driver-card-acts .btn{flex:1;justify-content:center}
+
+  .dest-modal-body,
+  .hotel-modal-body,
+  .food-modal-body,
+  .driver-modal-body{padding:16px}
+  .dest-modal-body .grid,
+  .hotel-modal-body .grid,
+  .food-modal-body .grid,
+  .driver-modal-body .grid{gap:12px}
+  .dest-modal-footer,
+  .hotel-modal-footer,
+  .food-modal-footer,
+  .driver-modal-footer{padding:14px 16px;gap:10px}
+  .dest-modal-footer .btn,
+  .hotel-modal-footer .btn,
+  .food-modal-footer .btn,
+  .driver-modal-footer .btn{flex:1;justify-content:center;padding:11px}
+
+  .order-card-header{padding:16px 16px 0}
+  .order-card-body{padding:12px 16px}
+  .order-card-footer{padding:12px 16px}
+  .order-card-total{font-size:17px}
+  .order-card-restaurant{font-size:15px}
+
+  #toast-box{left:14px;right:14px;bottom:14px;align-items:stretch}
+  .toast{text-align:center;font-size:12px;padding:10px 16px}
+
+  .tag{font-size:9px;padding:2px 6px}
+  .modal{padding:20px;width:92%}
+  .modal h3{font-size:15px}
+}
+
+/* ── 430px: Small phone ────────────────────────── */
+@media(max-width:430px){
+  header{padding:0 10px;height:48px}
+  .logo{font-size:13px}
+  .hamburger{padding:6px}
+  .hamburger svg{width:20px;height:20px}
+  .tabs{top:48px;padding:6px 10px}
+  .tab{padding:10px 14px;font-size:12px}
+  .search{width:90px;padding:5px 8px;font-size:10px}
+  .content{padding:12px}
+
+  .ov-cards{grid-template-columns:1fr 1fr;gap:8px}
+  .ov-card{padding:10px;gap:8px}
+  .ov-card-icon{width:34px;height:34px;border-radius:8px}
+  .ov-card-icon svg{width:15px;height:15px}
+  .ov-card-value{font-size:16px}
+  .ov-card-label{font-size:9px}
+  .ov-section-title{font-size:11px}
+  .ov-section{margin-bottom:18px}
+
+  .ov-recent-item{padding:10px 12px;gap:10px}
+  .ov-recent-avatar{width:34px;height:34px;font-size:11px;border-radius:8px}
+  .ov-recent-name{font-size:11px}
+  .ov-recent-time{font-size:9px}
+  .ov-recent-header{padding:12px}
+  .ov-recent-title{font-size:12px}
+
+  .drv-profile{padding:18px 14px}
+  .drv-profile-name{font-size:17px}
+  .drv-profile-avatar{width:58px;height:58px;font-size:20px}
+  .drv-badge{font-size:9px;padding:3px 8px}
+  .drv-stats-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .drv-stat-card{padding:14px}
+  .drv-stat-value{font-size:18px}
+  .drv-stat-icon{width:34px;height:34px}
+  .drv-quick-item{padding:8px 12px}
+  .drv-quick-icon{width:32px;height:32px}
+  .drv-quick-value{font-size:12px}
+  .drv-vehicle-title{font-size:13px}
+  .drv-earning-card{padding:14px}
+  .drv-earning-value{font-size:15px}
+  .drv-earning-label{font-size:9px}
+  .drv-review-card{padding:12px}
+  .drv-review-text{font-size:11px}
+  .drv-banner{padding:12px;gap:10px}
+  .drv-banner-title{font-size:12px}
+  .drv-banner-desc{font-size:11px;line-height:1.5}
+  .drv-tabs{gap:2px;padding:3px}
+  .drv-tab{padding:6px 12px;font-size:10px}
+  .drv-section{margin-bottom:18px}
+  .drv-section-title{font-size:13px}
+  .drv-ride-card{padding:12px}
+  .drv-ride-route-text{font-size:11px}
+  .drv-rating-big{gap:10px}
+  .drv-rating-number{font-size:28px}
+  .drv-rating-stars .star{font-size:16px}
+  .drv-vehicle{padding:16px}
+  .drv-vehicle-icon{width:36px;height:36px}
+  .drv-vehicle-title{font-size:12px}
+  .drv-review-header{flex-wrap:wrap;gap:6px}
+
+  .dest-page-header,
+  .hotel-page-header,
+  .food-page-header,
+  .driver-page-header,
+  .order-page-header{margin-bottom:18px;padding-bottom:14px}
+
+  .dest-modal-close,
+  .hotel-modal-close,
+  .food-modal-close,
+  .driver-modal-close,
+  .order-modal-close{width:30px;height:30px}
+  .dest-modal-close svg,
+  .hotel-modal-close svg,
+  .food-modal-close svg,
+  .driver-modal-close svg,
+  .order-modal-close svg{width:15px;height:15px}
+
+  .dest-card-acts,
+  .hotel-card-acts,
+  .food-card-acts,
+  .driver-card-acts{flex-direction:column;gap:6px}
+  .dest-card-acts .btn,
+  .hotel-card-acts .btn,
+  .food-card-acts .btn,
+  .driver-card-acts .btn{width:100%;justify-content:center;padding:10px}
+
+  .order-card-header{padding:14px 14px 0}
+  .order-card-body{padding:10px 14px}
+  .order-card-footer{padding:10px 14px}
+  .order-card-total{font-size:16px}
+  .order-card-restaurant{font-size:14px}
+}
+
+/* ── 390px: Compact phone ──────────────────────── */
+@media(max-width:390px){
+  header{padding:0 8px;height:46px}
+  .logo{font-size:12px}
+  .hamburger{padding:6px}
+  .hamburger svg{width:18px;height:18px}
+  .tabs{top:46px;padding:6px 8px}
+  .tab{padding:9px 12px;font-size:12px}
+  .search{width:80px;padding:5px 7px;font-size:10px}
+  .content{padding:10px}
+
+  .ov-cards{grid-template-columns:1fr;gap:8px}
+  .ov-card{padding:10px}
+  .ov-card-value{font-size:15px}
+
+  .items{gap:10px}
+
+  .dest-card-img-wrap,
+  .hotel-card-img-wrap,
+  .food-card-img-wrap{height:140px}
+
+  .drv-profile{padding:16px 12px}
+  .drv-profile-name{font-size:16px}
+  .drv-profile-avatar{width:54px;height:54px;font-size:18px}
+  .drv-stats-grid{grid-template-columns:1fr}
+  .drv-earnings-grid{grid-template-columns:1fr}
+  .drv-vehicle-grid{grid-template-columns:1fr}
+  .drv-tabs{gap:2px;padding:2px}
+  .drv-tab{padding:6px 10px;font-size:10px}
+  .drv-section{margin-bottom:16px}
+  .drv-section-title{font-size:13px}
+  .drv-stat-card{padding:14px}
+  .drv-stat-value{font-size:17px}
+  .drv-ride-card{padding:12px}
+  .drv-ride-route{flex-wrap:wrap}
+  .drv-ride-route-text{font-size:11px}
+  .drv-rating-big{flex-direction:column;align-items:flex-start}
+  .drv-rating-number{font-size:28px}
+  .drv-vehicle{padding:14px}
+  .drv-vehicle-grid{gap:8px}
+  .drv-earning-card{padding:14px}
+  .drv-earning-value{font-size:15px}
+}
+
+/* ── 375px: Standard small phone ───────────────── */
+@media(max-width:375px){
+  header{padding:0 8px;height:44px}
+  .logo{font-size:12px;font-weight:700}
+  .hamburger{padding:5px}
+  .hamburger svg{width:18px;height:18px}
+  .tabs{top:44px;padding:6px 8px}
+  .tab{padding:9px 12px;font-size:11px}
+  .search{width:70px;padding:4px 6px;font-size:9px}
+  .content{padding:10px}
+  .grid{gap:10px}
+
+  .items{gap:10px}
+
+  .ov-cards{grid-template-columns:1fr;gap:8px}
+  .ov-card{padding:10px;gap:8px}
+  .ov-card-icon{width:32px;height:32px;border-radius:6px}
+  .ov-card-icon svg{width:14px;height:14px}
+  .ov-card-value{font-size:15px}
+  .ov-card-label{font-size:8px}
+  .ov-section{margin-bottom:16px}
+  .ov-section-header{margin-bottom:8px}
+  .overview-content{gap:18px}
+
+  .ov-recent-item{padding:10px 12px;gap:10px}
+  .ov-recent-avatar{width:32px;height:32px;font-size:11px;border-radius:8px}
+  .ov-recent-header{padding:12px}
+  .ov-recent-name{font-size:11px}
+  .ov-recent-detail{font-size:9px;gap:4px}
+  .ov-recent-badge{font-size:8px;padding:1px 5px;border-radius:4px}
+  .ov-recent-time{font-size:9px}
+  .ov-two-col{gap:10px}
+
+  .drv-profile{padding:14px 12px}
+  .drv-profile-name{font-size:15px}
+  .drv-profile-avatar{width:50px;height:50px;font-size:17px}
+  .drv-badge{font-size:8px;padding:3px 7px}
+  .drv-quick-grid{grid-template-columns:1fr}
+  .drv-quick-item{padding:8px 10px}
+  .drv-stat-card{padding:12px}
+  .drv-stat-value{font-size:17px}
+  .drv-stat-icon{width:30px;height:30px}
+  .drv-earning-card{padding:12px}
+  .drv-earning-value{font-size:14px}
+  .drv-earning-label{font-size:8px}
+  .drv-vehicle-title{font-size:12px}
+  .drv-ride-card{padding:12px}
+  .drv-ride-meta{gap:6px}
+  .drv-ride-meta-item{font-size:10px}
+  .drv-review-card{padding:10px}
+  .drv-review-text{font-size:10px}
+  .drv-banner{padding:10px;gap:8px}
+  .drv-banner-title{font-size:11px}
+  .drv-banner-desc{font-size:10px}
+  .drv-tabs{gap:2px;padding:2px}
+  .drv-tab{padding:5px 10px;font-size:9px}
+  .drv-section{margin-bottom:14px}
+  .drv-section-title{font-size:12px}
+  .drv-rating-big{flex-direction:column;align-items:flex-start;gap:8px}
+  .drv-rating-number{font-size:26px}
+  .drv-rating-stars .star{font-size:14px}
+  .drv-rating-dist{gap:3px}
+  .drv-rating-bar{gap:6px}
+  .drv-vehicle{padding:12px}
+  .drv-vehicle-header{margin-bottom:10px}
+  .drv-vehicle-icon{width:34px;height:34px}
+  .drv-vehicle-title{font-size:11px}
+  .drv-vehicle-grid{gap:8px}
+  .drv-earning-value{font-size:13px}
+
+  .dest-page-title,
+  .hotel-page-title,
+  .food-page-title,
+  .driver-page-title,
+  .order-page-title{font-size:15px}
+  .dest-page-count,
+  .hotel-page-count,
+  .food-page-count,
+  .driver-page-count,
+  .order-page-count{font-size:10px;padding:3px 7px}
+
+  .dest-modal-header,
+  .hotel-modal-header,
+  .food-modal-header,
+  .driver-modal-header,
+  .order-modal-header{padding:14px 16px}
+  .dest-modal-body,
+  .hotel-modal-body,
+  .food-modal-body,
+  .driver-modal-body,
+  .order-modal-body{padding:14px 16px}
+  .dest-modal-footer,
+  .hotel-modal-footer,
+  .food-modal-footer,
+  .driver-modal-footer{padding:12px 16px}
+
+  .order-card-header{padding:12px 12px 0}
+  .order-card-body{padding:10px 12px}
+  .order-card-footer{padding:10px 12px}
+  .order-card-total{font-size:15px}
+  .order-card-restaurant{font-size:13px}
+  .order-card-customer{font-size:12px}
+  .order-card-items-preview{font-size:11px}
+  .order-card-meta-item{font-size:10px;padding:2px 6px}
+}
+
+/* ── 360px: Extra small phone ──────────────────── */
+@media(max-width:360px){
+  header{padding:0 6px;height:42px}
+  .logo{font-size:11px}
+  .hamburger{padding:5px}
+  .hamburger svg{width:16px;height:16px}
+  .tabs{top:42px;padding:4px 6px}
+  .tab{padding:8px 10px;font-size:11px}
+  .search{width:60px;padding:4px 5px;font-size:9px}
+  .content{padding:8px}
+
+  .ov-card{padding:8px;gap:6px}
+  .ov-card-value{font-size:14px}
+  .ov-card-label{font-size:8px}
+  .ov-section{margin-bottom:14px}
+
+  .drv-profile{padding:12px 10px}
+  .drv-profile-name{font-size:14px}
+  .drv-profile-avatar{width:46px;height:46px;font-size:16px}
+  .drv-stat-card{padding:10px}
+  .drv-stat-value{font-size:16px}
+  .drv-badge{font-size:7px;padding:2px 6px}
+  .drv-quick-item{padding:6px 8px}
+  .drv-quick-icon{width:28px;height:28px}
+  .drv-quick-value{font-size:11px}
+  .drv-earning-card{padding:10px}
+  .drv-earning-value{font-size:13px}
+  .drv-ride-card{padding:10px}
+  .drv-ride-meta-item{font-size:9px}
+  .drv-tabs{gap:2px;padding:2px}
+  .drv-tab{padding:5px 8px;font-size:9px}
+  .drv-section{margin-bottom:12px}
+  .drv-section-title{font-size:11px}
+  .drv-rating-number{font-size:24px}
+  .drv-rating-stars .star{font-size:13px}
+  .drv-vehicle{padding:10px}
+  .drv-vehicle-icon{width:32px;height:32px}
+  .drv-vehicle-title{font-size:11px}
+  .drv-vehicle-grid{grid-template-columns:1fr}
+  .drv-earning-value{font-size:12px}
+  .drv-review-card{padding:8px 10px}
+  .drv-review-text{font-size:10px}
+
+  .dest-card-img-wrap,
+  .hotel-card-img-wrap,
+  .food-card-img-wrap{height:120px}
+  .dest-card-body,
+  .hotel-card-body,
+  .food-card-body{padding:12px}
+  .dest-card-name,
+  .hotel-card-name,
+  .food-card-name{font-size:14px}
+
+  .driver-card-top{padding:14px 14px 0}
+  .driver-card-body{padding:10px 14px}
+  .driver-card-name{font-size:14px}
+  .driver-card-drt-val{font-size:13px}
+
+  .login-box{padding:28px 20px;max-width:320px}
+  .login-box h2{font-size:18px}
+}
+
+/* ── Touch-friendly targets ────────────────────── */
+@media(hover:none) and (pointer:coarse){
+  .tab{min-height:38px}
+  .btn{min-height:38px}
+  .drv-tab{min-height:36px}
+  .ov-card{min-height:48px}
+  .ov-recent-item{min-height:52px}
+  .dest-card-acts .btn,
+  .hotel-card-acts .btn,
+  .food-card-acts .btn,
+  .driver-card-acts .btn{min-height:42px}
+  .tgl{width:50px;height:28px}
+  .tgl::after{width:22px;height:22px}
+  .tgl.on::after{transform:translateX(22px)}
+  .dest-card-acts,
+  .hotel-card-acts,
+  .food-card-acts,
+  .driver-card-acts{flex-direction:row;gap:8px}
+  .dest-card-acts .btn,
+  .hotel-card-acts .btn,
+  .food-card-acts .btn,
+  .driver-card-acts .btn{padding:10px 16px}
+}
+
+/* ── Landscape phone ───────────────────────────── */
+@media(max-height:500px) and (orientation:landscape){
+  .dest-modal,
+  .hotel-modal,
+  .food-modal,
+  .driver-modal,
+  .order-modal{max-height:100vh}
+  .modal-bg{align-items:stretch;padding:0}
+}
+
+/* ── Print ─────────────────────────────────────── */
+@media print{
+  header,.modal-bg,#toast-box,#loading{display:none!important}
+  .content{display:block!important;padding:0}
+  body{background:#fff;color:#000}
 }

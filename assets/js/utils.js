@@ -3,7 +3,31 @@
 var search = '';
 var delCb = null;
 
+function toggleMobileMenu() {
+  var tabs = document.getElementById('navTabs');
+  var btn = document.getElementById('hamburgerBtn');
+  tabs.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+function closeMobileMenu() {
+  var tabs = document.getElementById('navTabs');
+  var btn = document.getElementById('hamburgerBtn');
+  if (tabs) tabs.classList.remove('open');
+  if (btn) btn.classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  var tabs = document.getElementById('navTabs');
+  var btn = document.getElementById('hamburgerBtn');
+  if (!tabs || !btn) return;
+  if (tabs.classList.contains('open') && !tabs.contains(e.target) && !btn.contains(e.target)) {
+    closeMobileMenu();
+  }
+});
+
 function switchTab(t) {
+  closeMobileMenu();
   document.querySelectorAll('.tab').forEach(function(b){
     var txt = b.textContent.toLowerCase();
     var match = false;
