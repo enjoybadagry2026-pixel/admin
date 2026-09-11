@@ -7,18 +7,22 @@ function switchTab(t) {
   document.querySelectorAll('.tab').forEach(function(b){
     var txt = b.textContent.toLowerCase();
     var match = false;
-    if (t === 'dest') match = txt.indexOf('dest') >= 0;
+    if (t === 'overview') match = txt.indexOf('overview') >= 0;
+    else if (t === 'dest') match = txt.indexOf('dest') >= 0;
     else if (t === 'hotel') match = txt.indexOf('hotel') >= 0;
     else if (t === 'food') match = txt.indexOf('food') >= 0;
     else if (t === 'orders') match = txt.indexOf('order') >= 0;
     else if (t === 'drivers') match = txt.indexOf('driver') >= 0;
     b.classList.toggle('on', match);
   });
+  document.getElementById('panel-overview').classList.toggle('on', t === 'overview');
   document.getElementById('panel-dest').classList.toggle('on', t === 'dest');
   document.getElementById('panel-hotel').classList.toggle('on', t === 'hotel');
   document.getElementById('panel-food').classList.toggle('on', t === 'food');
   document.getElementById('panel-orders').classList.toggle('on', t === 'orders');
   document.getElementById('panel-drivers').classList.toggle('on', t === 'drivers');
+  document.getElementById('panel-driver-details').classList.remove('on');
+  if (t === 'overview' && typeof loadOverviewStats === 'function') loadOverviewStats();
 }
 
 function doSearch(v) { search = v.toLowerCase(); renderCached(); }
