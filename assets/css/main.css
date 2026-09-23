@@ -339,11 +339,15 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .order-status-pending{background:rgba(241,196,15,.15);color:#f1c40f}
 .order-status-confirmed{background:rgba(52,152,219,.15);color:#3498db}
 .order-status-preparing{background:rgba(155,89,182,.15);color:#9b59b6}
+.order-status-processing{background:rgba(155,89,182,.15);color:#9b59b6}
 .order-status-ready{background:rgba(46,204,113,.15);color:var(--green)}
 .order-status-assigned{background:rgba(232,138,58,.15);color:var(--accent)}
 .order-status-ontheway{background:rgba(232,138,58,.2);color:var(--accent)}
+.order-status-ondelivery{background:rgba(232,138,58,.2);color:var(--accent)}
 .order-status-delivered{background:rgba(46,204,113,.2);color:var(--green)}
+.order-status-completed{background:rgba(46,204,113,.15);color:var(--green)}
 .order-status-cancelled{background:rgba(231,76,60,.15);color:var(--red)}
+.order-status-declined{background:rgba(231,76,60,.15);color:var(--red)}
 .order-card-body{padding:14px 18px}
 .order-card-restaurant{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.2px}
 .order-card-customer{font-size:13px;color:var(--text2);margin-bottom:10px}
@@ -387,7 +391,104 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .order-detail-total-label{font-size:13px;font-weight:600;color:var(--text2)}
 .order-detail-total-value{font-size:18px;font-weight:800;color:var(--accent)}
 .order-detail-status-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Order status workflow actions (Accept / Decline / Processing / Complete / Delivery) */
+.order-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.order-actions .btn{flex:1;min-width:150px;justify-content:center;padding:10px 16px;font-size:13px}
+.order-actions .btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.order-actions .btn:disabled:hover{box-shadow:none}
+.order-actions-hint{flex-basis:100%;font-size:11px;color:var(--text2);line-height:1.5;margin-top:-2px}
+
+/* Decline reason (saved with declined orders) */
+.order-decline-box{background:rgba(231,76,60,.07);border:1px solid rgba(231,76,60,.3);border-left:3px solid var(--red);border-radius:var(--radius-sm);padding:12px 14px}
+.order-decline-label{font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.order-decline-reason{font-size:13px;color:var(--text);line-height:1.55;overflow-wrap:anywhere}
+
+/* Decline order modal */
+.decline-modal{text-align:left}
+.decline-modal h3,.decline-modal p{text-align:center}
+.decline-modal .fg{margin-bottom:6px}
+.decline-err{color:var(--red);font-size:12px;font-weight:600;min-height:18px;text-align:left;margin-bottom:10px;line-height:1.4}
+.decline-modal .modal-acts{justify-content:center}
 .order-detail-notes{background:var(--input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.5}
+.order-detail-charges{display:flex;flex-direction:column;gap:8px}
+.order-detail-charge-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;background:var(--input);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.order-detail-charge-label{font-size:12px;font-weight:600;color:var(--text2)}
+.order-detail-charge-value{font-size:13px;font-weight:700;color:var(--text)}
+.order-detail-charge-row.is-total{background:rgba(232,138,58,.08);border-color:rgba(232,138,58,.35)}
+.order-detail-charge-row.is-total .order-detail-charge-label{color:var(--text);font-weight:700;font-size:13px}
+.order-detail-charge-row.is-total .order-detail-charge-value{color:var(--accent);font-size:16px;font-weight:800}
+.order-detail-charge-row.is-discount .order-detail-charge-value{color:var(--green)}
+.order-detail-item-desc{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4}
+.order-detail-item-extras{font-size:11px;color:var(--accent);margin-top:3px;line-height:1.4}
+
+/* Order Items — trigger inside Order Details */
+.order-items-trigger{width:100%;background:none;border:none;font-family:inherit;cursor:pointer;padding:0;justify-content:space-between;transition:color .15s}
+.order-items-trigger:hover{color:var(--accent)}
+.order-items-trigger-main{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.order-items-trigger-cta{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--accent);flex-shrink:0}
+.order-items-trigger-cta svg{opacity:1;transition:transform .15s}
+.order-items-trigger:hover .order-items-trigger-cta svg{transform:translateX(3px)}
+.order-detail-items.is-clickable{cursor:pointer}
+
+/* Order Items Modal */
+.order-items-modal{max-width:960px}
+.oi-summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:20px}
+.oi-chip{display:inline-flex;align-items:center;gap:6px;background:var(--input);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;color:var(--text2);max-width:100%;min-width:0}
+.oi-chip svg{flex-shrink:0;opacity:.6}
+.oi-chip strong{color:var(--text);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oi-list{display:flex;flex-direction:column;gap:12px}
+.oi-item{display:flex;gap:14px;background:var(--input);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.oi-item-img-wrap{position:relative;flex-shrink:0}
+.oi-item-img{width:88px;height:88px;border-radius:10px;object-fit:cover;background:var(--card);border:1px solid var(--border);display:block}
+.oi-item-img-fallback{width:88px;height:88px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:32px;opacity:.35}
+.oi-item-index{position:absolute;top:-7px;left:-7px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface);box-shadow:0 2px 6px rgba(0,0,0,.45)}
+.oi-item-main{flex:1;min-width:0}
+.oi-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.oi-item-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.2px;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.oi-item-total{font-size:15px;font-weight:800;color:var(--accent);flex-shrink:0;white-space:nowrap}
+.oi-item-price-line{font-size:12px;color:var(--text2);margin-top:4px;font-weight:500}
+.oi-item-price-line b{color:var(--text);font-weight:700}
+.oi-item-desc{font-size:12px;color:var(--text2);line-height:1.5;margin-top:6px;overflow-wrap:anywhere}
+.oi-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.oi-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--accent);background:rgba(232,138,58,.1);border:1px solid rgba(232,138,58,.3);border-radius:5px;padding:3px 8px;line-height:1.4;overflow-wrap:anywhere}
+.oi-badge-muted{color:var(--text2);background:var(--card);border-color:var(--border)}
+.oi-extras{margin-top:8px;display:flex;flex-direction:column;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px}
+.oi-extra-row{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text2)}
+.oi-extra-name{color:var(--text);font-weight:600;min-width:0;overflow-wrap:anywhere}
+.oi-extra-price{margin-left:auto;color:var(--accent);font-weight:700;flex-shrink:0}
+.oi-item-note{margin-top:8px;display:flex;gap:7px;align-items:flex-start;background:var(--card);border:1px solid var(--border);border-left:2px solid var(--accent);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--text2);line-height:1.5;overflow-wrap:anywhere}
+.oi-item-note svg{flex-shrink:0;color:var(--accent);opacity:.85;margin-top:1px}
+.oi-empty{text-align:center;padding:40px 20px;background:var(--input);border:1px dashed var(--border);border-radius:var(--radius);color:var(--text2)}
+.oi-empty-icon{width:56px;height:56px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px;opacity:.5}
+.oi-empty-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px}
+.oi-empty-text{font-size:12px;line-height:1.5}
+
+/* Order Items — full order load indicator */
+.oi-refresh{display:none;align-items:center;justify-content:center;gap:9px;background:var(--input);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px}
+.oi-refresh::before{content:'';width:12px;height:12px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:oiSpin .7s linear infinite;flex-shrink:0}
+@keyframes oiSpin{to{transform:rotate(360deg)}}
+
+/* Order Items — customer selections (toppings, add-ons, options, extras) */
+.oi-sel{margin-top:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.oi-sel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;background:rgba(232,138,58,.07);border-bottom:1px solid var(--border)}
+.oi-sel-title{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.7px}
+.oi-sel-count{font-size:10px;font-weight:600;color:var(--text2);background:var(--input);border:1px solid var(--border);border-radius:20px;padding:2px 8px;flex-shrink:0}
+.oi-sel-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:8px 12px;font-size:12px;border-bottom:1px solid rgba(42,42,58,.6)}
+.oi-sel-name{color:var(--text);font-weight:600;min-width:0;overflow-wrap:anywhere}
+.oi-sel-qty{color:var(--accent);font-weight:700}
+.oi-sel-unit{color:var(--text2);font-size:11px;white-space:nowrap;text-align:right;min-width:0}
+.oi-sel-total{color:var(--accent);font-weight:700;white-space:nowrap;text-align:right;min-width:64px}
+.oi-sel-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;background:var(--input);font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px}
+.oi-sel-foot span:last-child{color:var(--accent);font-size:13px;font-weight:800;text-transform:none;letter-spacing:0}
+
+/* Order Items — ingredients */
+.oi-sub{margin-top:10px}
+.oi-sub-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+.oi-ing-list{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Order Items — stacked special-instruction notes */
+.oi-notes-gap{margin-top:8px}
 
 /* Order Empty State */
 .order-empty{text-align:center;padding:64px 24px;color:var(--text2)}
@@ -910,6 +1011,19 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   .order-card-total{font-size:17px}
   .order-card-restaurant{font-size:15px}
 
+  .order-items-modal{max-width:96%}
+  .oi-summary{gap:6px;margin-bottom:16px}
+  .oi-chip{padding:5px 10px;font-size:10px}
+  .oi-list{gap:10px}
+  .oi-item{gap:10px;padding:12px}
+  .oi-item-img,.oi-item-img-fallback{width:70px;height:70px}
+  .oi-item-img-fallback{font-size:26px}
+  .oi-item-name{font-size:14px}
+  .oi-item-total{font-size:14px}
+  .oi-sel-row{gap:8px;padding:7px 10px;font-size:11px}
+  .oi-sel-total{min-width:56px}
+  .oi-sel-head,.oi-sel-foot{padding:8px 10px}
+
   #toast-box{left:14px;right:14px;bottom:14px;align-items:stretch}
   .toast{text-align:center;font-size:12px;padding:10px 16px}
 
@@ -1010,6 +1124,17 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   .order-card-footer{padding:10px 14px}
   .order-card-total{font-size:16px}
   .order-card-restaurant{font-size:14px}
+
+  .oi-item{gap:9px;padding:10px}
+  .oi-item-img,.oi-item-img-fallback{width:58px;height:58px}
+  .oi-item-img-fallback{font-size:22px}
+  .oi-item-index{width:18px;height:18px;font-size:9px;top:-6px;left:-6px}
+  .oi-item-name{font-size:13px}
+  .oi-item-total{font-size:13px}
+  .oi-item-price-line,.oi-item-desc{font-size:11px}
+  .oi-sel-row{grid-template-columns:1fr auto;gap:6px;padding:6px 9px}
+  .oi-sel-unit{display:none}
+  .oi-sel-total{min-width:0}
 }
 
 /* ── 390px: Compact phone ──────────────────────── */
