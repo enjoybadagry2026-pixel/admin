@@ -3,50 +3,118 @@
 var search = '';
 var delCb = null;
 
+// Tab metadata: used for the active state, the header breadcrumb
+// and for keeping the sidebar in sync with the visible panel.
+var TAB_META = {
+  overview: { label: 'Overview',     group: 'Dashboard' },
+  rides:    { label: 'Rides',        group: 'Operations' },
+  orders:   { label: 'Food Orders',  group: 'Operations' },
+  users:    { label: 'Users',        group: 'Management' },
+  drivers:  { label: 'Drivers',      group: 'Management' },
+  dest:     { label: 'Destinations', group: 'Content' },
+  hotel:    { label: 'Hotels',       group: 'Content' },
+  food:     { label: 'Food Menu',    group: 'Content' },
+  reviews:  { label: 'Reviews & Ratings', group: 'Content' },
+  wallets:  { label: 'Wallets & Payouts', group: 'Finance' }
+};
+
+var PANEL_IDS = ['overview', 'users', 'dest', 'hotel', 'food', 'reviews', 'orders', 'rides', 'drivers', 'wallets'];
+
+function isNavDrawer() {
+  var sb = document.getElementById('sidebar');
+  return !!(sb && sb.classList.contains('open'));
+}
+
 function toggleMobileMenu() {
-  var tabs = document.getElementById('navTabs');
+  var sb = document.getElementById('sidebar');
   var btn = document.getElementById('hamburgerBtn');
-  tabs.classList.toggle('open');
-  btn.classList.toggle('open');
+  var scrim = document.getElementById('navScrim');
+  var open = !isNavDrawer();
+  if (sb) sb.classList.toggle('open', open);
+  if (btn) btn.classList.toggle('open', open);
+  if (scrim) scrim.classList.toggle('on', open);
 }
 
 function closeMobileMenu() {
-  var tabs = document.getElementById('navTabs');
+  var sb = document.getElementById('sidebar');
   var btn = document.getElementById('hamburgerBtn');
-  if (tabs) tabs.classList.remove('open');
+  var scrim = document.getElementById('navScrim');
+  if (sb) sb.classList.remove('open');
   if (btn) btn.classList.remove('open');
+  if (scrim) scrim.classList.remove('on');
 }
 
 document.addEventListener('click', function(e) {
-  var tabs = document.getElementById('navTabs');
+  var sb = document.getElementById('sidebar');
   var btn = document.getElementById('hamburgerBtn');
-  if (!tabs || !btn) return;
-  if (tabs.classList.contains('open') && !tabs.contains(e.target) && !btn.contains(e.target)) {
+  if (!sb || !btn) return;
+  if (isNavDrawer() && !sb.contains(e.target) && !btn.contains(e.target)) {
     closeMobileMenu();
   }
 });
 
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMobileMenu();
+});
+
+// If the viewport grows back to desktop the drawer is always visible,
+// so make sure no leftover open/scrim state is kept around.
+window.addEventListener('resize', function() {
+  if (window.innerWidth > 1024 && isNavDrawer()) closeMobileMenu();
+});
+
 function switchTab(t) {
   closeMobileMenu();
-  document.querySelectorAll('.tab').forEach(function(b){
-    var txt = b.textContent.toLowerCase();
-    var match = false;
-    if (t === 'overview') match = txt.indexOf('overview') >= 0;
-    else if (t === 'dest') match = txt.indexOf('dest') >= 0;
-    else if (t === 'hotel') match = txt.indexOf('hotel') >= 0;
-    else if (t === 'food') match = txt.indexOf('food') >= 0;
-    else if (t === 'orders') match = txt.indexOf('order') >= 0;
-    else if (t === 'drivers') match = txt.indexOf('driver') >= 0;
+
+  document.querySelectorAll('.side-item').forEach(function(b) {
+    var match = b.getAttribute('data-tab') === t;
     b.classList.toggle('on', match);
+    if (match) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
   });
-  document.getElementById('panel-overview').classList.toggle('on', t === 'overview');
-  document.getElementById('panel-dest').classList.toggle('on', t === 'dest');
-  document.getElementById('panel-hotel').classList.toggle('on', t === 'hotel');
-  document.getElementById('panel-food').classList.toggle('on', t === 'food');
-  document.getElementById('panel-orders').classList.toggle('on', t === 'orders');
-  document.getElementById('panel-drivers').classList.toggle('on', t === 'drivers');
+
+  PANEL_IDS.forEach(function(p) {
+    var el = document.getElementById('panel-' + p);
+    if (el) el.classList.toggle('on', p === t);
+  });
   document.getElementById('panel-driver-details').classList.remove('on');
+
+  var meta = TAB_META[t];
+  if (meta) {
+    var g = document.getElementById('hdrCrumbGroup');
+    var pg = document.getElementById('hdrCrumbPage');
+    if (g) g.textContent = meta.group;
+    if (pg) pg.textContent = meta.label;
+  }
+
   if (t === 'overview' && typeof loadOverviewStats === 'function') loadOverviewStats();
+  if (t === 'users' && typeof loadUsers === 'function') loadUsers();
+  if (t === 'rides' && typeof loadRides === 'function') loadRides();
+  if (t === 'wallets' && typeof loadWalletPanel === 'function') loadWalletPanel();
+  if (t === 'reviews' && typeof loadReviews === 'function') loadReviews();
+}
+
+// Signed-in admin shown at the bottom of the sidebar (real session data).
+function renderAdminIdentity() {
+  var name = 'Administrator';
+  var role = 'Admin';
+  try {
+    var u = JSON.parse(localStorage.getItem('admin_user') || 'null') || {};
+    if (u.fullName || u.name) name = u.fullName || u.name;
+    else if (u.email) name = u.email;
+    if (u.role) role = u.role;
+  } catch (e) {}
+
+  var initials = name.trim().split(/\s+/).slice(0, 2).map(function(w) {
+    return w.charAt(0);
+  }).join('').toUpperCase() || 'A';
+
+  var av = document.getElementById('sideAdminAvatar');
+  var nm = document.getElementById('sideAdminName');
+  var rl = document.getElementById('sideAdminRole');
+  if (av) av.textContent = initials;
+  if (nm) nm.textContent = name;
+  if (rl) rl.textContent = role;
 }
 
 function doSearch(v) { search = v.toLowerCase(); renderCached(); }
@@ -86,6 +154,9 @@ function fmtNaira(n) { return '\u20A6' + Number(n||0).toLocaleString(); }
 function orderStatusClass(s) {
   if (!s) return 'tag-pending';
   var l = s.toLowerCase();
+  if (l.indexOf('trip completed') >= 0 || l === 'completed') return 'tag-confirmed';
+  if (l.indexOf('passenger picked up') >= 0) return 'tag-out';
+  if (l.indexOf('arrived at pickup') >= 0 || l.indexOf('driver arriving') >= 0) return 'tag-preparing';
   if (l.indexOf('pending') >= 0) return 'tag-pending';
   if (l.indexOf('confirmed') >= 0) return 'tag-confirmed';
   if (l.indexOf('prepar') >= 0) return 'tag-preparing';

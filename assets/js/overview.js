@@ -93,7 +93,10 @@ function renderRecentUsers(users) {
   }
   el.innerHTML = users.map(function(u) {
     var initials = getInitials(u.name);
-    var statusCls = u.status === 'active' ? 'ov-badge-active' : 'ov-badge-pending';
+    var statusCls = 'ov-badge-pending';
+    if (u.status === 'active') statusCls = 'ov-badge-active';
+    else if (u.status === 'suspended') statusCls = 'ov-badge-suspended';
+    else if (u.status === 'disabled') statusCls = 'ov-badge-offline';
     var statusText = u.status || 'unknown';
     var phone = u.phone || '';
     var time = fmtDate(u.createdAt);

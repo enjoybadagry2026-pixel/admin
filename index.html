@@ -36,19 +36,10 @@
     <svg class="hamburger-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   </button>
   <div class="logo">Enjoy Badagry</div>
-  <div class="tabs" id="navTabs">
-    <button class="tab on" onclick="switchTab('overview')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      Overview
-    </button>
-    <button class="tab" onclick="switchTab('dest')">Destinations</button>
-    <button class="tab" onclick="switchTab('hotel')">Hotels</button>
-    <button class="tab" onclick="switchTab('food')">Food Menu</button>
-    <button class="tab" onclick="switchTab('orders')">Orders</button>
-    <button class="tab" onclick="switchTab('drivers')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/><path d="M3 11h18"/></svg>
-      Driver Registration
-    </button>
+  <div class="hdr-crumb" id="hdrCrumb">
+    <span class="hdr-crumb-group" id="hdrCrumbGroup">Dashboard</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="hdr-crumb-page" id="hdrCrumbPage">Overview</span>
   </div>
   <div class="hdr-right">
     <span class="conn"><span class="dot"></span> <span id="connTxt">Connected</span></span>
@@ -56,6 +47,77 @@
     <button class="btn btn-ghost btn-sm" onclick="doLogout()">Logout</button>
   </div>
 </header>
+
+<!-- SIDEBAR NAVIGATION -->
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+  <nav class="side-nav">
+    <button class="side-item on" data-tab="overview" aria-current="page" onclick="switchTab('overview')">
+      <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Overview</span>
+    </button>
+
+    <div class="side-group">
+      <div class="side-group-label">Operations</div>
+      <button class="side-item" data-tab="rides" onclick="switchTab('rides')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        <span>Rides</span>
+      </button>
+      <button class="side-item" data-tab="orders" onclick="switchTab('orders')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Food Orders</span>
+      </button>
+    </div>
+
+    <div class="side-group">
+      <div class="side-group-label">Management</div>
+      <button class="side-item" data-tab="users" onclick="switchTab('users')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Users</span>
+      </button>
+      <button class="side-item" data-tab="drivers" onclick="switchTab('drivers')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/><path d="M3 11h18"/></svg>
+        <span>Drivers</span>
+      </button>
+    </div>
+
+    <div class="side-group">
+      <div class="side-group-label">Finance</div>
+      <button class="side-item" data-tab="wallets" onclick="switchTab('wallets')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M17 15h2"/></svg>
+        <span>Wallets &amp; Payouts</span>
+      </button>
+    </div>
+
+    <div class="side-group">
+      <div class="side-group-label">Content</div>
+      <button class="side-item" data-tab="dest" onclick="switchTab('dest')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>Destinations</span>
+      </button>
+      <button class="side-item" data-tab="hotel" onclick="switchTab('hotel')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/></svg>
+        <span>Hotels</span>
+      </button>
+      <button class="side-item" data-tab="food" onclick="switchTab('food')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        <span>Food Menu</span>
+      </button>
+      <button class="side-item" data-tab="reviews" onclick="switchTab('reviews')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>Reviews</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="side-foot">
+    <div class="side-foot-avatar" id="sideAdminAvatar">A</div>
+    <div class="side-foot-info">
+      <div class="side-foot-name" id="sideAdminName">Administrator</div>
+      <div class="side-foot-role" id="sideAdminRole">Admin</div>
+    </div>
+  </div>
+</aside>
+<div class="nav-scrim" id="navScrim" onclick="closeMobileMenu()"></div>
 
 <!-- OVERVIEW -->
 <div class="content on" id="panel-overview">
@@ -92,10 +154,10 @@
     <div class="ov-section">
       <div class="ov-section-header">
         <h3 class="ov-section-title">Users</h3>
-        <button class="btn btn-ghost btn-xs" onclick="switchTab('drivers')" title="View all users" style="display:none">View All</button>
+        <button class="btn btn-ghost" onclick="switchTab('users')" title="Manage users" style="margin-left:auto">Manage Users</button>
       </div>
       <div class="ov-cards">
-        <div class="ov-card" onclick="switchTab('drivers')">
+        <div class="ov-card" onclick="switchTab('users')">
           <div class="ov-card-icon ov-icon-blue">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
@@ -377,6 +439,98 @@
   </div>
 </div>
 
+<!-- USERS -->
+<div class="content" id="panel-users">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Users</h2>
+      <span class="order-page-count" id="um-count">0 users</span>
+    </div>
+    <div class="order-page-actions">
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <select id="um-status-filter" onchange="filterUsers()">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+          <option value="disabled">Disabled</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadUsers(true)" title="Refresh users">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- User statistics (kept at the top) -->
+  <div class="um-stats">
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-blue">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="um-s-total">—</div>
+        <div class="um-stat-label">Total Users</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-green">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="um-s-active">—</div>
+        <div class="um-stat-label">Active</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-red">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="um-s-suspended">—</div>
+        <div class="um-stat-label">Suspended</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="um-s-new">—</div>
+        <div class="um-stat-label">New This Week</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search toolbar -->
+  <div class="um-toolbar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search um-search" id="um-search" placeholder="Search by name, email, phone or ID..." oninput="onUserSearch(this.value)" autocomplete="off">
+    <span class="um-hint" id="um-hint"></span>
+  </div>
+
+  <!-- Loading state -->
+  <div id="um-loading" class="drv-loading" style="display:none">
+    <div class="drv-loading-spinner"></div>
+    <div class="drv-loading-text">Loading users...</div>
+  </div>
+
+  <!-- Error state -->
+  <div id="um-error" class="drv-error" style="display:none">
+    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-title">Failed to load users</div>
+    <div class="drv-error-text" id="um-error-text"></div>
+    <button class="btn btn-accent btn-sm" onclick="loadUsers(true)">Retry</button>
+  </div>
+
+  <!-- User list -->
+  <div class="items" id="um-list"></div>
+
+  <!-- Pagination -->
+  <div class="um-pagination" id="um-pagination" style="display:none"></div>
+</div>
+
 <!-- DESTINATIONS -->
 <div class="content" id="panel-dest">
   <div class="dest-page-header">
@@ -447,15 +601,135 @@
 <div class="content" id="panel-hotel">
   <div class="hotel-page-header">
     <div class="hotel-page-info">
-      <h2 class="hotel-page-title">Hotels</h2>
+      <h2 class="hotel-page-title" id="hotel-tab-title">Hotels</h2>
       <span class="hotel-page-count" id="h-count">0 hotels</span>
     </div>
-    <button class="btn btn-accent" onclick="openHotelModal()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Create Hotel
-    </button>
+    <div class="order-page-actions" id="htl-actions-properties">
+      <button class="btn btn-accent" onclick="openHotelModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Hotel
+      </button>
+    </div>
+    <div class="order-page-actions" id="htl-actions-bookings" style="display:none">
+      <button class="btn btn-ghost btn-sm" onclick="loadHotelBookings(true)" title="Refresh bookings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
   </div>
-  <div class="items" id="h-list"></div>
+
+  <!-- In-panel tabs: keeps the sidebar unchanged (same pattern as Wallets) -->
+  <div class="drv-tabs">
+    <button class="drv-tab on" data-hotel-tab="properties" onclick="hotelSwitchTab('properties', this)">Properties</button>
+    <button class="drv-tab" data-hotel-tab="bookings" onclick="hotelSwitchTab('bookings', this)">Bookings <span class="wl-tab-badge" id="hb-pending-badge" style="display:none"></span></button>
+  </div>
+
+  <!-- ── Tab: Properties ── -->
+  <div id="hotel-pane-properties">
+    <div class="items" id="h-list"></div>
+  </div>
+
+  <!-- ── Tab: Bookings ── -->
+  <div id="hotel-pane-bookings" style="display:none">
+    <!-- Booking statistics -->
+    <div class="um-stats">
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="hb-s-total">—</div>
+          <div class="um-stat-label">Total Bookings</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="hb-s-pending">—</div>
+          <div class="um-stat-label">Awaiting Confirmation</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="hb-s-active">—</div>
+          <div class="um-stat-label">Confirmed / In-house</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-red">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="hb-s-revenue">—</div>
+          <div class="um-stat-label">Paid Revenue</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search + filters -->
+    <div class="um-toolbar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search um-search" id="hb-search" placeholder="Search by booking ref, guest, phone or hotel..." oninput="onHotelBookingSearch(this.value)" autocomplete="off">
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <select id="hb-status-filter" onchange="filterHotelBookings()" title="Filter by booking status">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending Confirmation</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="checkedin">Checked In</option>
+          <option value="completed">Completed</option>
+          <option value="declined">Declined</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="refunded">Refunded</option>
+        </select>
+      </div>
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <select id="hb-payment-filter" onchange="filterHotelBookings()" title="Filter by payment status">
+          <option value="">All Payments</option>
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+          <option value="refunded">Refunded</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+        <select id="hb-hotel-filter" onchange="filterHotelBookings()" title="Filter by hotel">
+          <option value="">All Hotels</option>
+        </select>
+      </div>
+      <input type="date" class="rd-date" id="hb-from" title="From date" aria-label="From date" onchange="filterHotelBookings()">
+      <input type="date" class="rd-date" id="hb-to" title="To date" aria-label="To date" onchange="filterHotelBookings()">
+      <button class="btn btn-ghost btn-sm" id="hb-clear" onclick="clearHotelBookingFilters()" style="display:none">Clear</button>
+      <span class="um-hint" id="hb-hint"></span>
+    </div>
+
+    <!-- Loading state -->
+    <div id="hb-loading" class="drv-loading" style="display:none">
+      <div class="drv-loading-spinner"></div>
+      <div class="drv-loading-text">Loading bookings...</div>
+    </div>
+
+    <!-- Error state -->
+    <div id="hb-error" class="drv-error" style="display:none">
+      <div class="drv-error-icon">⚠️</div>
+      <div class="drv-error-title">Failed to load bookings</div>
+      <div class="drv-error-text" id="hb-error-text"></div>
+      <button class="btn btn-accent btn-sm" onclick="loadHotelBookings(true)">Retry</button>
+    </div>
+
+    <!-- Booking list -->
+    <div class="items" id="hb-list"></div>
+
+    <!-- Pagination -->
+    <div class="um-pagination" id="hb-pagination" style="display:none"></div>
+  </div>
 </div>
 
 <!-- HOTEL CREATE/EDIT MODAL -->
@@ -486,6 +760,7 @@
               <option>4 Stars</option><option>5 Stars</option>
             </select>
           </div>
+          <div class="fg"><label>Nightly Rate (NGN)</label><input id="h-rate" type="number" min="0" step="100" placeholder="e.g. 45000"></div>
           <div class="fg wide"><label>Cover Image URL *</label><input id="h-cover" type="url" required placeholder="https://..."></div>
           <div class="fg wide"><label>Description *</label><textarea id="h-desc" required placeholder="About this hotel..."></textarea></div>
           <div class="fg wide"><label>Address *</label><input id="h-addr" required placeholder="Full address"></div>
@@ -581,6 +856,136 @@
   </div>
 </div>
 
+<!-- REVIEWS & RATINGS -->
+<div class="content" id="panel-reviews">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Reviews &amp; Ratings</h2>
+      <span class="order-page-count" id="rv-count">0 reviews</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadReviews(true)" title="Refresh reviews">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Moderation statistics -->
+  <div class="um-stats">
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-blue">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rv-s-total">—</div>
+        <div class="um-stat-label">Total Reviews</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-green">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rv-s-visible">—</div>
+        <div class="um-stat-label">Visible</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rv-s-hidden">—</div>
+        <div class="um-stat-label">Hidden</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-red">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rv-s-reported">—</div>
+        <div class="um-stat-label">Reported</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + filters -->
+  <div class="um-toolbar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search um-search" id="rv-search" placeholder="Search by review text, user or item..." oninput="onReviewSearch(this.value)" autocomplete="off">
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <select id="rv-type-filter" onchange="filterReviews()" title="Filter by review type">
+        <option value="">All Types</option>
+        <option value="destination">Destinations</option>
+        <option value="hotel">Hotels</option>
+        <option value="food">Food</option>
+        <option value="driver">Drivers</option>
+      </select>
+    </div>
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <select id="rv-rating-filter" onchange="filterReviews()" title="Filter by rating">
+        <option value="">All Ratings</option>
+        <option value="5">5 stars</option>
+        <option value="4">4 stars</option>
+        <option value="3">3 stars</option>
+        <option value="2">2 stars</option>
+        <option value="1">1 star</option>
+        <option value="0">No rating</option>
+      </select>
+    </div>
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <select id="rv-status-filter" onchange="filterReviews()" title="Filter by moderation status">
+        <option value="">All Statuses</option>
+        <option value="visible">Visible</option>
+        <option value="hidden">Hidden</option>
+      </select>
+    </div>
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+      <select id="rv-target-filter" onchange="filterReviews()" title="Filter by reviewed item">
+        <option value="">All Items</option>
+      </select>
+    </div>
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      <select id="rv-reported-filter" onchange="filterReviews()" title="Filter reported reviews">
+        <option value="">All Reviews</option>
+        <option value="1">Reported only</option>
+        <option value="open">Open reports</option>
+      </select>
+    </div>
+    <input type="date" class="rd-date" id="rv-from" title="From date" aria-label="From date" onchange="filterReviews()">
+    <input type="date" class="rd-date" id="rv-to" title="To date" aria-label="To date" onchange="filterReviews()">
+    <button class="btn btn-ghost btn-sm" id="rv-clear" onclick="clearReviewFilters()" style="display:none">Clear</button>
+    <span class="um-hint" id="rv-hint"></span>
+  </div>
+
+  <!-- Loading state -->
+  <div id="rv-loading" class="drv-loading" style="display:none">
+    <div class="drv-loading-spinner"></div>
+    <div class="drv-loading-text">Loading reviews...</div>
+  </div>
+
+  <!-- Error state -->
+  <div id="rv-error" class="drv-error" style="display:none">
+    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-title">Failed to load reviews</div>
+    <div class="drv-error-text" id="rv-error-text"></div>
+    <button class="btn btn-accent btn-sm" onclick="loadReviews(true)">Retry</button>
+  </div>
+
+  <!-- Review list -->
+  <div class="items" id="rv-list"></div>
+
+  <!-- Pagination -->
+  <div class="um-pagination" id="rv-pagination" style="display:none"></div>
+</div>
+
 <!-- ORDERS -->
 <div class="content" id="panel-orders">
   <div class="order-page-header">
@@ -642,6 +1047,137 @@
       </button>
     </div>
     <div class="order-modal-body" id="orderItemsModalBody"></div>
+  </div>
+</div>
+
+<!-- RIDES -->
+<div class="content" id="panel-rides">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Rides</h2>
+      <span class="order-page-count" id="rd-count">0 rides</span>
+    </div>
+    <div class="order-page-actions">
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <select id="rd-status-filter" onchange="filterRides()" title="Filter by ride status">
+          <option value="">All Statuses</option>
+          <option value="Pending Driver Assignment">Pending Assignment</option>
+          <option value="Driver Arriving">Driver Arriving</option>
+          <option value="Arrived at Pickup">Arrived at Pickup</option>
+          <option value="Passenger Picked Up">Passenger Picked Up</option>
+          <option value="Trip Completed">Trip Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <select id="rd-payment-filter" onchange="filterRides()" title="Filter by payment status">
+          <option value="">All Payments</option>
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+          <option value="refunded">Refunded</option>
+          <option value="failed">Failed</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/><path d="M3 11h18"/></svg>
+        <select id="rd-vehicle-filter" onchange="filterRides()" title="Filter by ride category">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadRides(true)" title="Refresh rides">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Ride statistics -->
+  <div class="um-stats">
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-blue">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/><path d="M3 11h18"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rd-s-total">—</div>
+        <div class="um-stat-label">Total Rides</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-green">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rd-s-completed">—</div>
+        <div class="um-stat-label">Completed</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rd-s-progress">—</div>
+        <div class="um-stat-label">In Progress</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-red">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="rd-s-cancelled">—</div>
+        <div class="um-stat-label">Cancelled</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + date range -->
+  <div class="um-toolbar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search um-search" id="rd-search" placeholder="Search by ride ID, customer, driver or location..." oninput="onRideSearch(this.value)" autocomplete="off">
+    <input type="date" class="rd-date" id="rd-from" title="From date" aria-label="From date" onchange="filterRides()">
+    <input type="date" class="rd-date" id="rd-to" title="To date" aria-label="To date" onchange="filterRides()">
+    <button class="btn btn-ghost btn-sm" id="rd-clear" onclick="clearRideFilters()" style="display:none">Clear</button>
+    <span class="um-hint" id="rd-hint"></span>
+  </div>
+
+  <!-- Loading state -->
+  <div id="rd-loading" class="drv-loading" style="display:none">
+    <div class="drv-loading-spinner"></div>
+    <div class="drv-loading-text">Loading rides...</div>
+  </div>
+
+  <!-- Error state -->
+  <div id="rd-error" class="drv-error" style="display:none">
+    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-title">Failed to load rides</div>
+    <div class="drv-error-text" id="rd-error-text"></div>
+    <button class="btn btn-accent btn-sm" onclick="loadRides(true)">Retry</button>
+  </div>
+
+  <!-- Ride list -->
+  <div class="items" id="rd-list"></div>
+
+  <!-- Pagination -->
+  <div class="um-pagination" id="rd-pagination" style="display:none"></div>
+</div>
+
+<!-- RIDE DETAILS MODAL -->
+<div class="modal-bg order-modal-bg" id="rideModal">
+  <div class="modal order-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="rideModalTitle">Ride Details</h3>
+        <span class="order-modal-ref" id="rideModalRef"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeRideModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="rideModalBody"></div>
   </div>
 </div>
 
@@ -767,6 +1303,200 @@
   </div>
 </div>
 
+<!-- WALLETS / PAYOUTS -->
+<div class="content" id="panel-wallets">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Wallets &amp; Payouts</h2>
+      <span class="order-page-count" id="wl-count">Loading...</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadWalletOverview(true)" title="Refresh wallet data">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Wallet overview statistics -->
+  <div class="um-stats wl-stats" id="wl-stats">
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-blue">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="wl-s-user">—</div>
+        <div class="um-stat-label">User Wallets</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-green">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="wl-s-driver">—</div>
+        <div class="um-stat-label">Driver Wallets</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="wl-s-platform">—</div>
+        <div class="um-stat-label">Platform Net</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-red">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="wl-s-pending">—</div>
+        <div class="um-stat-label">Pending Payouts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sub navigation (inside the panel — keeps the main nav clean) -->
+  <div class="drv-tabs wl-tabs">
+    <button class="drv-tab on" data-wl-tab="overview" onclick="wlSwitchTab('overview', this)">Overview</button>
+    <button class="drv-tab" data-wl-tab="users" onclick="wlSwitchTab('users', this)">User Wallets</button>
+    <button class="drv-tab" data-wl-tab="drivers" onclick="wlSwitchTab('drivers', this)">Driver Wallets</button>
+    <button class="drv-tab" data-wl-tab="withdrawals" onclick="wlSwitchTab('withdrawals', this)">Withdrawal Requests <span class="wl-tab-badge" id="wl-pending-badge" style="display:none"></span></button>
+  </div>
+
+  <!-- Loading state -->
+  <div id="wl-loading" class="drv-loading" style="display:none">
+    <div class="drv-loading-spinner"></div>
+    <div class="drv-loading-text">Loading wallet data...</div>
+  </div>
+
+  <!-- Error state -->
+  <div id="wl-error" class="drv-error" style="display:none">
+    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-title">Failed to load wallet data</div>
+    <div class="drv-error-text" id="wl-error-text"></div>
+    <button class="btn btn-accent btn-sm" onclick="wlRetry()">Retry</button>
+  </div>
+
+  <!-- ── Tab: Overview ── -->
+  <div class="wl-pane" id="wl-pane-overview">
+    <div class="ov-two-col">
+      <div class="ov-recent-box">
+        <div class="ov-recent-header">
+          <div class="ov-recent-title"><span class="ov-recent-title-dot" style="background:var(--accent)"></span> Recent Wallet Activity</div>
+          <span class="ov-recent-count" id="wl-recent-count">0</span>
+        </div>
+        <div class="ov-recent-list" id="wl-recent-list"></div>
+      </div>
+      <div class="ov-recent-box">
+        <div class="ov-recent-header">
+          <div class="ov-recent-title"><span class="ov-recent-title-dot" style="background:#2ecc71"></span> Payout Summary</div>
+          <span class="ov-recent-count" id="wl-payout-count">0</span>
+        </div>
+        <div class="wl-payout-summary" id="wl-payout-summary"></div>
+      </div>
+    </div>
+    <div class="wl-breakdown">
+      <div class="order-detail-label">Balance Breakdown</div>
+      <div class="order-detail-grid" id="wl-breakdown-grid"></div>
+    </div>
+  </div>
+
+  <!-- ── Tab: User wallets ── -->
+  <div class="wl-pane" id="wl-pane-users" style="display:none">
+    <div class="um-toolbar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search um-search" id="wl-users-search" placeholder="Search by name, email, phone or ID..." oninput="wlOnSearch('users', this.value)" autocomplete="off">
+      <span class="um-hint" id="wl-users-hint"></span>
+    </div>
+    <div id="wl-users-empty" class="wl-empty" style="display:none"></div>
+    <div class="items wl-accounts" id="wl-users-list"></div>
+    <div class="um-pagination" id="wl-users-pagination" style="display:none"></div>
+  </div>
+
+  <!-- ── Tab: Driver wallets ── -->
+  <div class="wl-pane" id="wl-pane-drivers" style="display:none">
+    <div class="um-toolbar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search um-search" id="wl-drivers-search" placeholder="Search by name, phone, driver ID or wallet..." oninput="wlOnSearch('drivers', this.value)" autocomplete="off">
+      <span class="um-hint" id="wl-drivers-hint"></span>
+    </div>
+    <div id="wl-drivers-empty" class="wl-empty" style="display:none"></div>
+    <div class="items wl-accounts" id="wl-drivers-list"></div>
+    <div class="um-pagination" id="wl-drivers-pagination" style="display:none"></div>
+  </div>
+
+  <!-- ── Tab: Withdrawal requests ── -->
+  <div class="wl-pane" id="wl-pane-withdrawals" style="display:none">
+    <div class="um-stats wl-substats">
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="wl-w-pending">0</div>
+          <div class="um-stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="wl-w-approved">0</div>
+          <div class="um-stat-label">Completed</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-red"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="wl-w-rejected">0</div>
+          <div class="um-stat-label">Rejected</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="wl-w-total">0</div>
+          <div class="um-stat-label">Total Requested</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="um-toolbar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search um-search" id="wl-withdrawals-search" placeholder="Search by driver, phone or reference..." oninput="wlOnSearch('withdrawals', this.value)" autocomplete="off">
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <select id="wl-withdrawals-filter" onchange="wlFilterWithdrawals()">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Completed</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="wl-withdrawals-empty" class="wl-empty" style="display:none"></div>
+    <div class="wl-table-wrap">
+      <table class="wl-table" id="wl-withdrawals-list">
+        <thead>
+          <tr>
+            <th>Driver</th>
+            <th>Reference</th>
+            <th class="wl-num">Amount</th>
+            <th class="wl-num">Wallet Balance</th>
+            <th>Payout Details</th>
+            <th>Requested</th>
+            <th>Status</th>
+            <th class="wl-actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="wl-withdrawals-body"></tbody>
+      </table>
+    </div>
+    <div class="um-pagination" id="wl-withdrawals-pagination" style="display:none"></div>
+  </div>
+</div>
+
 <!-- DRIVER DETAILS SPA -->
 <div class="content" id="panel-driver-details">
   <div class="drv-detail-back">
@@ -810,6 +1540,192 @@
   </div>
 </div>
 
+<!-- USER DETAILS MODAL -->
+<div class="modal-bg order-modal-bg" id="userModal">
+  <div class="modal order-modal user-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="userModalTitle">User Details</h3>
+        <span class="order-modal-ref" id="userModalRef"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeUserModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="userModalBody"></div>
+  </div>
+</div>
+
+<!-- USER ACTION MODAL (suspend / unsuspend / reset password) -->
+<div class="modal-bg" id="userActionModal">
+  <div class="modal user-action-modal">
+    <h3 id="ua-title">Confirm</h3>
+    <p id="ua-desc"></p>
+
+    <div class="fg" id="ua-reason-fg" style="display:none">
+      <label>Reason *</label>
+      <textarea id="ua-reason" maxlength="500" placeholder="e.g. Suspended for fraudulent payment activity..."></textarea>
+    </div>
+
+    <div id="ua-reset-fg" style="display:none">
+      <div class="ua-radio-group">
+        <label class="ua-radio">
+          <input type="radio" name="ua-reset-mode" value="temp" checked onchange="onResetModeChange()">
+          <span><strong>Temporary password</strong><em>Generates a one-time password shown here once.</em></span>
+        </label>
+        <label class="ua-radio">
+          <input type="radio" name="ua-reset-mode" value="link" onchange="onResetModeChange()">
+          <span><strong>Reset link</strong><em>Firebase password-reset link for the user's email.</em></span>
+        </label>
+      </div>
+      <div class="ua-reset-hint" id="ua-reset-hint"></div>
+    </div>
+
+    <div class="ua-result" id="ua-result" style="display:none">
+      <div class="ua-result-label" id="ua-result-label">Temporary password</div>
+      <div class="ua-result-row">
+        <code class="ua-result-value" id="ua-result-value"></code>
+        <button class="btn btn-ghost btn-sm" onclick="copyUserActionResult()">Copy</button>
+      </div>
+      <div class="ua-result-note" id="ua-result-note"></div>
+    </div>
+
+    <div class="decline-err" id="ua-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" id="ua-cancel" onclick="closeUserActionModal()">Cancel</button>
+      <button class="btn btn-red" id="ua-confirm" onclick="confirmUserAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- WALLET DETAIL MODAL -->
+<div class="modal-bg order-modal-bg" id="walletModal">
+  <div class="modal order-modal wallet-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="walletModalTitle">Wallet</h3>
+        <span class="order-modal-ref" id="walletModalRef"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeWalletModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="walletModalBody"></div>
+  </div>
+</div>
+
+<!-- WALLET ACTION MODAL (top-up / deduct) -->
+<div class="modal-bg" id="walletActionModal">
+  <div class="modal wallet-action-modal">
+    <h3 id="wal-title">Confirm</h3>
+    <p id="wal-desc"></p>
+    <div class="wal-balance-line" id="wal-balance-line"></div>
+    <div class="fg">
+      <label>Amount (NGN) *</label>
+      <input id="wal-amount" type="number" min="1" step="0.01" placeholder="0.00" oninput="walValidate()">
+    </div>
+    <div class="fg" id="wal-reason-fg" style="display:none">
+      <label>Reason / Note *</label>
+      <textarea id="wal-reason" maxlength="500" placeholder="e.g. Correction for duplicate charge..." oninput="walValidate()"></textarea>
+    </div>
+    <div class="wal-preview" id="wal-preview" style="display:none"></div>
+    <div class="decline-err" id="wal-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" id="wal-cancel" onclick="closeWalletActionModal()">Cancel</button>
+      <button class="btn btn-accent" id="wal-confirm" onclick="confirmWalletAction()" disabled>Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- WITHDRAWAL ACTION MODAL (approve / reject) -->
+<div class="modal-bg" id="withdrawModal">
+  <div class="modal wallet-action-modal">
+    <h3 id="wdl-title">Withdrawal</h3>
+    <p id="wdl-desc"></p>
+    <div class="wal-summary" id="wdl-summary"></div>
+    <div class="fg" id="wdl-reason-fg" style="display:none">
+      <label>Rejection reason *</label>
+      <textarea id="wdl-reason" maxlength="500" placeholder="e.g. Payout account details could not be verified..."></textarea>
+    </div>
+    <div class="decline-err" id="wdl-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" id="wdl-cancel" onclick="closeWithdrawModal()">Cancel</button>
+      <button class="btn btn-accent" id="wdl-confirm" onclick="confirmWithdrawAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOTEL BOOKING DETAILS -->
+<div class="modal-bg order-modal-bg" id="hbModal">
+  <div class="modal order-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="hbModalTitle">Booking Details</h3>
+        <span class="order-modal-ref" id="hbModalRef"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeHotelBookingModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="hbModalBody"></div>
+  </div>
+</div>
+
+<!-- HOTEL BOOKING REASON (decline / cancel) -->
+<div class="modal-bg" id="hbReasonModal">
+  <div class="modal decline-modal">
+    <h3 id="hb-reason-title">Reason</h3>
+    <p id="hb-reason-desc">Explain why this booking cannot go ahead. The reason is saved with the booking and shown to the guest.</p>
+    <div class="fg">
+      <label>Problem / Reason *</label>
+      <textarea id="hb-reason" maxlength="500" placeholder="e.g. The hotel has no rooms available for the selected dates..."></textarea>
+    </div>
+    <div class="decline-err" id="hb-reason-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeHotelBookingReason()">Cancel</button>
+      <button class="btn btn-red" id="hb-reason-confirm" onclick="submitHotelBookingReason()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span id="hb-reason-confirm-label">Confirm</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW DETAILS -->
+<div class="modal-bg order-modal-bg" id="rvModal">
+  <div class="modal order-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="rvModalTitle">Review Details</h3>
+        <span class="order-modal-ref" id="rvModalRef"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeReviewModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="rvModalBody"></div>
+  </div>
+</div>
+
+<!-- REVIEW MODERATION REASON / CONFIRMATION -->
+<div class="modal-bg" id="rvReasonModal">
+  <div class="modal decline-modal">
+    <h3 id="rv-reason-title">Moderation reason</h3>
+    <p id="rv-reason-desc">Explain why this action is being taken. The reason is stored with the review and shown in its moderation history.</p>
+    <div class="fg">
+      <label id="rv-reason-label">Reason *</label>
+      <textarea id="rv-reason" maxlength="500" placeholder="e.g. Contains abusive or misleading language..."></textarea>
+    </div>
+    <div class="decline-err" id="rv-reason-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeReviewReason()">Cancel</button>
+      <button class="btn btn-red" id="rv-reason-confirm" onclick="submitReviewReason()">
+        <span id="rv-reason-confirm-label">Confirm</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div id="toast-box"></div>
 </div>
 
@@ -819,8 +1735,13 @@
 <script defer src="assets/js/destinations.js"></script>
 <script defer src="assets/js/food.js"></script>
 <script defer src="assets/js/hotels.js"></script>
+<script defer src="assets/js/hotelBookings.js"></script>
+<script defer src="assets/js/reviews.js"></script>
 <script defer src="assets/js/orders.js"></script>
 <script defer src="assets/js/drivers.js"></script>
+<script defer src="assets/js/users.js"></script>
+<script defer src="assets/js/rides.js"></script>
+<script defer src="assets/js/wallets.js"></script>
 <script defer src="assets/js/auth.js"></script>
 </body>
 </html>

@@ -41,6 +41,7 @@ function doLogout() {
   authToken = null;
   localStorage.removeItem('admin_token');
   localStorage.removeItem('admin_user');
+  if (typeof closeMobileMenu === 'function') closeMobileMenu();
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
@@ -48,6 +49,7 @@ function doLogout() {
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  if (typeof renderAdminIdentity === 'function') renderAdminIdentity();
   loadAllData();
 }
 

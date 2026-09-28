@@ -1,5 +1,8 @@
 // ═══════════════ HOTELS ═══════════════
 
+// Shared with hotelBookings.js so the panel header count follows the open tab.
+var hotelCountText = '0 hotels';
+
 function renderHotels(hotels) {
   hotels = hotels || {};
   var html = '';
@@ -22,6 +25,9 @@ function renderHotels(hotels) {
       var starCount = parseInt(h.rating) || 0;
       ratingStars = '<div class="hotel-card-rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#f1c40f" stroke="#f1c40f" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' + esc(h.rating) + '</div>';
     }
+    var priceMeta = (h.startingPrice !== null && h.startingPrice !== undefined && h.startingPrice !== '')
+      ? '<span class="hotel-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>' + esc(fmtNaira(h.startingPrice)) + ' / night</span>'
+      : '';
     html += '<div class="hotel-card" onclick="prevHotel(\'' + id + '\')">' +
       '<div class="hotel-card-img-wrap">' +
         imgSection +
@@ -35,6 +41,7 @@ function renderHotels(hotels) {
           (h.address ? '<span class="hotel-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(h.address.length > 30 ? h.address.substring(0, 30) + '...' : h.address) + '</span>' : '') +
           (h.checkInTime ? '<span class="hotel-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + esc(h.checkInTime) + '</span>' : '') +
           (h.checkOutTime ? '<span class="hotel-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + esc(h.checkOutTime) + '</span>' : '') +
+          priceMeta +
         '</div>' +
         (catTags ? '<div class="hotel-card-tags">' + catTags + '</div>' : '') +
         '<div class="hotel-card-acts">' +
@@ -45,7 +52,9 @@ function renderHotels(hotels) {
     '</div>';
   });
   document.getElementById('h-list').innerHTML = html || '<div class="hotel-empty"><div class="hotel-empty-icon">\uD83C\uDFE8</div><div class="hotel-empty-title">No hotels yet</div><div class="hotel-empty-text">Create your first hotel to get started.</div><button class="btn btn-accent" onclick="openHotelModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create Hotel</button></div>';
-  document.getElementById('h-count').textContent = n + ' hotel' + (n !== 1 ? 's' : '');
+  hotelCountText = n + ' hotel' + (n !== 1 ? 's' : '');
+  if (typeof applyHotelHeaderCount === 'function') applyHotelHeaderCount();
+  else document.getElementById('h-count').textContent = hotelCountText;
 }
 
 // ═══════════════ MODAL CONTROLS ═══════════════
@@ -105,6 +114,7 @@ async function saveHotel() {
     checkInTime: document.getElementById('h-checkin').value.trim(),
     checkOutTime: document.getElementById('h-checkout').value.trim(),
     rating: document.getElementById('h-rating').value.trim(),
+    startingPrice: document.getElementById('h-rate').value.trim(),
     gallery: gal,
     featured: document.getElementById('h-feat').classList.contains('on')
   };
@@ -142,6 +152,7 @@ function editHotel(id) {
   document.getElementById('h-web').value = h.website || '';
   document.getElementById('h-checkin').value = h.checkInTime || '';
   document.getElementById('h-checkout').value = h.checkOutTime || '';
+  document.getElementById('h-rate').value = (h.startingPrice !== null && h.startingPrice !== undefined) ? h.startingPrice : '';
   renderTagChips('h-cat');
   setGalInputs('h-gal-list', h.gallery || []);
   document.getElementById('h-feat').classList.toggle('on', !!h.featured);
