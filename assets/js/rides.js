@@ -2,7 +2,7 @@
 // Global list of every ride booking on the platform.
 // Backed by GET /api/admin/rides (paginated, searchable, filterable).
 
-var rdState = { page: 1, limit: 20, q: '', status: '', payment: '', vehicle: '', from: '', to: '', loaded: false, loading: false };
+var rdState = { q: '', status: '', payment: '', vehicle: '', from: '', to: '', loaded: false, loading: false };
 var rdListData = [];
 var rdPagination = null;
 var rdStats = null;
@@ -10,6 +10,16 @@ var rdSearchTimer = null;
 var rdActiveRideId = null;
 var rdActiveRide = null;
 var rdActiveRideExtra = null;
+
+// Server sort keys accepted by GET /rides (see the backend parseSort map).
+var RIDE_SORT_OPTIONS = [
+  { value: 'created', label: 'Date' },
+  { value: 'fare', label: 'Fare' },
+  { value: 'status', label: 'Status' },
+  { value: 'driver', label: 'Driver' },
+  { value: 'user', label: 'Customer' },
+  { value: 'reference', label: 'Booking number' }
+];
 
 function rdSetText(id, val) {
   var el = document.getElementById(id);
@@ -77,8 +87,14 @@ function rdPaymentTag(ride) {
 
 // ─── List ──────────────────────────────────────
 
+function rdListKit() {
+  return kitList('rides', { limit: 20, sort: 'created', dir: 'desc' });
+}
+
 function rdRidePath() {
-  var p = '/rides?page=' + rdState.page + '&limit=' + rdState.limit;
+  var s = rdListKit();
+  var p = '/rides?page=' + s.page + '&limit=' + s.limit +
+    '&sort=' + encodeURIComponent(s.sort) + '&dir=' + encodeURIComponent(s.dir);
   if (rdState.q) p += '&q=' + encodeURIComponent(rdState.q);
   if (rdState.status) p += '&status=' + encodeURIComponent(rdState.status);
   if (rdState.payment) p += '&paymentStatus=' + encodeURIComponent(rdState.payment);
@@ -116,6 +132,10 @@ function loadRides(force) {
     rdStats = (res.data && res.data.stats) || null;
     rdPagination = res.pagination || null;
     rdState.loaded = true;
+    if (rdPagination && rdPagination.totalPages && rdListKit().page > rdPagination.totalPages) {
+      kitSetPage('rides', rdPagination.totalPages);
+      setTimeout(function() { loadRides(true); }, 0);
+    }
     rdShowListState('ready');
     rdRenderStats();
     rdRenderVehicleTypes((res.data && res.data.vehicleTypes) || []);
@@ -219,15 +239,17 @@ function renderRides() {
           ? 'Try a different search term or clear the filters below.'
           : 'Ride bookings from customers will appear here as soon as they are made.') +
       '</div>' +
-    '</div>';
+    '</div><div id="rd-insights" style="margin-top:16px"></div>';
   }
   el.innerHTML = html;
+  if (document.getElementById('rd-insights')) loadInsightsInto('rd-insights');
 
   var total = rdPagination ? rdPagination.total : (rdListData || []).length;
   rdSetText('rd-count', total + ' ride' + (total === 1 ? '' : 's'));
 
   if (total) {
-    var start = (rdState.page - 1) * rdState.limit + 1;
+    var s = rdListKit();
+    var start = (s.page - 1) * s.limit + 1;
     var end = Math.min(total, start + (rdListData || []).length - 1);
     rdSetText('rd-hint', start === end ? String(total) : start + '–' + end + ' of ' + total);
   } else {
@@ -241,23 +263,12 @@ function renderRides() {
 }
 
 function rdRenderPagination() {
-  var el = document.getElementById('rd-pagination');
-  if (!el) return;
-  var pg = rdPagination;
-  if (!pg || !pg.totalPages || pg.totalPages <= 1) {
-    el.style.display = 'none';
-    el.innerHTML = '';
-    return;
-  }
-  el.style.display = '';
-  el.innerHTML =
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page <= 1 ? 'disabled' : '') + ' onclick="rdGoPage(' + (pg.page - 1) + ')">Prev</button>' +
-    '<span class="um-page-info">Page ' + pg.page + ' of ' + pg.totalPages + '</span>' +
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page >= pg.totalPages ? 'disabled' : '') + ' onclick="rdGoPage(' + (pg.page + 1) + ')">Next</button>';
+  kitRenderPager('rd-pagination', 'rides', rdPagination, function() { loadRides(true); });
+  kitRenderSort('rd-sort', 'rides', RIDE_SORT_OPTIONS, function() { loadRides(true); });
 }
 
 function rdGoPage(page) {
-  rdState.page = page;
+  kitSetPage('rides', page);
   loadRides(true);
   var el = document.getElementById('rd-list');
   if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -267,7 +278,7 @@ function onRideSearch(v) {
   if (rdSearchTimer) clearTimeout(rdSearchTimer);
   rdSearchTimer = setTimeout(function() {
     rdState.q = String(v || '').trim();
-    rdState.page = 1;
+    kitSetPage('rides', 1);
     loadRides(true);
   }, 300);
 }
@@ -287,7 +298,7 @@ function filterRides() {
     toast('From date must be before the To date', false);
     return;
   }
-  rdState.page = 1;
+  kitSetPage('rides', 1);
   loadRides(true);
 }
 
@@ -298,7 +309,7 @@ function clearRideFilters() {
   rdState.vehicle = '';
   rdState.from = '';
   rdState.to = '';
-  rdState.page = 1;
+  kitSetPage('rides', 1);
   var search = document.getElementById('rd-search');
   if (search) search.value = '';
   ['rd-status-filter', 'rd-payment-filter', 'rd-vehicle-filter'].forEach(function(id) {
@@ -543,6 +554,10 @@ function renderRideModal() {
     }).join('') + '</div>';
   }
   html += rdSection('Payment', paymentHtml);
+
+  if (typeof refundActionsHtml === 'function') {
+    html += refundActionsHtml('ride', r.bookingNumber || '', { paymentStatus: r.paymentStatus });
+  }
 
   // ── Timestamps ──
   html += rdSection('Important Timestamps', rdGrid(

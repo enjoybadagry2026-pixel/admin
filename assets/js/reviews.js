@@ -10,7 +10,7 @@
 //          POST /api/admin/reviews/:type/:id/replies/:rid/<action>
 //          POST /api/admin/reviews/reports/:reportId/resolve
 
-var rvState = { page: 1, limit: 20, q: '', type: '', rating: '', status: '', targetId: '', reported: '', from: '', to: '', loaded: false, loading: false };
+var rvState = { q: '', type: '', rating: '', status: '', targetId: '', reported: '', from: '', to: '', loaded: false, loading: false };
 var rvListData = [];
 var rvPagination = null;
 var rvStats = null;
@@ -20,6 +20,14 @@ var rvDetail = null;
 var rvPendingAction = null;
 var rvActionBusy = false;
 var rvCountText = '0 reviews';
+
+// Server sort keys accepted by GET /reviews (see the backend parseSort map).
+var REVIEW_SORT_OPTIONS = [
+  { value: 'created', label: 'Date posted' },
+  { value: 'rating', label: 'Rating' },
+  { value: 'type', label: 'Reviewed item type' },
+  { value: 'status', label: 'Visibility' }
+];
 
 var RV_TYPE_LABEL = { destination: 'Destination', hotel: 'Hotel', food: 'Food', driver: 'Driver' };
 var RV_TYPE_TAG = { destination: 'tag-preparing', hotel: 'tag-out', food: 'tag-pending', driver: 'tag-confirmed' };
@@ -82,8 +90,14 @@ var RV_ICO_STAR = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" s
 
 // ─── List state ────────────────────────────────────────────────────
 
+function rvListKit() {
+  return kitList('reviews', { limit: 20, sort: 'created', dir: 'desc' });
+}
+
 function rvListPath() {
-  var p = '/reviews?page=' + rvState.page + '&limit=' + rvState.limit;
+  var s = rvListKit();
+  var p = '/reviews?page=' + s.page + '&limit=' + s.limit +
+    '&sort=' + encodeURIComponent(s.sort) + '&dir=' + encodeURIComponent(s.dir);
   if (rvState.q) p += '&q=' + encodeURIComponent(rvState.q);
   if (rvState.type) p += '&type=' + encodeURIComponent(rvState.type);
   if (rvState.rating !== '') p += '&rating=' + encodeURIComponent(rvState.rating);
@@ -124,6 +138,10 @@ function loadReviews(force) {
     rvStats = (res.data && res.data.stats) || null;
     rvPagination = res.pagination || null;
     rvState.loaded = true;
+    if (rvPagination && rvPagination.totalPages && rvListKit().page > rvPagination.totalPages) {
+      kitSetPage('reviews', rvPagination.totalPages);
+      setTimeout(function() { loadReviews(true); }, 0);
+    }
     rvShowListState('ready');
     rvRenderStats();
     rvRenderTargetFilter();
@@ -258,16 +276,18 @@ function renderReviews() {
           ? 'Try a different search term or clear the filters below.'
           : 'Reviews from the app for destinations, hotels, food and drivers will appear here.') +
       '</div>' +
-    '</div>';
+    '</div><div id="rv-insights" style="margin-top:16px"></div>';
   }
   el.innerHTML = html;
+  if (document.getElementById('rv-insights')) loadInsightsInto('rv-insights');
 
   var total = rvPagination ? rvPagination.total : (rvListData || []).length;
   rvCountText = total + ' review' + (total === 1 ? '' : 's');
   rvSetText('rv-count', rvCountText);
 
   if (total) {
-    var start = (rvState.page - 1) * rvState.limit + 1;
+    var s = rvListKit();
+    var start = (s.page - 1) * s.limit + 1;
     var end = Math.min(total, start + (rvListData || []).length - 1);
     rvSetText('rv-hint', start === end ? String(total) : start + '–' + end + ' of ' + total);
   } else {
@@ -281,23 +301,12 @@ function renderReviews() {
 }
 
 function rvRenderPagination() {
-  var el = document.getElementById('rv-pagination');
-  if (!el) return;
-  var pg = rvPagination;
-  if (!pg || !pg.totalPages || pg.totalPages <= 1) {
-    el.style.display = 'none';
-    el.innerHTML = '';
-    return;
-  }
-  el.style.display = '';
-  el.innerHTML =
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page <= 1 ? 'disabled' : '') + ' onclick="rvGoPage(' + (pg.page - 1) + ')">Prev</button>' +
-    '<span class="um-page-info">Page ' + pg.page + ' of ' + pg.totalPages + '</span>' +
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page >= pg.totalPages ? 'disabled' : '') + ' onclick="rvGoPage(' + (pg.page + 1) + ')">Next</button>';
+  kitRenderPager('rv-pagination', 'reviews', rvPagination, function() { loadReviews(true); });
+  kitRenderSort('rv-sort', 'reviews', REVIEW_SORT_OPTIONS, function() { loadReviews(true); });
 }
 
 function rvGoPage(page) {
-  rvState.page = page;
+  kitSetPage('reviews', page);
   loadReviews(true);
   var el = document.getElementById('rv-list');
   if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -309,7 +318,7 @@ function onReviewSearch(v) {
   if (rvSearchTimer) clearTimeout(rvSearchTimer);
   rvSearchTimer = setTimeout(function() {
     rvState.q = String(v || '').trim();
-    rvState.page = 1;
+    kitSetPage('reviews', 1);
     loadReviews(true);
   }, 300);
 }
@@ -337,7 +346,7 @@ function filterReviews() {
     return;
   }
 
-  rvState.page = 1;
+  kitSetPage('reviews', 1);
   rvRenderTargetFilter();
   loadReviews(true);
 }
@@ -351,7 +360,7 @@ function clearReviewFilters() {
   rvState.reported = '';
   rvState.from = '';
   rvState.to = '';
-  rvState.page = 1;
+  kitSetPage('reviews', 1);
 
   var search = document.getElementById('rv-search');
   if (search) search.value = '';

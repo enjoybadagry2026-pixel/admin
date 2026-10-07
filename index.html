@@ -1,11 +1,29 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Enjoy Badagry — Admin</title>
+<script>
+/* Theme is applied before the stylesheet paints to avoid a flash of the
+   wrong palette. Mirrors theme.js (localStorage key eb_theme). */
+(function () {
+  try {
+    var t = localStorage.getItem('eb_theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <div id="loading"></div>
@@ -42,8 +60,16 @@
     <span class="hdr-crumb-page" id="hdrCrumbPage">Overview</span>
   </div>
   <div class="hdr-right">
-    <span class="conn"><span class="dot"></span> <span id="connTxt">Connected</span></span>
-    <input class="search" id="searchBox" placeholder="Search..." oninput="doSearch(this.value)">
+    <span class="conn" id="connState" title="Live status from the API health endpoint"><span class="dot"></span> <span id="connTxt">Connected</span></span>
+    <button type="button" class="search-trigger" id="searchTrigger" title="Search or jump to (Ctrl+K)" aria-label="Open command palette">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="st-label">Search or jump to…</span>
+      <kbd>Ctrl K</kbd>
+    </button>
+    <button type="button" class="icon-btn" id="shortcutsBtn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+    </button>
+    <button type="button" class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"></button>
     <button class="btn btn-ghost btn-sm" onclick="doLogout()">Logout</button>
   </div>
 </header>
@@ -65,6 +91,24 @@
       <button class="side-item" data-tab="orders" onclick="switchTab('orders')">
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <span>Food Orders</span>
+        <span class="side-badge" id="ord-side-badge" style="display:none">0</span>
+      </button>
+    </div>
+
+    <div class="side-group">
+      <div class="side-group-label">Support</div>
+      <button class="side-item" data-tab="support" onclick="switchTab('support')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        <span>Support Inbox</span>
+        <span class="side-badge" id="sup-side-badge" style="display:none">0</span>
+      </button>
+    </div>
+
+    <div class="side-group">
+      <div class="side-group-label">Engagement</div>
+      <button class="side-item" data-tab="notifications" onclick="switchTab('notifications')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>Notifications</span>
       </button>
     </div>
 
@@ -86,6 +130,10 @@
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M17 15h2"/></svg>
         <span>Wallets &amp; Payouts</span>
       </button>
+      <button class="side-item" data-tab="revenue" onclick="switchTab('revenue')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Revenue &amp; Reporting</span>
+      </button>
     </div>
 
     <div class="side-group">
@@ -102,19 +150,48 @@
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
         <span>Food Menu</span>
       </button>
+      <button class="side-item" data-tab="events" onclick="switchTab('events')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+        <span>Events &amp; Festivals</span>
+      </button>
+      <button class="side-item" data-tab="tours" onclick="switchTab('tours')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+        <span>Tour Packages</span>
+      </button>
+      <button class="side-item" data-tab="banners" onclick="switchTab('banners')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Banners &amp; Carousel</span>
+      </button>
+      <button class="side-item" data-tab="taxonomy" onclick="switchTab('taxonomy')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <span>Tags &amp; Categories</span>
+      </button>
       <button class="side-item" data-tab="reviews" onclick="switchTab('reviews')">
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         <span>Reviews</span>
       </button>
     </div>
+
+    <div class="side-group">
+      <div class="side-group-label">Security</div>
+      <button class="side-item" data-tab="audit" onclick="switchTab('audit')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Audit Log</span>
+      </button>
+      <button class="side-item" data-tab="staff" onclick="switchTab('staff')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Admin Staff</span>
+      </button>
+    </div>
   </nav>
 
-  <div class="side-foot">
+  <div class="side-foot" id="sideFoot" onclick="switchTab('profile')" title="My profile" role="button" tabindex="0" onkeydown="if(event.key==='Enter'){switchTab('profile')}">
     <div class="side-foot-avatar" id="sideAdminAvatar">A</div>
     <div class="side-foot-info">
       <div class="side-foot-name" id="sideAdminName">Administrator</div>
       <div class="side-foot-role" id="sideAdminRole">Admin</div>
     </div>
+    <svg class="side-foot-go" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
   </div>
 </aside>
 <div class="nav-scrim" id="navScrim" onclick="closeMobileMenu()"></div>
@@ -131,6 +208,9 @@
       Refresh
     </button>
   </div>
+
+  <!-- Driver licence expiry alert -->
+  <div id="ov-license-alert" class="dri-license-strip" style="display:none"></div>
 
   <!-- Skeleton loading state -->
   <div id="ov-skeleton" class="overview-skeleton">
@@ -162,7 +242,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-total">—</div>
+            <div class="ov-card-value" id="ov-u-total">â€”</div>
             <div class="ov-card-label">Total Users</div>
           </div>
         </div>
@@ -171,7 +251,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-active">—</div>
+            <div class="ov-card-value" id="ov-u-active">â€”</div>
             <div class="ov-card-label">Active</div>
           </div>
         </div>
@@ -180,7 +260,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-onboarded">—</div>
+            <div class="ov-card-value" id="ov-u-onboarded">â€”</div>
             <div class="ov-card-label">Onboarded</div>
           </div>
         </div>
@@ -189,7 +269,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-today">—</div>
+            <div class="ov-card-value" id="ov-u-today">â€”</div>
             <div class="ov-card-label">New Today</div>
           </div>
         </div>
@@ -208,7 +288,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-total">—</div>
+            <div class="ov-card-value" id="ov-dr-total">â€”</div>
             <div class="ov-card-label">Total Drivers</div>
           </div>
         </div>
@@ -217,7 +297,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-online">—</div>
+            <div class="ov-card-value" id="ov-dr-online">â€”</div>
             <div class="ov-card-label">Online Now</div>
           </div>
         </div>
@@ -226,7 +306,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-onride">—</div>
+            <div class="ov-card-value" id="ov-dr-onride">â€”</div>
             <div class="ov-card-label">On Ride</div>
           </div>
         </div>
@@ -235,8 +315,17 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-suspended">—</div>
+            <div class="ov-card-value" id="ov-dr-suspended">â€”</div>
             <div class="ov-card-label">Suspended</div>
+          </div>
+        </div>
+        <div class="ov-card" onclick="switchTab('drivers');setTimeout(function(){openDriLicenseAlerts()},300)" title="Licences expired or expiring within 30 days â€” click to review">
+          <div class="ov-card-icon ov-icon-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="ov-card-body">
+            <div class="ov-card-value" id="ov-dr-licalerts">â€”</div>
+            <div class="ov-card-label">Licence Alerts</div>
           </div>
         </div>
       </div>
@@ -253,7 +342,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-total">—</div>
+            <div class="ov-card-value" id="ov-r-total">â€”</div>
             <div class="ov-card-label">Total Rides</div>
           </div>
         </div>
@@ -262,7 +351,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-completed">—</div>
+            <div class="ov-card-value" id="ov-r-completed">â€”</div>
             <div class="ov-card-label">Completed</div>
           </div>
         </div>
@@ -271,7 +360,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-pending">—</div>
+            <div class="ov-card-value" id="ov-r-pending">â€”</div>
             <div class="ov-card-label">Pending</div>
           </div>
         </div>
@@ -280,7 +369,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-cancelled">—</div>
+            <div class="ov-card-value" id="ov-r-cancelled">â€”</div>
             <div class="ov-card-label">Cancelled</div>
           </div>
         </div>
@@ -298,7 +387,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-fare">—</div>
+            <div class="ov-card-value" id="ov-f-fare">â€”</div>
             <div class="ov-card-label">Total Ride Fare</div>
           </div>
         </div>
@@ -307,7 +396,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-wallet">—</div>
+            <div class="ov-card-value" id="ov-f-wallet">â€”</div>
             <div class="ov-card-label">User Wallet Balance</div>
           </div>
         </div>
@@ -316,7 +405,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-earnings">—</div>
+            <div class="ov-card-value" id="ov-f-earnings">â€”</div>
             <div class="ov-card-label">Total Driver Earnings</div>
           </div>
         </div>
@@ -325,7 +414,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-rating">—</div>
+            <div class="ov-card-value" id="ov-f-rating">â€”</div>
             <div class="ov-card-label">Avg Driver Rating</div>
           </div>
         </div>
@@ -344,7 +433,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-total">—</div>
+            <div class="ov-card-value" id="ov-fo-total">â€”</div>
             <div class="ov-card-label">Total Orders</div>
           </div>
         </div>
@@ -353,7 +442,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-completed">—</div>
+            <div class="ov-card-value" id="ov-fo-completed">â€”</div>
             <div class="ov-card-label">Completed</div>
           </div>
         </div>
@@ -362,7 +451,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-pending">—</div>
+            <div class="ov-card-value" id="ov-fo-pending">â€”</div>
             <div class="ov-card-label">Pending</div>
           </div>
         </div>
@@ -371,7 +460,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-cancelled">—</div>
+            <div class="ov-card-value" id="ov-fo-cancelled">â€”</div>
             <div class="ov-card-label">Cancelled</div>
           </div>
         </div>
@@ -389,7 +478,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-dest">—</div>
+            <div class="ov-card-value" id="ov-c-dest">â€”</div>
             <div class="ov-card-label">Destinations</div>
           </div>
         </div>
@@ -398,7 +487,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-hotels">—</div>
+            <div class="ov-card-value" id="ov-c-hotels">â€”</div>
             <div class="ov-card-label">Hotels</div>
           </div>
         </div>
@@ -407,11 +496,66 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-foods">—</div>
+            <div class="ov-card-value" id="ov-c-foods">â€”</div>
             <div class="ov-card-label">Food Items</div>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Revenue -->
+    <div class="ov-section">
+      <div class="ov-section-header">
+        <h3 class="ov-section-title">Revenue</h3>
+        <div class="ov-section-actions">
+          <select id="ov-rev-range" onchange="loadOvRevenue()" aria-label="Revenue range">
+            <option value="today">Today</option>
+            <option value="7d">7 Days</option>
+            <option value="30d" selected>30 Days</option>
+            <option value="90d">90 Days</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('revenue')">Full Report</button>
+        </div>
+      </div>
+      <div class="ov-cards" id="ov-rev-cards">
+        <div class="ov-card" onclick="switchTab('revenue')">
+          <div class="ov-card-icon ov-icon-green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="ov-card-body">
+            <div class="ov-card-value" id="ov-c-rev">â€”</div>
+            <div class="ov-card-label">Platform Revenue</div>
+          </div>
+        </div>
+        <div class="ov-card" onclick="switchTab('revenue')">
+          <div class="ov-card-icon ov-icon-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div class="ov-card-body">
+            <div class="ov-card-value" id="ov-c-gmv">â€”</div>
+            <div class="ov-card-label">Total GMV</div>
+          </div>
+        </div>
+        <div class="ov-card" onclick="switchTab('revenue')">
+          <div class="ov-card-icon ov-icon-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>
+          </div>
+          <div class="ov-card-body">
+            <div class="ov-card-value" id="ov-c-dep">â€”</div>
+            <div class="ov-card-label">Deposits</div>
+          </div>
+        </div>
+        <div class="ov-card" onclick="switchTab('revenue')">
+          <div class="ov-card-icon ov-icon-red">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </div>
+          <div class="ov-card-body">
+            <div class="ov-card-value" id="ov-c-refunds">â€”</div>
+            <div class="ov-card-label">Refunds</div>
+          </div>
+        </div>
+      </div>
+      <div class="rv-note" id="ov-rev-note" style="display:none"></div>
     </div>
 
     <!-- Recent Activity -->
@@ -470,7 +614,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-total">—</div>
+        <div class="um-stat-value" id="um-s-total">â€”</div>
         <div class="um-stat-label">Total Users</div>
       </div>
     </div>
@@ -479,7 +623,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-active">—</div>
+        <div class="um-stat-value" id="um-s-active">â€”</div>
         <div class="um-stat-label">Active</div>
       </div>
     </div>
@@ -488,7 +632,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-suspended">—</div>
+        <div class="um-stat-value" id="um-s-suspended">â€”</div>
         <div class="um-stat-label">Suspended</div>
       </div>
     </div>
@@ -497,7 +641,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-new">—</div>
+        <div class="um-stat-value" id="um-s-new">â€”</div>
         <div class="um-stat-label">New This Week</div>
       </div>
     </div>
@@ -518,13 +662,14 @@
 
   <!-- Error state -->
   <div id="um-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-icon">âš ï¸</div>
     <div class="drv-error-title">Failed to load users</div>
     <div class="drv-error-text" id="um-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="loadUsers(true)">Retry</button>
   </div>
 
   <!-- User list -->
+  <div class="list-bar"><span class="grow"></span><div id="um-sort"></div></div>
   <div class="items" id="um-list"></div>
 
   <!-- Pagination -->
@@ -543,7 +688,18 @@
       Create Destination
     </button>
   </div>
+  <div class="cms-list-bar">
+    <label class="cms-select-all"><input type="checkbox" id="d-select-all" onchange="bulkSelectAll('d', bulkVisible['d'] || [], this.checked)"> Select all visible</label>
+    <span class="cms-list-hint">Tick cards to publish, archive, feature or delete in bulk</span>
+  </div>
+  <div class="list-bar">
+    <div class="saved-bar" id="d-saved" style="margin-bottom:0"></div>
+    <span class="grow"></span>
+    <div id="d-sort"></div>
+  </div>
+  <div class="order-bulk-bar" id="d-bulkbar" style="display:none"></div>
   <div class="items" id="d-list"></div>
+  <div class="pager" id="d-pager"></div>
 </div>
 
 <!-- DESTINATION CREATE/EDIT MODAL -->
@@ -564,12 +720,32 @@
           <div class="fg wide">
             <label>Categories * <span style="color:var(--text2);font-weight:400;text-transform:none">(press Enter to add)</span></label>
             <div class="tag-input-wrap" id="d-cat-wrap" onclick="this.querySelector('input').focus()">
-              <input id="d-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'d-cat')">
+              <input id="d-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'d-cat')" oninput="cmsSuggest('d-cat','categories')">
             </div>
             <input type="hidden" id="d-cat" value="">
           </div>
-          <div class="fg wide"><label>Cover Image URL *</label><input id="d-cover" type="url" required placeholder="https://..."></div>
-          <div class="fg wide"><label>Description *</label><textarea id="d-desc" required placeholder="About this place..."></textarea></div>
+          <div class="fg wide">
+            <label>Cover Image *</label>
+            <input type="hidden" id="d-cover" value="">
+            <div class="cms-cover">
+              <div class="cms-cover-preview" id="d-cover-preview"><span class="cms-cover-empty">No image selected</span></div>
+              <div class="cms-cover-tools">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUpload('d-cover','d-cover-prog')">Upload</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUrl('d-cover')">Paste URL</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverCrop('d-cover')">Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverClear('d-cover')">Clear</button>
+              </div>
+              <div class="cms-uprog" id="d-cover-prog" style="display:none"><i style="width:0"></i></div>
+            </div>
+          </div>
+          <div class="fg wide">
+            <label>Tags <span class="cms-label-hint">(optional â€” press Enter to add, suggestions appear as you type)</span></label>
+            <div class="tag-input-wrap" id="d-tags-wrap" onclick="this.querySelector('input').focus()">
+              <input id="d-tags-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'d-tags')" oninput="cmsSuggest('d-tags','tags')">
+            </div>
+            <input type="hidden" id="d-tags" value="">
+          </div>
+          <div class="fg wide"><label>Description *</label><div id="d-desc" data-ph="About this place..."></div></div>
           <div class="fg wide"><label>Address *</label><input id="d-addr" required placeholder="Full address"></div>
           <div class="fg"><label>Maps Link</label><input id="d-maps" placeholder="https://maps.google.com/..."></div>
           <div class="fg"><label>Coordinates</label><input id="d-coords" placeholder="lat, lng"></div>
@@ -578,14 +754,34 @@
           <div class="fg"><label>Website</label><input id="d-web" placeholder="https://..."></div>
           <div class="fg"><label>Hours</label><input id="d-hours" placeholder="9AM - 6PM"></div>
           <div class="fg wide">
-            <label>Gallery Images</label>
-            <div class="img-add-list" id="d-gal-list">
-              <div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>
+            <label>Gallery Images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <div class="cms-gal-tools-row">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('d-gal')">Upload images</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('d-gal')">+ Add by URL</button>
             </div>
-            <button type="button" class="btn-add-img" onclick="addGalInput('d-gal-list')">+ Add Image</button>
+            <div id="d-gal" data-cover="d-cover"></div>
           </div>
           <div class="fg wide">
-            <div class="tgl-row"><span>Featured</span><div class="tgl" id="d-feat" onclick="this.classList.toggle('on')"></div></div>
+            <div class="cms-pub-box">
+              <div class="cms-pub-title">Publishing</div>
+              <div class="cms-pub-row">
+                <div class="fg"><label>Status</label>
+                  <select id="d-status">
+                    <option value="draft">Draft</option>
+                    <option value="published" selected>Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Featured</label>
+                  <div class="tgl-row cms-tgl-row"><span>Feature this item</span><div class="tgl" id="d-feat" onclick="this.classList.toggle('on');cmsFeatToggle('d')"></div></div>
+                </div>
+              </div>
+              <div class="cms-sched" id="d-sched" style="display:none">
+                <div class="fg"><label>Featured from</label><input type="datetime-local" id="d-feat-from"></div>
+                <div class="fg"><label>Featured until</label><input type="datetime-local" id="d-feat-until"></div>
+              </div>
+              <div class="cms-pub-hint">Featured items show on the home carousel. Set both dates for a schedule, or leave them empty to feature immediately.</div>
+            </div>
           </div>
         </div>
       </form>
@@ -624,12 +820,23 @@
     <button class="drv-tab" data-hotel-tab="bookings" onclick="hotelSwitchTab('bookings', this)">Bookings <span class="wl-tab-badge" id="hb-pending-badge" style="display:none"></span></button>
   </div>
 
-  <!-- ── Tab: Properties ── -->
+  <!-- â”€â”€ Tab: Properties â”€â”€ -->
   <div id="hotel-pane-properties">
+    <div class="cms-list-bar">
+      <label class="cms-select-all"><input type="checkbox" id="h-select-all" onchange="bulkSelectAll('h', bulkVisible['h'] || [], this.checked)"> Select all visible</label>
+      <span class="cms-list-hint">Tick cards to publish, archive, feature or delete in bulk</span>
+    </div>
+    <div class="list-bar">
+      <div class="saved-bar" id="h-saved" style="margin-bottom:0"></div>
+      <span class="grow"></span>
+      <div id="h-sort"></div>
+    </div>
+    <div class="order-bulk-bar" id="h-bulkbar" style="display:none"></div>
     <div class="items" id="h-list"></div>
+    <div class="pager" id="h-pager"></div>
   </div>
 
-  <!-- ── Tab: Bookings ── -->
+  <!-- â”€â”€ Tab: Bookings â”€â”€ -->
   <div id="hotel-pane-bookings" style="display:none">
     <!-- Booking statistics -->
     <div class="um-stats">
@@ -638,7 +845,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-total">—</div>
+          <div class="um-stat-value" id="hb-s-total">â€”</div>
           <div class="um-stat-label">Total Bookings</div>
         </div>
       </div>
@@ -647,7 +854,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-pending">—</div>
+          <div class="um-stat-value" id="hb-s-pending">â€”</div>
           <div class="um-stat-label">Awaiting Confirmation</div>
         </div>
       </div>
@@ -656,7 +863,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-active">—</div>
+          <div class="um-stat-value" id="hb-s-active">â€”</div>
           <div class="um-stat-label">Confirmed / In-house</div>
         </div>
       </div>
@@ -665,7 +872,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-revenue">—</div>
+          <div class="um-stat-value" id="hb-s-revenue">â€”</div>
           <div class="um-stat-label">Paid Revenue</div>
         </div>
       </div>
@@ -718,13 +925,14 @@
 
     <!-- Error state -->
     <div id="hb-error" class="drv-error" style="display:none">
-      <div class="drv-error-icon">⚠️</div>
+      <div class="drv-error-icon">âš ï¸</div>
       <div class="drv-error-title">Failed to load bookings</div>
       <div class="drv-error-text" id="hb-error-text"></div>
       <button class="btn btn-accent btn-sm" onclick="loadHotelBookings(true)">Retry</button>
     </div>
 
     <!-- Booking list -->
+    <div class="list-bar"><span class="grow"></span><div id="hb-sort"></div></div>
     <div class="items" id="hb-list"></div>
 
     <!-- Pagination -->
@@ -749,7 +957,7 @@
           <div class="fg wide">
             <label>Categories * <span style="color:var(--text2);font-weight:400;text-transform:none">(press Enter to add)</span></label>
             <div class="tag-input-wrap" id="h-cat-wrap" onclick="this.querySelector('input').focus()">
-              <input id="h-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'h-cat')">
+              <input id="h-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'h-cat')" oninput="cmsSuggest('h-cat','categories')">
             </div>
             <input type="hidden" id="h-cat" value="">
           </div>
@@ -761,8 +969,21 @@
             </select>
           </div>
           <div class="fg"><label>Nightly Rate (NGN)</label><input id="h-rate" type="number" min="0" step="100" placeholder="e.g. 45000"></div>
-          <div class="fg wide"><label>Cover Image URL *</label><input id="h-cover" type="url" required placeholder="https://..."></div>
-          <div class="fg wide"><label>Description *</label><textarea id="h-desc" required placeholder="About this hotel..."></textarea></div>
+          <div class="fg wide">
+            <label>Cover Image *</label>
+            <input type="hidden" id="h-cover" value="">
+            <div class="cms-cover">
+              <div class="cms-cover-preview" id="h-cover-preview"><span class="cms-cover-empty">No image selected</span></div>
+              <div class="cms-cover-tools">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUpload('h-cover','h-cover-prog')">Upload</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUrl('h-cover')">Paste URL</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverCrop('h-cover')">Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverClear('h-cover')">Clear</button>
+              </div>
+              <div class="cms-uprog" id="h-cover-prog" style="display:none"><i style="width:0"></i></div>
+            </div>
+          </div>
+          <div class="fg wide"><label>Description *</label><div id="h-desc" data-ph="About this hotel..."></div></div>
           <div class="fg wide"><label>Address *</label><input id="h-addr" required placeholder="Full address"></div>
           <div class="fg"><label>Maps Link</label><input id="h-maps" placeholder="https://maps.google.com/..."></div>
           <div class="fg"><label>Coordinates</label><input id="h-coords" placeholder="lat, lng"></div>
@@ -772,14 +993,34 @@
           <div class="fg"><label>Check-in Time</label><input id="h-checkin" placeholder="e.g. 2:00 PM"></div>
           <div class="fg"><label>Check-out Time</label><input id="h-checkout" placeholder="e.g. 12:00 PM"></div>
           <div class="fg wide">
-            <label>Gallery Images</label>
-            <div class="img-add-list" id="h-gal-list">
-              <div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>
+            <label>Gallery Images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <div class="cms-gal-tools-row">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('h-gal')">Upload images</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('h-gal')">+ Add by URL</button>
             </div>
-            <button type="button" class="btn-add-img" onclick="addGalInput('h-gal-list')">+ Add Image</button>
+            <div id="h-gal" data-cover="h-cover"></div>
           </div>
           <div class="fg wide">
-            <div class="tgl-row"><span>Featured</span><div class="tgl" id="h-feat" onclick="this.classList.toggle('on')"></div></div>
+            <div class="cms-pub-box">
+              <div class="cms-pub-title">Publishing</div>
+              <div class="cms-pub-row">
+                <div class="fg"><label>Status</label>
+                  <select id="h-status">
+                    <option value="draft">Draft</option>
+                    <option value="published" selected>Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Featured</label>
+                  <div class="tgl-row cms-tgl-row"><span>Feature this item</span><div class="tgl" id="h-feat" onclick="this.classList.toggle('on');cmsFeatToggle('h')"></div></div>
+                </div>
+              </div>
+              <div class="cms-sched" id="h-sched" style="display:none">
+                <div class="fg"><label>Featured from</label><input type="datetime-local" id="h-feat-from"></div>
+                <div class="fg"><label>Featured until</label><input type="datetime-local" id="h-feat-until"></div>
+              </div>
+              <div class="cms-pub-hint">Featured items show on the home carousel. Set both dates for a schedule, or leave them empty to feature immediately.</div>
+            </div>
           </div>
         </div>
       </form>
@@ -803,7 +1044,18 @@
       Create Food Item
     </button>
   </div>
+  <div class="cms-list-bar">
+    <label class="cms-select-all"><input type="checkbox" id="f-select-all" onchange="bulkSelectAll('f', bulkVisible['f'] || [], this.checked)"> Select all visible</label>
+    <span class="cms-list-hint">Tick cards to publish, archive, feature or delete in bulk</span>
+  </div>
+  <div class="list-bar">
+    <div class="saved-bar" id="f-saved" style="margin-bottom:0"></div>
+    <span class="grow"></span>
+    <div id="f-sort"></div>
+  </div>
+  <div class="order-bulk-bar" id="f-bulkbar" style="display:none"></div>
   <div class="items" id="f-list"></div>
+  <div class="pager" id="f-pager"></div>
 </div>
 
 <!-- FOOD CREATE/EDIT MODAL -->
@@ -823,28 +1075,61 @@
           <div class="fg wide">
             <label>Categories * <span style="color:var(--text2);font-weight:400;text-transform:none">(press Enter to add)</span></label>
             <div class="tag-input-wrap" id="f-cat-wrap" onclick="this.querySelector('input').focus()">
-              <input id="f-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'f-cat')">
+              <input id="f-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'f-cat')" oninput="cmsSuggest('f-cat','categories')">
             </div>
             <input type="hidden" id="f-cat" value="">
           </div>
           <div class="fg"><label>Destination</label><select id="f-dest"><option value="">None</option></select></div>
-          <div class="fg wide"><label>Cover Image URL *</label><input id="f-img" type="url" required placeholder="https://..."></div>
-          <div class="fg wide"><label>Description</label><textarea id="f-desc" placeholder="About this dish..."></textarea></div>
+          <div class="fg wide">
+            <label>Cover Image *</label>
+            <input type="hidden" id="f-img" value="">
+            <div class="cms-cover">
+              <div class="cms-cover-preview" id="f-img-preview"><span class="cms-cover-empty">No image selected</span></div>
+              <div class="cms-cover-tools">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUpload('f-img','f-img-prog')">Upload</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUrl('f-img')">Paste URL</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverCrop('f-img')">Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverClear('f-img')">Clear</button>
+              </div>
+              <div class="cms-uprog" id="f-img-prog" style="display:none"><i style="width:0"></i></div>
+            </div>
+          </div>
+          <div class="fg wide"><label>Description</label><div id="f-desc" data-ph="About this dish..."></div></div>
           <div class="fg"><label>Price (NGN) *</label><input id="f-price" type="number" min="0" required placeholder="0"></div>
           <div class="fg"><label>Prep Time</label><input id="f-prep" placeholder="e.g. 20 mins"></div>
-          <div class="fg wide"><label>Tags</label><input id="f-tags" placeholder="spicy, popular, special"></div>
+          <div class="fg wide"><label>Tags <span class="cms-label-hint">(comma separated)</span></label><input id="f-tags" placeholder="spicy, popular, special"></div>
           <div class="fg wide">
-            <label>Gallery Images</label>
-            <div class="img-add-list" id="f-gal-list">
-              <div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>
+            <label>Gallery Images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <div class="cms-gal-tools-row">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('f-gal')">Upload images</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('f-gal')">+ Add by URL</button>
             </div>
-            <button type="button" class="btn-add-img" onclick="addGalInput('f-gal-list')">+ Add Image</button>
+            <div id="f-gal" data-cover="f-img"></div>
           </div>
           <div class="fg wide">
             <div class="tgl-row"><span>Available</span><div class="tgl on" id="f-avail" onclick="this.classList.toggle('on')"></div></div>
           </div>
           <div class="fg wide">
-            <div class="tgl-row"><span>Featured</span><div class="tgl" id="f-feat" onclick="this.classList.toggle('on')"></div></div>
+            <div class="cms-pub-box">
+              <div class="cms-pub-title">Publishing</div>
+              <div class="cms-pub-row">
+                <div class="fg"><label>Status</label>
+                  <select id="f-status">
+                    <option value="draft">Draft</option>
+                    <option value="published" selected>Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Featured</label>
+                  <div class="tgl-row cms-tgl-row"><span>Feature this item</span><div class="tgl" id="f-feat" onclick="this.classList.toggle('on');cmsFeatToggle('f')"></div></div>
+                </div>
+              </div>
+              <div class="cms-sched" id="f-sched" style="display:none">
+                <div class="fg"><label>Featured from</label><input type="datetime-local" id="f-feat-from"></div>
+                <div class="fg"><label>Featured until</label><input type="datetime-local" id="f-feat-until"></div>
+              </div>
+              <div class="cms-pub-hint">Featured items show on the home carousel. Set both dates for a schedule, or leave them empty to feature immediately.</div>
+            </div>
           </div>
         </div>
       </form>
@@ -852,6 +1137,426 @@
     <div class="food-modal-footer">
       <button class="btn btn-ghost" onclick="closeFoodModal()">Cancel</button>
       <button class="btn btn-green" id="f-save" onclick="saveFood()">Save Food Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• EVENTS & FESTIVALS â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="content" id="panel-events">
+  <div class="dest-page-header">
+    <div class="dest-page-info">
+      <h2 class="dest-page-title">Events &amp; Festivals</h2>
+      <span class="dest-page-count" id="ev-count">0 events</span>
+    </div>
+    <button class="btn btn-accent" onclick="openEventModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Create Event
+    </button>
+  </div>
+  <div class="cms-filter-bar">
+    <input type="search" id="ev-search" placeholder="Search events..." oninput="loadEventsPanel()">
+    <select id="ev-status-filter" onchange="loadEventsPanel()">
+      <option value="">All statuses</option>
+      <option value="published">Published</option>
+      <option value="draft">Draft</option>
+      <option value="archived">Archived</option>
+    </select>
+    <select id="ev-scope-filter" onchange="loadEventsPanel()">
+      <option value="">All dates</option>
+      <option value="upcoming">Upcoming</option>
+      <option value="past">Past</option>
+    </select>
+    <label class="cms-select-all"><input type="checkbox" id="ev-select-all" onchange="bulkSelectAll('ev', bulkVisible['ev'] || [], this.checked)"> Select all</label>
+  </div>
+  <div class="order-bulk-bar" id="ev-bulkbar" style="display:none"></div>
+  <div class="items" id="ev-list"></div>
+</div>
+
+<!-- EVENT CREATE/EDIT MODAL -->
+<div class="modal-bg cms-modal-bg" id="eventModal">
+  <div class="modal cms-modal">
+    <div class="dest-modal-header">
+      <h3 class="dest-modal-title" id="eventModalTitle">Create Event</h3>
+      <button class="dest-modal-close" onclick="closeEventModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="dest-modal-body">
+      <form id="eventForm" onsubmit="return false">
+        <input type="hidden" id="ev-edit">
+        <div class="grid">
+          <div class="fg wide"><label>Event name *</label><input id="ev-name" required placeholder="e.g. Badagry Festival"></div>
+          <div class="fg">
+            <label>Starts *</label>
+            <input type="datetime-local" id="ev-start" required>
+          </div>
+          <div class="fg">
+            <label>Ends *</label>
+            <input type="datetime-local" id="ev-end" required>
+          </div>
+          <div class="fg wide">
+            <label>Category <span class="cms-label-hint">(press Enter to add)</span></label>
+            <div class="tag-input-wrap" id="ev-cat-wrap" onclick="this.querySelector('input').focus()">
+              <input id="ev-cat-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'ev-cat')" oninput="cmsSuggest('ev-cat','categories')">
+            </div>
+            <input type="hidden" id="ev-cat" value="">
+          </div>
+          <div class="fg wide">
+            <label>Tags <span class="cms-label-hint">(press Enter to add, suggestions appear as you type)</span></label>
+            <div class="tag-input-wrap" id="ev-tags-wrap" onclick="this.querySelector('input').focus()">
+              <input id="ev-tags-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'ev-tags')" oninput="cmsSuggest('ev-tags','tags')">
+            </div>
+            <input type="hidden" id="ev-tags" value="">
+          </div>
+          <div class="fg wide">
+            <label>Cover image *</label>
+            <input type="hidden" id="ev-cover" value="">
+            <div class="cms-cover">
+              <div class="cms-cover-preview" id="ev-cover-preview"><span class="cms-cover-empty">No image selected</span></div>
+              <div class="cms-cover-tools">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUpload('ev-cover','ev-cover-prog')">Upload</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUrl('ev-cover')">Paste URL</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverCrop('ev-cover')">Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverClear('ev-cover')">Clear</button>
+              </div>
+              <div class="cms-uprog" id="ev-cover-prog" style="display:none"><i style="width:0"></i></div>
+            </div>
+          </div>
+          <div class="fg wide"><label>Description</label><div id="ev-desc" data-ph="About this event..."></div></div>
+          <div class="fg"><label>Location</label><input id="ev-location" placeholder="e.g. Father Christmas House"></div>
+          <div class="fg"><label>Address</label><input id="ev-address" placeholder="Full address"></div>
+          <div class="fg"><label>Organizer</label><input id="ev-organizer" placeholder="Organizer name"></div>
+          <div class="fg"><label>Contact phone</label><input id="ev-phone" placeholder="+234..."></div>
+          <div class="fg wide"><label>Contact email</label><input id="ev-email" placeholder="info@..."></div>
+          <div class="fg wide">
+            <div class="tgl-row"><span>Free event</span><div class="tgl on" id="ev-free" onclick="this.classList.toggle('on');evFreeToggle()"></div></div>
+          </div>
+          <div class="fg" id="ev-price-row" style="display:none"><label>Ticket price (NGN)</label><input id="ev-price" type="number" min="0" placeholder="0"></div>
+          <div class="fg" id="ev-ticketrow" style="display:none"><label>Ticket URL</label><input id="ev-ticket-url" type="url" placeholder="https://..."></div>
+          <div class="fg wide">
+            <label>Gallery images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <div class="cms-gal-tools-row">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('ev-gal')">Upload images</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('ev-gal')">+ Add by URL</button>
+            </div>
+            <div id="ev-gal" data-cover="ev-cover"></div>
+          </div>
+          <div class="fg wide">
+            <div class="cms-pub-box">
+              <div class="cms-pub-title">Publishing</div>
+              <div class="cms-pub-row">
+                <div class="fg"><label>Status</label>
+                  <select id="ev-status">
+                    <option value="draft">Draft</option>
+                    <option value="published" selected>Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Featured</label>
+                  <div class="tgl-row cms-tgl-row"><span>Feature this item</span><div class="tgl" id="ev-feat" onclick="this.classList.toggle('on');cmsFeatToggle('ev')"></div></div>
+                </div>
+              </div>
+              <div class="cms-sched" id="ev-sched" style="display:none">
+                <div class="fg"><label>Featured from</label><input type="datetime-local" id="ev-feat-from"></div>
+                <div class="fg"><label>Featured until</label><input type="datetime-local" id="ev-feat-until"></div>
+              </div>
+              <div class="cms-pub-hint">Featured items show on the home carousel. Set both dates for a schedule, or leave them empty to feature immediately.</div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="food-modal-footer">
+      <button class="btn btn-ghost" onclick="closeEventModal()">Cancel</button>
+      <button class="btn btn-green" id="ev-save" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• TOUR PACKAGES â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="content" id="panel-tours">
+  <div class="dest-page-header">
+    <div class="dest-page-info">
+      <h2 class="dest-page-title">Tour Packages</h2>
+      <span class="dest-page-count" id="tr-count">0 packages</span>
+    </div>
+    <button class="btn btn-accent" onclick="openTourModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Create Package
+    </button>
+  </div>
+  <div class="cms-filter-bar">
+    <input type="search" id="tr-search" placeholder="Search packages..." oninput="loadToursPanel()">
+    <select id="tr-status-filter" onchange="loadToursPanel()">
+      <option value="">All statuses</option>
+      <option value="published">Published</option>
+      <option value="draft">Draft</option>
+      <option value="archived">Archived</option>
+    </select>
+    <label class="cms-select-all"><input type="checkbox" id="tr-select-all" onchange="bulkSelectAll('tr', bulkVisible['tr'] || [], this.checked)"> Select all</label>
+  </div>
+  <div class="order-bulk-bar" id="tr-bulkbar" style="display:none"></div>
+  <div class="items" id="tr-list"></div>
+</div>
+
+<!-- TOUR CREATE/EDIT MODAL -->
+<div class="modal-bg cms-modal-bg" id="tourModal">
+  <div class="modal cms-modal">
+    <div class="dest-modal-header">
+      <h3 class="dest-modal-title" id="tourModalTitle">Create Tour Package</h3>
+      <button class="dest-modal-close" onclick="closeTourModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="dest-modal-body">
+      <form id="tourForm" onsubmit="return false">
+        <input type="hidden" id="tr-edit">
+        <div class="grid">
+          <div class="fg wide"><label>Package name *</label><input id="tr-name" required placeholder="e.g. Badagry Heritage Tour"></div>
+          <div class="fg"><label>Price (NGN) *</label><input id="tr-price" type="number" min="0" required placeholder="0"></div>
+          <div class="fg"><label>Duration (days)</label><input id="tr-days" type="number" min="1" placeholder="e.g. 2"></div>
+          <div class="fg"><label>Duration label</label><input id="tr-duration-label" placeholder="e.g. 2 Days / 1 Night"></div>
+          <div class="fg"><label>Max group size</label><input id="tr-group" type="number" min="1" placeholder="e.g. 15"></div>
+          <div class="fg wide">
+            <label>Cover image *</label>
+            <input type="hidden" id="tr-cover" value="">
+            <div class="cms-cover">
+              <div class="cms-cover-preview" id="tr-cover-preview"><span class="cms-cover-empty">No image selected</span></div>
+              <div class="cms-cover-tools">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUpload('tr-cover','tr-cover-prog')">Upload</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUrl('tr-cover')">Paste URL</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverCrop('tr-cover')">Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverClear('tr-cover')">Clear</button>
+              </div>
+              <div class="cms-uprog" id="tr-cover-prog" style="display:none"><i style="width:0"></i></div>
+            </div>
+          </div>
+          <div class="fg wide"><label>Description</label><div id="tr-desc" data-ph="What's included in this package..."></div></div>
+          <div class="fg wide">
+            <label>Gallery images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <div class="cms-gal-tools-row">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('tr-gal')">Upload images</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('tr-gal')">+ Add by URL</button>
+            </div>
+            <div id="tr-gal" data-cover="tr-cover"></div>
+          </div>
+          <div class="fg wide">
+            <div class="tgl-row"><span>Accepting bookings</span><div class="tgl on" id="tr-avail" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="fg wide">
+            <div class="cms-pub-box">
+              <div class="cms-pub-title">Publishing</div>
+              <div class="cms-pub-row">
+                <div class="fg"><label>Status</label>
+                  <select id="tr-status">
+                    <option value="draft">Draft</option>
+                    <option value="published" selected>Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                <div class="fg"><label>Featured</label>
+                  <div class="tgl-row cms-tgl-row"><span>Feature this item</span><div class="tgl" id="tr-feat" onclick="this.classList.toggle('on');cmsFeatToggle('tr')"></div></div>
+                </div>
+              </div>
+              <div class="cms-sched" id="tr-sched" style="display:none">
+                <div class="fg"><label>Featured from</label><input type="datetime-local" id="tr-feat-from"></div>
+                <div class="fg"><label>Featured until</label><input type="datetime-local" id="tr-feat-until"></div>
+              </div>
+              <div class="cms-pub-hint">Featured items show on the home carousel. Set both dates for a schedule, or leave them empty to feature immediately.</div>
+            </div>
+          </div>
+          <div class="fg wide" id="tr-itin-hint" style="display:none">
+            <div class="cms-pub-box">
+              <div class="cms-pub-title">Itinerary</div>
+              <div class="cms-pub-hint" style="margin-bottom:10px">Save the package first, then add day-by-day plans.</div>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="openItinModal()">Edit itinerary</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="food-modal-footer">
+      <button class="btn btn-ghost" onclick="closeTourModal()">Cancel</button>
+      <button class="btn btn-green" id="tr-save" onclick="saveTour()">Save Package</button>
+    </div>
+  </div>
+</div>
+
+<!-- ITINERARY BUILDER MODAL -->
+<div class="modal-bg cms-modal-bg" id="itinModal">
+  <div class="modal cms-modal modal-wide">
+    <div class="dest-modal-header">
+      <h3 class="dest-modal-title">Itinerary Builder â€” <span id="itin-tour-name"></span></h3>
+      <button class="dest-modal-close" onclick="closeItinModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="dest-modal-body">
+      <div id="itin-days"></div>
+      <button type="button" class="btn btn-ghost btn-sm itin-add-day" onclick="itinAddDay()">+ Add day</button>
+    </div>
+    <div class="food-modal-footer">
+      <button class="btn btn-ghost" onclick="closeItinModal()">Cancel</button>
+      <button class="btn btn-green" id="itin-save" onclick="saveItinerary()">Save Itinerary</button>
+    </div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• BANNERS / CAROUSEL â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="content" id="panel-banners">
+  <div class="dest-page-header">
+    <div class="dest-page-info">
+      <h2 class="dest-page-title">Banners &amp; Carousel</h2>
+      <span class="dest-page-count" id="bn-count">0 banners</span>
+    </div>
+    <button class="btn btn-accent" onclick="openBannerModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Banner
+    </button>
+  </div>
+  <div class="cms-list-bar">
+    <span class="cms-list-hint">Drag banners or use â†‘ â†“ to change carousel order, then save the order</span>
+    <button class="btn btn-ghost btn-sm" id="bn-order-save" onclick="saveBannerOrder()" style="display:none">Save order</button>
+  </div>
+  <div class="items" id="bn-list"></div>
+</div>
+
+<!-- BANNER CREATE/EDIT MODAL -->
+<div class="modal-bg cms-modal-bg" id="bannerModal">
+  <div class="modal cms-modal">
+    <div class="dest-modal-header">
+      <h3 class="dest-modal-title" id="bannerModalTitle">Add Banner</h3>
+      <button class="dest-modal-close" onclick="closeBannerModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="dest-modal-body">
+      <form id="bannerForm" onsubmit="return false">
+        <input type="hidden" id="bn-edit">
+        <div class="grid">
+          <div class="fg wide"><label>Title *</label><input id="bn-title" required placeholder="e.g. Explore Badagry"></div>
+          <div class="fg wide"><label>Subtitle</label><input id="bn-subtitle" placeholder="Short supporting line"></div>
+          <div class="fg wide">
+            <label>Banner image *</label>
+            <input type="hidden" id="bn-img" value="">
+            <div class="cms-cover">
+              <div class="cms-cover-preview" id="bn-img-preview"><span class="cms-cover-empty">No image selected</span></div>
+              <div class="cms-cover-tools">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUpload('bn-img','bn-img-prog')">Upload</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverUrl('bn-img')">Paste URL</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverCrop('bn-img')">Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCoverClear('bn-img')">Clear</button>
+              </div>
+              <div class="cms-uprog" id="bn-img-prog" style="display:none"><i style="width:0"></i></div>
+            </div>
+          </div>
+          <div class="fg"><label>Placement</label>
+            <select id="bn-placement">
+              <option value="home_carousel">home_carousel</option>
+              <option value="explore">explore</option>
+              <option value="destinations">destinations</option>
+              <option value="food">food</option>
+              <option value="events">events</option>
+              <option value="tours">tours</option>
+              <option value="offers">offers</option>
+            </select>
+          </div>
+          <div class="fg"><label>Sort order</label><input id="bn-sort" type="number" placeholder="0"></div>
+          <div class="fg"><label>Button action</label>
+            <select id="bn-cta-type" onchange="cmsToggleField('bn-cta-value-row', this.value!=='none')">
+              <option value="none">No button</option>
+              <option value="link">Open link</option>
+              <option value="destination">Go to destination</option>
+              <option value="hotel">Go to hotel</option>
+              <option value="food">Go to food item</option>
+              <option value="event">Go to event</option>
+              <option value="tour">Go to tour</option>
+            </select>
+          </div>
+          <div class="fg"><label>Button label</label><input id="bn-cta-label" placeholder="e.g. Explore now"></div>
+          <div class="fg wide" id="bn-cta-value-row" style="display:none"><label>Button target</label><input id="bn-cta-value" placeholder="https://... or an item id"></div>
+          <div class="fg"><label>Active from</label><input type="datetime-local" id="bn-starts"></div>
+          <div class="fg"><label>Active until</label><input type="datetime-local" id="bn-ends"></div>
+          <div class="fg wide">
+            <div class="tgl-row"><span>Active</span><div class="tgl on" id="bn-active" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="food-modal-footer">
+      <button class="btn btn-ghost" onclick="closeBannerModal()">Cancel</button>
+      <button class="btn btn-green" id="bn-save" onclick="saveBanner()">Save Banner</button>
+    </div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAGS & CATEGORIES â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="content" id="panel-taxonomy">
+  <div class="dest-page-header">
+    <div class="dest-page-info">
+      <h2 class="dest-page-title">Tags &amp; Categories</h2>
+      <span class="dest-page-count">Master lists shared by all content</span>
+    </div>
+  </div>
+  <div class="tax-grid">
+    <div class="tax-col">
+      <div class="tax-col-head">
+        <h3>Categories</h3>
+        <span class="dest-page-count" id="tx-cat-count">0</span>
+      </div>
+      <div class="tax-create">
+        <input id="tx-cat-new" placeholder="New category name..." onkeydown="if(event.key==='Enter'){event.preventDefault();txCreate('cat')}">
+        <button class="btn btn-accent btn-sm" onclick="txCreate('cat')">Add</button>
+      </div>
+      <div class="tax-list" id="tx-cats"></div>
+    </div>
+    <div class="tax-col">
+      <div class="tax-col-head">
+        <h3>Tags</h3>
+        <span class="dest-page-count" id="tx-tag-count">0</span>
+      </div>
+      <div class="tax-create">
+        <input id="tx-tag-new" placeholder="New tag name..." onkeydown="if(event.key==='Enter'){event.preventDefault();txCreate('tag')}">
+        <button class="btn btn-accent btn-sm" onclick="txCreate('tag')">Add</button>
+      </div>
+      <div class="tax-list" id="tx-tags"></div>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGE CROP MODAL (shared) -->
+<div class="modal-bg" id="cropModal">
+  <div class="modal modal-crop">
+    <div class="dest-modal-header">
+      <h3 class="dest-modal-title">Crop image <span class="crop-dims" id="cropDims"></span></h3>
+      <button class="dest-modal-close" onclick="cmsCloseCrop()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="crop-body">
+      <div class="crop-aspects">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCropAspect('free')">Free</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCropAspect('1:1')">1:1</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCropAspect('4:3')">4:3</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="cmsCropAspect('16:9')">16:9</button>
+      </div>
+      <div class="crop-stage" id="cropStage">
+        <img id="cropImg" alt="">
+        <div class="crop-box" id="cropBox">
+          <span class="crop-h" data-dir="nw"></span>
+          <span class="crop-h" data-dir="n"></span>
+          <span class="crop-h" data-dir="ne"></span>
+          <span class="crop-h" data-dir="e"></span>
+          <span class="crop-h" data-dir="se"></span>
+          <span class="crop-h" data-dir="s"></span>
+          <span class="crop-h" data-dir="sw"></span>
+          <span class="crop-h" data-dir="w"></span>
+        </div>
+      </div>
+    </div>
+    <div class="food-modal-footer">
+      <button class="btn btn-ghost" onclick="cmsCloseCrop()">Cancel</button>
+      <button class="btn btn-green" id="cropApplyBtn" onclick="cmsCropApply()">Apply &amp; Upload</button>
     </div>
   </div>
 </div>
@@ -878,7 +1583,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-total">—</div>
+        <div class="um-stat-value" id="rv-s-total">â€”</div>
         <div class="um-stat-label">Total Reviews</div>
       </div>
     </div>
@@ -887,7 +1592,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-visible">—</div>
+        <div class="um-stat-value" id="rv-s-visible">â€”</div>
         <div class="um-stat-label">Visible</div>
       </div>
     </div>
@@ -896,7 +1601,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-hidden">—</div>
+        <div class="um-stat-value" id="rv-s-hidden">â€”</div>
         <div class="um-stat-label">Hidden</div>
       </div>
     </div>
@@ -905,7 +1610,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-reported">—</div>
+        <div class="um-stat-value" id="rv-s-reported">â€”</div>
         <div class="um-stat-label">Reported</div>
       </div>
     </div>
@@ -973,13 +1678,14 @@
 
   <!-- Error state -->
   <div id="rv-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-icon">âš ï¸</div>
     <div class="drv-error-title">Failed to load reviews</div>
     <div class="drv-error-text" id="rv-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="loadReviews(true)">Retry</button>
   </div>
 
   <!-- Review list -->
+  <div class="list-bar"><span class="grow"></span><div id="rv-sort"></div></div>
   <div class="items" id="rv-list"></div>
 
   <!-- Pagination -->
@@ -992,8 +1698,12 @@
     <div class="order-page-info">
       <h2 class="order-page-title">Food Orders</h2>
       <span class="order-page-count" id="o-count">0 orders</span>
+      <button type="button" class="o-new" id="o-new-orders" style="display:none" onclick="ordersShowNew()">
+        <span class="dot"></span><span id="o-new-count">0</span> new &middot; Refresh
+      </button>
     </div>
     <div class="order-page-actions">
+      <input class="search um-search" id="o-search" placeholder="Search reference, customer or restaurant..." oninput="onOrderSearch(this.value)" aria-label="Search orders">
       <div class="order-filter-wrap">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         <select id="o-filter" onchange="filterOrders()">
@@ -1009,13 +1719,20 @@
           <option value="refunded">Refunded</option>
         </select>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="loadAllData()" title="Refresh orders">
+      <button class="btn btn-ghost btn-sm" onclick="loadOrders(true)" title="Refresh orders">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Refresh
       </button>
     </div>
   </div>
+  <div class="list-bar">
+    <div class="saved-bar" id="o-saved" style="margin-bottom:0"></div>
+    <span class="grow"></span>
+    <div id="o-sort"></div>
+  </div>
+  <div class="order-bulk-bar" id="o-bulk-bar" style="display:none"></div>
   <div class="items" id="o-list"></div>
+  <div class="pager" id="o-pager"></div>
 </div>
 
 <!-- ORDER DETAILS MODAL -->
@@ -1101,7 +1818,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/><path d="M3 11h18"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-total">—</div>
+        <div class="um-stat-value" id="rd-s-total">â€”</div>
         <div class="um-stat-label">Total Rides</div>
       </div>
     </div>
@@ -1110,7 +1827,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-completed">—</div>
+        <div class="um-stat-value" id="rd-s-completed">â€”</div>
         <div class="um-stat-label">Completed</div>
       </div>
     </div>
@@ -1119,7 +1836,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-progress">—</div>
+        <div class="um-stat-value" id="rd-s-progress">â€”</div>
         <div class="um-stat-label">In Progress</div>
       </div>
     </div>
@@ -1128,7 +1845,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-cancelled">—</div>
+        <div class="um-stat-value" id="rd-s-cancelled">â€”</div>
         <div class="um-stat-label">Cancelled</div>
       </div>
     </div>
@@ -1152,13 +1869,14 @@
 
   <!-- Error state -->
   <div id="rd-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-icon">âš ï¸</div>
     <div class="drv-error-title">Failed to load rides</div>
     <div class="drv-error-text" id="rd-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="loadRides(true)">Retry</button>
   </div>
 
   <!-- Ride list -->
+  <div class="list-bar"><span class="grow"></span><div id="rd-sort"></div></div>
   <div class="items" id="rd-list"></div>
 
   <!-- Pagination -->
@@ -1193,7 +1911,55 @@
       Register Driver
     </button>
   </div>
+
+  <!-- Drivers toolbar: view toggle + upgrade actions -->
+  <div class="dri-toolbar">
+    <div class="dri-seg" id="dri-view-seg">
+      <button class="dri-seg-btn on" id="dri-seg-list" onclick="setDriversView('list')" title="List view">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        List
+      </button>
+      <button class="dri-seg-btn" id="dri-seg-map" onclick="setDriversView('map')" title="Live driver map">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Live Map
+      </button>
+    </div>
+    <div class="dri-toolbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openDriLicenseAlerts()" id="dri-alerts-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Licence Alerts <span class="dri-alert-pill" id="dri-alert-pill" style="display:none">0</span>
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="openDriImport()" title="Import drivers from a CSV file">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import CSV
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="exportDriversFile('csv')" title="Export drivers as CSV">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="openDriAnnounce()" title="Send an announcement to the fleet">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        Announce Fleet
+      </button>
+    </div>
+  </div>
+
+  <!-- Licence expiry alert strip -->
+  <div class="dri-license-strip" id="dri-license-strip" style="display:none"></div>
+
+  <!-- Live map (Leaflet) -->
+  <div class="dri-map-wrap" id="dri-map-wrap" style="display:none">
+    <div class="dri-map" id="dri-map"></div>
+    <div class="dri-map-bar" id="dri-map-bar">Loading driver locationsâ€¦</div>
+  </div>
+
+  <div class="list-bar">
+    <input class="search um-search" id="dri-search" placeholder="Search name, phone, driver ID or DRT..." oninput="onDriverSearch(this.value)" aria-label="Search drivers">
+    <span class="grow"></span>
+    <div id="dri-sort"></div>
+  </div>
   <div class="items" id="dri-list"></div>
+  <div class="pager" id="dri-pager"></div>
 </div>
 
 <!-- DRIVER REGISTRATION MODAL -->
@@ -1303,6 +2069,166 @@
   </div>
 </div>
 
+<!-- DRIVER REASON MODAL (reject / suspend) -->
+<div class="modal-bg" id="drvReasonModal">
+  <div class="modal">
+    <h3 id="drv-reason-title">Reason</h3>
+    <p id="drv-reason-desc" class="drv-reason-desc"></p>
+    <textarea id="drv-reason-input" class="drv-reason-input" rows="4" placeholder="Enter the reason..."></textarea>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeDrvReason()">Cancel</button>
+      <button class="btn btn-red" id="drv-reason-confirm" onclick="confirmDrvReason()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVER MESSAGE MODAL -->
+<div class="modal-bg" id="drvMessageModal">
+  <div class="modal drv-msg-modal">
+    <div class="drv-msg-head">
+      <div class="drv-msg-head-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="drv-msg-head-text">
+        <h3>Message Driver</h3>
+        <p class="drv-msg-to" id="drv-msg-to"></p>
+      </div>
+    </div>
+    <div class="fg"><label>Title *</label><input id="drv-msg-title" maxlength="255" placeholder="e.g. Maintenance reminder"></div>
+    <div class="fg"><label>Message *</label><textarea id="drv-msg-body" class="drv-reason-input" rows="5" maxlength="1000" placeholder="Write your message..." oninput="document.getElementById('drv-msg-count').textContent=this.value.length"></textarea>
+      <div class="drv-msg-hint"><span id="drv-msg-count">0</span> / 1000 characters</div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('drvMessageModal')">Cancel</button>
+      <button class="btn btn-accent" id="drv-msg-send" onclick="drvMessageDriver()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVER APPROVE CONFIRM MODAL -->
+<div class="modal-bg" id="drvApproveModal">
+  <div class="modal">
+    <h3>Approve Driver?</h3>
+    <p class="drv-reason-desc" id="drv-approve-desc"></p>
+    <div class="drv-approve-checks" id="drv-approve-checks"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('drvApproveModal')">Cancel</button>
+      <button class="btn btn-green" id="drv-approve-confirm" onclick="drvApproveDriver()">Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVER LICENCE ALERTS MODAL -->
+<div class="modal-bg" id="drvAlertsModal">
+  <div class="modal drv-wide-modal">
+    <div class="drv-modal-head">
+      <h3>Licence Expiry Alerts</h3>
+      <button class="driver-modal-close" onclick="closeModal('drvAlertsModal')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p class="drv-reason-desc" id="drv-alerts-summary"></p>
+    <div id="drv-alerts-list" class="drv-alerts-list"></div>
+  </div>
+</div>
+
+<!-- DRIVER IMPORT WIZARD MODAL -->
+<div class="modal-bg" id="drvImportModal">
+  <div class="modal drv-wide-modal">
+    <div class="drv-modal-head">
+      <h3>Import Drivers from CSV</h3>
+      <button class="driver-modal-close" onclick="closeDriImport()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <ol class="dri-steps" id="dri-import-steps">
+      <li class="on"><span>1</span> Upload</li>
+      <li><span>2</span> Preview</li>
+      <li><span>3</span> Import</li>
+    </ol>
+    <div class="dri-import-step" id="dri-import-step1">
+      <p class="drv-reason-desc">Choose a CSV file with a header row. Required columns: <strong>Full Name</strong> and <strong>Phone Number</strong>. Optional: Email, Gender, Date of Birth, State of Origin, LGA, Residential Address, Licence Number, Licence Expiry, NIN, BVN, Vehicle Make/Model/Color/Plate.</p>
+      <div class="dri-import-drop" id="dri-import-drop">
+        <input type="file" id="dri-import-file" accept=".csv,text/csv" onchange="driImportFilePicked(this)">
+        <div class="dri-import-drop-text" id="dri-import-file-label">Click to choose a .csv file</div>
+      </div>
+      <details class="dri-import-manual"><summary>Or paste CSV content</summary>
+        <textarea id="dri-import-paste" class="drv-reason-input" rows="5" placeholder="Full Name,Phone Number,Email..."></textarea>
+      </details>
+      <div class="modal-acts">
+        <button class="btn btn-ghost" onclick="closeDriImport()">Cancel</button>
+        <button class="btn btn-accent" id="dri-import-next" onclick="driImportPreview()">Preview</button>
+      </div>
+    </div>
+    <div class="dri-import-step" id="dri-import-step2" style="display:none">
+      <div class="dri-import-summary" id="dri-import-summary"></div>
+      <div class="dri-import-table-wrap"><table class="dri-import-table" id="dri-import-table"></table></div>
+      <div class="modal-acts">
+        <button class="btn btn-ghost" onclick="driImportBack()">Back</button>
+        <button class="btn btn-green" id="dri-import-commit" onclick="driImportCommit()">Import Valid Rows</button>
+      </div>
+    </div>
+    <div class="dri-import-step" id="dri-import-step3" style="display:none">
+      <div class="dri-import-done" id="dri-import-done"></div>
+      <div class="modal-acts">
+        <button class="btn btn-accent" onclick="closeDriImport()">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FLEET ANNOUNCEMENT MODAL -->
+<div class="modal-bg" id="drvAnnounceModal">
+  <div class="modal drv-wide-modal">
+    <div class="drv-modal-head">
+      <h3>Announce to Fleet</h3>
+      <button class="driver-modal-close" onclick="closeModal('drvAnnounceModal')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="fg" style="text-align:left"><label>Audience</label>
+      <select id="dri-ann-segment" onchange="driAnnounceSegmentChange()">
+        <option value="all">All drivers</option>
+        <option value="online">Online / Offline driversâ€¦</option>
+        <option value="status">By account statusâ€¦</option>
+        <option value="specific">Selected driversâ€¦</option>
+      </select>
+    </div>
+    <div class="fg" style="text-align:left;margin-top:10px;display:none" id="dri-ann-value-wrap"><label id="dri-ann-value-label">Value</label>
+      <select id="dri-ann-value" onchange="driAnnounceQueueEstimate()"></select>
+    </div>
+    <div class="fg" style="text-align:left;margin-top:10px;display:none" id="dri-ann-pick-wrap">
+      <label>Selected drivers</label>
+      <input id="dri-ann-search" placeholder="Search drivers by name or phoneâ€¦" oninput="driAnnounceQueueEstimate()">
+      <div class="dri-ann-picked" id="dri-ann-picked"></div>
+      <div class="dri-ann-results" id="dri-ann-results"></div>
+    </div>
+    <div class="fg" style="text-align:left;margin-top:10px"><label>Title *</label><input id="dri-ann-title" maxlength="255" placeholder="e.g. Fleet meeting on Saturday"></div>
+    <div class="fg" style="text-align:left;margin-top:10px"><label>Message *</label><textarea id="dri-ann-message" class="drv-reason-input" rows="4" maxlength="1000" placeholder="Write the announcement..."></textarea></div>
+    <div class="dri-ann-estimate" id="dri-ann-estimate">Choose an audience to estimate reach.</div>
+    <div class="drv-reason-desc" id="dri-ann-err" style="color:var(--red);display:none"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('drvAnnounceModal')">Cancel</button>
+      <button class="btn btn-accent" id="dri-ann-send" onclick="driAnnounceSend()">Send Announcement</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVER DOCUMENT VIEWER MODAL -->
+<div class="modal-bg" id="drvDocModal">
+  <div class="modal drv-doc-modal">
+    <div class="drv-modal-head">
+      <h3 id="drv-doc-title">Document</h3>
+      <button class="driver-modal-close" onclick="closeModal('drvDocModal')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <img id="drv-doc-img" class="drv-doc-img" alt="Driver document">
+    <div class="modal-acts">
+      <a class="btn btn-ghost" id="drv-doc-open" href="#" target="_blank" rel="noopener">Open original</a>
+      <button class="btn btn-accent" onclick="closeModal('drvDocModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- WALLETS / PAYOUTS -->
 <div class="content" id="panel-wallets">
   <div class="order-page-header">
@@ -1325,7 +2251,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-user">—</div>
+        <div class="um-stat-value" id="wl-s-user">â€”</div>
         <div class="um-stat-label">User Wallets</div>
       </div>
     </div>
@@ -1334,7 +2260,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-driver">—</div>
+        <div class="um-stat-value" id="wl-s-driver">â€”</div>
         <div class="um-stat-label">Driver Wallets</div>
       </div>
     </div>
@@ -1343,7 +2269,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-platform">—</div>
+        <div class="um-stat-value" id="wl-s-platform">â€”</div>
         <div class="um-stat-label">Platform Net</div>
       </div>
     </div>
@@ -1352,13 +2278,13 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-pending">—</div>
+        <div class="um-stat-value" id="wl-s-pending">â€”</div>
         <div class="um-stat-label">Pending Payouts</div>
       </div>
     </div>
   </div>
 
-  <!-- Sub navigation (inside the panel — keeps the main nav clean) -->
+  <!-- Sub navigation (inside the panel â€” keeps the main nav clean) -->
   <div class="drv-tabs wl-tabs">
     <button class="drv-tab on" data-wl-tab="overview" onclick="wlSwitchTab('overview', this)">Overview</button>
     <button class="drv-tab" data-wl-tab="users" onclick="wlSwitchTab('users', this)">User Wallets</button>
@@ -1374,13 +2300,13 @@
 
   <!-- Error state -->
   <div id="wl-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">⚠️</div>
+    <div class="drv-error-icon">âš ï¸</div>
     <div class="drv-error-title">Failed to load wallet data</div>
     <div class="drv-error-text" id="wl-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="wlRetry()">Retry</button>
   </div>
 
-  <!-- ── Tab: Overview ── -->
+  <!-- â”€â”€ Tab: Overview â”€â”€ -->
   <div class="wl-pane" id="wl-pane-overview">
     <div class="ov-two-col">
       <div class="ov-recent-box">
@@ -1404,7 +2330,7 @@
     </div>
   </div>
 
-  <!-- ── Tab: User wallets ── -->
+  <!-- â”€â”€ Tab: User wallets â”€â”€ -->
   <div class="wl-pane" id="wl-pane-users" style="display:none">
     <div class="um-toolbar">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1416,7 +2342,7 @@
     <div class="um-pagination" id="wl-users-pagination" style="display:none"></div>
   </div>
 
-  <!-- ── Tab: Driver wallets ── -->
+  <!-- â”€â”€ Tab: Driver wallets â”€â”€ -->
   <div class="wl-pane" id="wl-pane-drivers" style="display:none">
     <div class="um-toolbar">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1428,7 +2354,7 @@
     <div class="um-pagination" id="wl-drivers-pagination" style="display:none"></div>
   </div>
 
-  <!-- ── Tab: Withdrawal requests ── -->
+  <!-- â”€â”€ Tab: Withdrawal requests â”€â”€ -->
   <div class="wl-pane" id="wl-pane-withdrawals" style="display:none">
     <div class="um-stats wl-substats">
       <div class="um-stat-card">
@@ -1497,6 +2423,575 @@
   </div>
 </div>
 
+<!-- REVENUE & REPORTING -->
+<div class="content" id="panel-revenue">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Revenue &amp; Reporting</h2>
+      <span class="order-page-count" id="rv-range-label">Last 30 days</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadRevenuePanel(true)" title="Refresh revenue data">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="rv-range-bar">
+    <div class="rv-range-presets" id="rv-range-presets">
+      <button class="rv-preset" data-range="today" onclick="rvSetRange('today', this)">Today</button>
+      <button class="rv-preset" data-range="7d" onclick="rvSetRange('7d', this)">7 Days</button>
+      <button class="rv-preset on" data-range="30d" onclick="rvSetRange('30d', this)">30 Days</button>
+      <button class="rv-preset" data-range="90d" onclick="rvSetRange('90d', this)">90 Days</button>
+      <button class="rv-preset" data-range="custom" onclick="rvSetRange('custom', this)">Custom</button>
+    </div>
+    <div class="rv-range-custom" id="rv-range-custom" style="display:none">
+      <input type="date" id="rv-range-from" aria-label="From date">
+      <span class="rv-range-sep">â†’</span>
+      <input type="date" id="rv-range-to" aria-label="To date">
+      <button class="btn btn-accent btn-sm" onclick="rvApplyCustom()">Apply</button>
+    </div>
+  </div>
+
+  <div class="drv-tabs rv-tabs" id="rv-tabs">
+    <button class="drv-tab on" data-rv-tab="overview" onclick="rvSwitchTab('overview', this)">Overview</button>
+    <button class="drv-tab" data-rv-tab="earnings" onclick="rvSwitchTab('earnings', this)">Earnings</button>
+    <button class="drv-tab" data-rv-tab="reports" onclick="rvSwitchTab('reports', this)">Reports</button>
+    <button class="drv-tab" data-rv-tab="refunds" onclick="rvSwitchTab('refunds', this)">Refunds</button>
+    <button class="drv-tab" data-rv-tab="settings" onclick="rvSwitchTab('settings', this)">Settings</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="drv-tab-panel on" id="rv-pane-overview">
+    <div class="drv-loading" id="rv-ov-loading"><div class="drv-loading-spinner"></div><div class="drv-loading-text">Loading revenue data...</div></div>
+    <div class="drv-error" id="rv-ov-error" style="display:none">
+      <div class="drv-loading-text" id="rv-ov-error-msg">Failed to load revenue data.</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="loadRevenuePanel(true)">Retry</button>
+    </div>
+    <div id="rv-ov-content" style="display:none">
+      <div class="um-stats rv-kpis">
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-revenue">â€”</div><div class="um-stat-label">Platform Revenue</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-gmv">â€”</div><div class="um-stat-label">Total GMV</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-rides">â€”</div><div class="um-stat-label">Rides GMV</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-red"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-food">â€”</div><div class="um-stat-label">Food GMV</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-deposits">â€”</div><div class="um-stat-label">Wallet Deposits</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-users">â€”</div><div class="um-stat-label">New Users</div></div></div>
+      </div>
+
+      <div class="rv-charts-grid">
+        <div class="rv-chart-card rv-span-2">
+          <div class="rv-chart-head"><h3>Revenue &amp; GMV Trend</h3><span class="rv-chart-hint" id="rv-trend-hint"></span></div>
+          <div class="rv-chart-box"><canvas id="rv-chart-trend"></canvas></div>
+        </div>
+        <div class="rv-chart-card">
+          <div class="rv-chart-head"><h3>Orders by Type</h3></div>
+          <div class="rv-chart-box"><canvas id="rv-chart-orders"></canvas></div>
+        </div>
+        <div class="rv-chart-card">
+          <div class="rv-chart-head"><h3>New Sign-ups</h3></div>
+          <div class="rv-chart-box"><canvas id="rv-chart-signups"></canvas></div>
+        </div>
+        <div class="rv-chart-card">
+          <div class="rv-chart-head"><h3>Deposits vs Refunds</h3></div>
+          <div class="rv-chart-box"><canvas id="rv-chart-deposits"></canvas></div>
+        </div>
+        <div class="rv-chart-card">
+          <div class="rv-chart-head"><h3>Revenue by Source</h3></div>
+          <div class="rv-source-list" id="rv-source-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EARNINGS -->
+  <div class="drv-tab-panel" id="rv-pane-earnings">
+    <div class="drv-loading" id="rv-earn-loading"><div class="drv-loading-spinner"></div><div class="drv-loading-text">Loading earnings report...</div></div>
+    <div class="drv-error" id="rv-earn-error" style="display:none">
+      <div class="drv-loading-text" id="rv-earn-error-msg">Failed to load earnings report.</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="rvLoadEarnings(true)">Retry</button>
+    </div>
+    <div id="rv-earn-content" style="display:none">
+      <div class="rv-banner" id="rv-earn-banner">
+        <div class="rv-banner-text"><strong id="rv-earn-status-title">Checkingâ€¦</strong><span id="rv-earn-status-sub"></span></div>
+        <span class="tag tag-avail" id="rv-earn-status-tag">â€”</span>
+      </div>
+      <div class="rv-checks" id="rv-earn-checks"></div>
+      <div class="rv-kv-grid">
+        <div class="rv-kv-card"><div class="rv-kv-label">Revenue (range)</div><div class="rv-kv-value" id="rv-earn-rev-range">â€”</div></div>
+        <div class="rv-kv-card"><div class="rv-kv-label">Revenue (all time)</div><div class="rv-kv-value" id="rv-earn-rev-total">â€”</div></div>
+        <div class="rv-kv-card"><div class="rv-kv-label">Cash Position</div><div class="rv-kv-value" id="rv-earn-cash">â€”</div></div>
+        <div class="rv-kv-card"><div class="rv-kv-label">Reconciliation</div><div class="rv-kv-value" id="rv-earn-recon">â€”</div></div>
+      </div>
+      <div class="rv-note" id="rv-earn-note"></div>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="drv-tab-panel" id="rv-pane-reports">
+    <div class="rv-export-card">
+      <div class="rv-export-head"><h3>Export Report</h3><span class="rv-chart-hint">Uses the selected date range above</span></div>
+      <div class="rv-export-form">
+        <div class="fg"><label>Report</label>
+          <select id="rv-report-type">
+            <option value="revenue">Revenue (daily summary)</option>
+            <option value="rides">Rides</option>
+            <option value="food">Food Orders</option>
+            <option value="hotels">Hotel Bookings</option>
+            <option value="transactions">Wallet Transactions</option>
+            <option value="refunds">Refunds</option>
+            <option value="users">Users</option>
+            <option value="drivers">Drivers</option>
+            <option value="earnings">Earnings Reconciliation</option>
+          </select>
+        </div>
+        <div class="fg"><label>Format</label>
+          <div class="rv-fmt-group" id="rv-fmt-group">
+            <button class="rv-fmt on" data-fmt="csv" onclick="rvSetFmt('csv', this)">CSV</button>
+            <button class="rv-fmt" data-fmt="xls" onclick="rvSetFmt('xls', this)">Excel</button>
+            <button class="rv-fmt" data-fmt="pdf" onclick="rvSetFmt('pdf', this)">PDF</button>
+          </div>
+        </div>
+        <div class="rv-export-actions">
+          <button class="btn btn-accent" id="rv-export-btn" onclick="rvExport()">Generate &amp; Download</button>
+          <span class="rv-export-status" id="rv-export-status"></span>
+        </div>
+      </div>
+      <div class="rv-note">Exports are capped at 50,000 rows. Files download straight to your device.</div>
+    </div>
+  </div>
+
+  <!-- REFUNDS -->
+  <div class="drv-tab-panel" id="rv-pane-refunds">
+    <div class="rv-filter-bar">
+      <div class="fg rv-filter-fg"><label>Type</label>
+        <select id="rv-rf-type" onchange="rvLoadRefunds(1)">
+          <option value="">All types</option>
+          <option value="ride">Rides</option>
+          <option value="food">Food orders</option>
+          <option value="hotel">Hotel bookings</option>
+        </select>
+      </div>
+      <div class="fg rv-filter-fg"><label>Search</label>
+        <input type="text" id="rv-rf-search" placeholder="Reference or refund ID" onkeydown="if(event.key==='Enter')rvLoadRefunds(1)">
+      </div>
+      <button class="btn btn-ghost btn-sm rv-filter-btn" onclick="rvLoadRefunds(1)">Apply</button>
+    </div>
+    <div class="wl-table-wrap">
+      <div class="drv-loading" id="rv-rf-loading" style="display:none;padding:36px 24px"><div class="drv-loading-spinner"></div><div class="drv-loading-text">Loading refunds...</div></div>
+      <table class="wl-table">
+        <thead><tr><th>Refund ID</th><th>Order</th><th>Type</th><th>Amount</th><th>Reason</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="rv-refunds-body"></tbody>
+      </table>
+      <div class="wl-empty" id="rv-refunds-empty" style="display:none">No refunds in this range.</div>
+    </div>
+    <div class="um-pagination" id="rv-refunds-pagination" style="display:none"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="drv-tab-panel" id="rv-pane-settings">
+    <div class="drv-loading" id="rv-set-loading"><div class="drv-loading-spinner"></div><div class="drv-loading-text">Loading fee settings...</div></div>
+    <div class="drv-error" id="rv-set-error" style="display:none">
+      <div class="drv-loading-text" id="rv-set-error-msg">Failed to load fee settings.</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="rvLoadSettings(true)">Retry</button>
+    </div>
+    <div id="rv-set-content" style="display:none">
+      <div class="rv-note" id="rv-set-role-note" style="display:none">Your admin role can view these settings but not change them. Finance roles (admin, superadmin, finance, owner) can save changes.</div>
+      <div class="rv-settings-grid">
+        <div class="rv-settings-group">
+          <h3>Rides</h3>
+          <div class="fg"><label>Commission % of fare</label><input type="number" min="0" max="100" step="0.01" data-key="ride_commission_percent" placeholder="0"></div>
+          <div class="fg"><label>Booking fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="ride_booking_fee" placeholder="200"></div>
+          <div class="fg"><label>Service fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="ride_service_fee" placeholder="100"></div>
+        </div>
+        <div class="rv-settings-group">
+          <h3>Food</h3>
+          <div class="fg"><label>Packaging fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="food_packaging_fee" placeholder="150"></div>
+          <div class="fg"><label>Platform fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="food_platform_fee" placeholder="100"></div>
+          <div class="fg"><label>Service fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="food_service_fee" placeholder="100"></div>
+          <div class="fg"><label>Delivery base fee (â‚¦)</label><input type="number" min="0" step="1" data-key="food_delivery_base_fee" placeholder="300"></div>
+          <div class="fg"><label>Free delivery distance (km)</label><input type="number" min="0" step="1" data-key="food_delivery_free_km" placeholder="2"></div>
+          <div class="fg"><label>Delivery rate (â‚¦/km after free km)</label><input type="number" min="0" step="1" data-key="food_delivery_rate_per_km" placeholder="60"></div>
+          <div class="fg"><label>Delivery max fee (â‚¦)</label><input type="number" min="0" step="1" data-key="food_delivery_max_fee" placeholder="2000"></div>
+        </div>
+        <div class="rv-settings-group">
+          <h3>Hotels</h3>
+          <div class="fg"><label>Service fee (â‚¦ flat per booking)</label><input type="number" min="0" step="1" data-key="hotel_service_fee" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="rv-settings-actions">
+        <button class="btn btn-accent" id="rv-set-save" onclick="rvSaveSettings()">Save Changes</button>
+        <button class="btn btn-ghost" onclick="rvLoadSettings(true, true)">Reset</button>
+        <span class="rv-export-status" id="rv-set-status"></span>
+      </div>
+      <div class="rv-note">New values apply to future transactions only â€” every transaction keeps a record of the fees it actually charged.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPORT INBOX -->
+<div class="content" id="panel-support">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Support Inbox</h2>
+      <span class="order-page-count" id="sup-count">0 conversations</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadSupportInbox(true)" title="Refresh inbox">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Inbox statistics -->
+  <div class="um-stats sup-stats">
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-red">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="sup-s-unread">â€”</div>
+        <div class="um-stat-label">Unread</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-blue">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="sup-s-open">â€”</div>
+        <div class="um-stat-label">Open</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="sup-s-pending">â€”</div>
+        <div class="um-stat-label">Pending</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-green">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="sup-s-resolved">â€”</div>
+        <div class="um-stat-label">Resolved</div>
+      </div>
+    </div>
+    <div class="um-stat-card">
+      <div class="um-stat-icon um-icon-red">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="um-stat-body">
+        <div class="um-stat-value" id="sup-s-urgent">â€”</div>
+        <div class="um-stat-label">High Priority</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + filters -->
+  <div class="um-toolbar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search um-search" id="sup-search" placeholder="Search name, email, phone, ticket ID or message..." oninput="onSupportSearch(this.value)" autocomplete="off">
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <select id="sup-type-filter" onchange="filterSupport()" title="Filter by requester type">
+        <option value="">Users &amp; Drivers</option>
+        <option value="user">Users only</option>
+        <option value="driver">Drivers only</option>
+      </select>
+    </div>
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      <select id="sup-status-filter" onchange="filterSupport()" title="Filter by ticket status">
+        <option value="">All Statuses</option>
+        <option value="open">Open</option>
+        <option value="pending">Pending</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      <select id="sup-unread-filter" onchange="filterSupport()" title="Filter unread conversations">
+        <option value="">All Conversations</option>
+        <option value="1">Unread only</option>
+      </select>
+    </div>
+    <div class="order-filter-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      <select id="sup-priority-filter" onchange="filterSupport()" title="Filter by priority">
+        <option value="">All Priorities</option>
+        <option value="urgent">Urgent</option>
+        <option value="high">High</option>
+        <option value="normal">Normal</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <input type="date" class="rd-date" id="sup-from" title="From date" aria-label="From date" onchange="filterSupport()">
+    <input type="date" class="rd-date" id="sup-to" title="To date" aria-label="To date" onchange="filterSupport()">
+    <button class="btn btn-ghost btn-sm" id="sup-clear" onclick="clearSupportFilters()" style="display:none">Clear</button>
+    <span class="um-hint" id="sup-hint"></span>
+  </div>
+
+  <!-- Inbox layout: conversation list + conversation panel -->
+  <div class="sup-layout">
+    <div class="sup-list-pane">
+      <div id="sup-loading" class="drv-loading" style="display:none">
+        <div class="drv-loading-spinner"></div>
+        <div class="drv-loading-text">Loading conversations...</div>
+      </div>
+      <div id="sup-error" class="drv-error" style="display:none">
+        <div class="drv-error-icon">âš ï¸</div>
+        <div class="drv-error-title">Failed to load conversations</div>
+        <div class="drv-error-text" id="sup-error-text"></div>
+        <button class="btn btn-accent btn-sm" onclick="loadSupportInbox(true)">Retry</button>
+      </div>
+      <div class="sup-list" id="sup-list"></div>
+      <div class="um-pagination" id="sup-pagination" style="display:none"></div>
+    </div>
+
+    <div class="sup-thread-pane" id="sup-thread-pane"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div class="content" id="panel-notifications">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Notifications</h2>
+      <span class="order-page-count" id="ntf-count">0 notifications</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadNotificationHistory(true)" title="Refresh notification history">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+      <button class="btn btn-accent btn-sm" onclick="ntfShowTab('compose')" title="Compose a notification">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        New Notification
+      </button>
+    </div>
+  </div>
+
+  <!-- Compose / History -->
+  <div class="drv-tabs" id="ntf-tabs">
+    <button class="drv-tab on" data-ntf-tab="compose" onclick="ntfShowTab('compose')">Compose</button>
+    <button class="drv-tab" data-ntf-tab="history" onclick="ntfShowTab('history')">History<span class="wl-tab-badge" id="ntf-hist-badge" style="display:none">0</span></button>
+  </div>
+
+  <!-- â•â•â• COMPOSE â•â•â• -->
+  <div class="ntf-pane" id="ntf-compose-pane">
+    <div class="ntf-compose-grid">
+
+      <!-- Left: form flow -->
+      <div class="ntf-compose-main">
+
+        <!-- Step 1: Message -->
+        <div class="card ntf-card">
+          <div class="ntf-card-title"><span class="ntf-step">1</span>Message</div>
+          <div class="fg">
+            <label for="ntf-title">Title *</label>
+            <input id="ntf-title" maxlength="255" placeholder="e.g. New destinations are live!" oninput="ntfOnComposeInput()">
+            <span class="ntf-counter" id="ntf-title-count">0/255</span>
+          </div>
+          <div class="fg">
+            <label for="ntf-message">Message *</label>
+            <textarea id="ntf-message" maxlength="1000" rows="5" placeholder="Write what users or drivers will see..." oninput="ntfOnComposeInput()"></textarea>
+            <span class="ntf-counter" id="ntf-msg-count">0/1000</span>
+          </div>
+          <div class="fg">
+            <label for="ntf-image-url">Image (optional)</label>
+            <div class="ntf-image-row">
+              <input id="ntf-image-url" placeholder="https://..." oninput="ntfOnComposeInput()">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('ntf-image-file').click()">Upload</button>
+              <input type="file" id="ntf-image-file" accept="image/*" style="display:none" onchange="ntfOnImageFile(this)">
+            </div>
+            <span class="ntf-hint" id="ntf-image-status">Shown in the notification where the device supports it.</span>
+          </div>
+        </div>
+
+        <!-- Step 2: Audience -->
+        <div class="card ntf-card">
+          <div class="ntf-card-title"><span class="ntf-step">2</span>Audience</div>
+          <div class="ntf-type-toggle">
+            <button type="button" class="ntf-type-btn on" data-ntf-type="user" onclick="ntfSetType('user')">Users</button>
+            <button type="button" class="ntf-type-btn" data-ntf-type="driver" onclick="ntfSetType('driver')">Drivers</button>
+          </div>
+          <div class="fg">
+            <label for="ntf-segment">Send to</label>
+            <select id="ntf-segment" onchange="ntfOnSegmentChange()"></select>
+          </div>
+          <div class="fg" id="ntf-value-fg" style="display:none">
+            <label for="ntf-segment-value" id="ntf-value-label">Value</label>
+            <select id="ntf-segment-value" onchange="ntfQueueEstimate()"></select>
+          </div>
+          <div class="fg" id="ntf-picker-fg" style="display:none">
+            <label for="ntf-picker-search">Search recipients</label>
+            <div class="ntf-picker">
+              <input id="ntf-picker-search" placeholder="Name, email or phone..." autocomplete="off" oninput="ntfPickerSearch(this.value)">
+              <div class="ntf-picker-results" id="ntf-picker-results" style="display:none"></div>
+              <div class="ntf-selected" id="ntf-selected"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: sticky preview + action rail -->
+      <div class="ntf-compose-side">
+
+        <!-- Live preview -->
+        <div class="card ntf-card">
+          <div class="ntf-card-title">Preview</div>
+          <div class="ntf-preview">
+            <div class="ntf-preview-notch"></div>
+            <div class="ntf-preview-card">
+              <div class="ntf-preview-app">EB</div>
+              <div class="ntf-preview-body">
+                <div class="ntf-preview-head">
+                  <span class="ntf-preview-app-name">Enjoy Badagry</span>
+                  <span class="ntf-preview-time">now</span>
+                </div>
+                <div class="ntf-preview-title" id="ntf-preview-title">Notification title</div>
+                <div class="ntf-preview-text" id="ntf-preview-text">Your message will appear here...</div>
+                <img class="ntf-preview-img" id="ntf-preview-img" alt="" style="display:none">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Delivery + send -->
+        <div class="card ntf-card ntf-delivery-card">
+          <div class="ntf-card-title"><span class="ntf-step">3</span>Delivery</div>
+          <div class="ntf-when">
+            <label class="ntf-when-opt">
+              <input type="radio" name="ntf-when" value="now" checked onchange="ntfOnWhenChange()">
+              <span><strong>Send now</strong><em>Delivered as soon as you confirm</em></span>
+            </label>
+            <label class="ntf-when-opt">
+              <input type="radio" name="ntf-when" value="schedule" onchange="ntfOnWhenChange()">
+              <span><strong>Schedule</strong><em>Pick a future date and time</em></span>
+            </label>
+          </div>
+          <div class="fg" id="ntf-schedule-fg" style="display:none">
+            <label for="ntf-schedule-at">Send at</label>
+            <input type="datetime-local" id="ntf-schedule-at">
+          </div>
+
+          <div class="ntf-estimate">
+            <div class="ntf-estimate-value" id="ntf-estimate-value">â€”</div>
+            <div class="ntf-estimate-label">recipients matched Â· <span id="ntf-estimate-devices">â€”</span> with registered devices</div>
+          </div>
+
+          <div class="ntf-side-divider"></div>
+          <div class="decline-err" id="ntf-form-err" role="alert"></div>
+          <button class="btn btn-accent ntf-send-btn" id="ntf-review-btn" onclick="ntfReviewSend()">
+            Review &amp; Send
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+          <div class="ntf-send-hint">Nothing is sent until you confirm the summary.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- â•â•â• HISTORY â•â•â• -->
+  <div class="ntf-pane" id="ntf-history-pane" style="display:none">
+    <div class="um-stats ntf-stats">
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="ntf-h-total">â€”</div>
+          <div class="um-stat-label">Total</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="ntf-h-scheduled">â€”</div>
+          <div class="um-stat-label">Scheduled</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="ntf-h-sent">â€”</div>
+          <div class="um-stat-label">Sent</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-red">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="ntf-h-failed">â€”</div>
+          <div class="um-stat-label">Failed</div>
+        </div>
+      </div>
+      <div class="um-stat-card">
+        <div class="um-stat-icon um-icon-blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <div class="um-stat-body">
+          <div class="um-stat-value" id="ntf-h-devices">â€”</div>
+          <div class="um-stat-label">Devices Reached</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="um-toolbar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search um-search" id="ntf-search" placeholder="Search title or message..." oninput="onNtfSearch(this.value)" autocomplete="off">
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        <select id="ntf-status-filter" onchange="ntfFilterHistory()" title="Filter by status">
+          <option value="">All Statuses</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="sending">Sending</option>
+          <option value="sent">Sent</option>
+          <option value="failed">Failed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="order-filter-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <select id="ntf-type-filter" onchange="ntfFilterHistory()" title="Filter by audience type">
+          <option value="">Users &amp; Drivers</option>
+          <option value="user">Users only</option>
+          <option value="driver">Drivers only</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="ntf-clear" onclick="ntfClearHistoryFilters()" style="display:none">Clear</button>
+      <span class="um-hint" id="ntf-hint"></span>
+    </div>
+
+    <div id="ntf-loading" class="drv-loading" style="display:none">
+      <div class="drv-loading-spinner"></div>
+      <div class="drv-loading-text">Loading notifications...</div>
+    </div>
+    <div id="ntf-error" class="drv-error" style="display:none">
+      <div class="drv-error-icon">âš ï¸</div>
+      <div class="drv-error-title">Failed to load notifications</div>
+      <div class="drv-error-text" id="ntf-error-text"></div>
+      <button class="btn btn-accent btn-sm" onclick="loadNotificationHistory(true)">Retry</button>
+    </div>
+    <div class="ntf-list" id="ntf-list"></div>
+    <div class="um-pagination" id="ntf-pagination" style="display:none"></div>
+  </div>
+</div>
+
 <!-- DRIVER DETAILS SPA -->
 <div class="content" id="panel-driver-details">
   <div class="drv-detail-back">
@@ -1506,6 +3001,221 @@
     </button>
   </div>
   <div id="drv-detail-content"></div>
+</div>
+
+<!-- AUDIT LOG -->
+<div class="content" id="panel-audit">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Audit Log</h2>
+      <span class="order-page-count" id="audit-count">0 entries</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadAuditPanel(true)" title="Reload the audit trail">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="um-toolbar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search um-search" id="audit-admin" placeholder="Admin email..." autocomplete="off" onkeydown="if(event.key==='Enter')auditApplyFilters()" title="Filter by admin email">
+    <input class="search um-search" id="audit-action" placeholder="Action code (e.g. driver.approve)..." autocomplete="off" onkeydown="if(event.key==='Enter')auditApplyFilters()" title="Filter by action code">
+    <div class="order-filter-wrap">
+      <select id="audit-category" onchange="auditApplyFilters()" title="Filter by category">
+        <option value="">All Categories</option>
+        <option value="auth">Auth</option>
+        <option value="users">Users</option>
+        <option value="drivers">Drivers</option>
+        <option value="orders">Orders</option>
+        <option value="content">Content</option>
+        <option value="finance">Finance</option>
+        <option value="support">Support</option>
+        <option value="notifications">Notifications</option>
+        <option value="security">Security</option>
+        <option value="general">General</option>
+      </select>
+    </div>
+    <input type="date" class="rd-date" id="audit-from" title="From date" aria-label="From date" onchange="auditApplyFilters()">
+    <input type="date" class="rd-date" id="audit-to" title="To date" aria-label="To date" onchange="auditApplyFilters()">
+    <button class="btn btn-ghost btn-sm" id="audit-clear" onclick="auditClearFilters()" style="display:none">Clear</button>
+    <span class="um-hint" id="audit-hint"></span>
+  </div>
+
+  <div class="list-bar"><span class="grow"></span><div id="audit-sort"></div></div>
+
+  <div id="audit-loading" class="drv-loading" style="display:none">
+    <div class="drv-loading-spinner"></div>
+    <div class="drv-loading-text">Loading audit trail...</div>
+  </div>
+  <div id="audit-error" class="drv-error" style="display:none">
+    <div class="drv-error-icon">&#9888;&#65039;</div>
+    <div class="drv-error-title">Failed to load the audit log</div>
+    <div class="drv-error-text" id="audit-error-text"></div>
+    <button class="btn btn-accent btn-sm" onclick="loadAuditPanel(true)">Retry</button>
+  </div>
+
+  <div class="wl-table-wrap" id="audit-table-wrap">
+    <table class="wl-table" id="audit-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Admin</th>
+          <th>Action</th>
+          <th>Category</th>
+          <th>Summary</th>
+          <th>Target</th>
+          <th>IP</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="audit-list"></tbody>
+    </table>
+  </div>
+  <div class="um-pagination" id="audit-pagination" style="display:none"></div>
+</div>
+
+<!-- ADMIN STAFF -->
+<div class="content" id="panel-staff">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Admin Staff</h2>
+      <span class="order-page-count" id="staff-count">0 accounts</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadStaffPanel(true)" title="Reload admin accounts">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+      <button class="btn btn-accent btn-sm" onclick="staffOpenForm(null)" title="Create an admin account">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Admin
+      </button>
+    </div>
+  </div>
+
+  <div id="staff-loading" class="drv-loading" style="display:none">
+    <div class="drv-loading-spinner"></div>
+    <div class="drv-loading-text">Loading admin accounts...</div>
+  </div>
+  <div id="staff-error" class="drv-error" style="display:none">
+    <div class="drv-error-icon">&#9888;&#65039;</div>
+    <div class="drv-error-title">Failed to load admin accounts</div>
+    <div class="drv-error-text" id="staff-error-text"></div>
+    <button class="btn btn-accent btn-sm" onclick="loadStaffPanel(true)">Retry</button>
+  </div>
+
+  <div class="wl-table-wrap" id="staff-table-wrap">
+    <table class="wl-table" id="staff-table">
+      <thead>
+        <tr>
+          <th>Admin</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th>Sessions</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="staff-list"></tbody>
+    </table>
+  </div>
+  <div class="um-hint" id="staff-hint" style="margin-top:10px"></div>
+</div>
+
+<!-- MY PROFILE -->
+<div class="content" id="panel-profile">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">My Profile</h2>
+      <span class="order-page-count" id="pf-count">Account &amp; security</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadProfilePanel(true)" title="Reload profile">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div id="pf-loading" class="drv-loading" style="display:none">
+    <div class="drv-loading-spinner"></div>
+    <div class="drv-loading-text">Loading your profile...</div>
+  </div>
+  <div id="pf-error" class="drv-error" style="display:none">
+    <div class="drv-error-icon">&#9888;&#65039;</div>
+    <div class="drv-error-title">Failed to load your profile</div>
+    <div class="drv-error-text" id="pf-error-text"></div>
+    <button class="btn btn-accent btn-sm" onclick="loadProfilePanel(true)">Retry</button>
+  </div>
+
+  <div class="pf-grid" id="pf-grid" style="display:none">
+    <!-- Identity + edit -->
+    <div class="card pf-card">
+      <div class="ntf-card-title">Account</div>
+      <div class="pf-identity" id="pf-identity"></div>
+      <div class="pf-sub" id="pf-edit-toggle">
+        <button class="btn btn-ghost btn-sm" onclick="pfToggleEdit()">Edit name &amp; phone</button>
+      </div>
+      <div id="pf-edit-form" style="display:none">
+        <div class="fg">
+          <label for="pf-name">Full name</label>
+          <input id="pf-name" maxlength="255" placeholder="Your full name">
+        </div>
+        <div class="fg">
+          <label for="pf-phone">Phone</label>
+          <input id="pf-phone" maxlength="50" placeholder="Optional">
+        </div>
+        <div class="decline-err" id="pf-edit-err" role="alert"></div>
+        <div class="pf-actions">
+          <button class="btn btn-ghost btn-sm" onclick="pfToggleEdit()">Cancel</button>
+          <button class="btn btn-accent btn-sm" id="pf-edit-save" onclick="pfSaveProfile()">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change password -->
+    <div class="card pf-card">
+      <div class="ntf-card-title">Change Password</div>
+      <p class="pf-note">Changing your password signs you out of every other device.</p>
+      <div class="fg">
+        <label for="pf-cur-pass">Current password</label>
+        <input id="pf-cur-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <div class="fg">
+        <label for="pf-new-pass">New password</label>
+        <input id="pf-new-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters" oninput="pfPassHint()">
+        <span class="pf-hint" id="pf-pass-hint">Minimum 8 characters, different from your current password.</span>
+      </div>
+      <div class="fg">
+        <label for="pf-new-pass2">Confirm new password</label>
+        <input id="pf-new-pass2" type="password" autocomplete="new-password" placeholder="Repeat the new password" oninput="pfPassHint()">
+      </div>
+      <div class="decline-err" id="pf-pass-err" role="alert"></div>
+      <div class="pf-actions">
+        <button class="btn btn-accent btn-sm" id="pf-pass-save" onclick="pfChangePassword()">Change password</button>
+      </div>
+    </div>
+
+    <!-- Active sessions -->
+    <div class="card pf-card">
+      <div class="ntf-card-title">Active Sessions <span class="pf-count" id="pf-sess-count">0</span></div>
+      <div class="pf-sessions" id="pf-sessions"></div>
+      <div class="pf-actions" id="pf-revoke-others-wrap" style="display:none">
+        <button class="btn btn-ghost btn-sm" id="pf-revoke-others" onclick="pfRevokeOthers()">Sign out all other sessions</button>
+      </div>
+    </div>
+
+    <!-- Permissions -->
+    <div class="card pf-card">
+      <div class="ntf-card-title">Your Permissions</div>
+      <p class="pf-note" id="pf-role-note"></p>
+      <div class="pf-perms" id="pf-perms"></div>
+    </div>
+  </div>
 </div>
 
 <!-- DELETE MODAL -->
@@ -1523,8 +3233,8 @@
 <!-- DECLINE ORDER MODAL -->
 <div class="modal-bg" id="declineModal">
   <div class="modal decline-modal">
-    <h3>Decline Order</h3>
-    <p>Explain the problem with this order. The reason will be saved with the order and shown in Order Details.</p>
+    <h3 id="decline-title">Decline Order</h3>
+    <p id="decline-desc">Explain the problem with this order. The reason will be saved with the order and shown in Order Details.</p>
     <div class="fg">
       <label>Problem / Reason *</label>
       <textarea id="decline-reason" maxlength="500" placeholder="e.g. The kitchen is unable to fulfill this order right now..."></textarea>
@@ -1655,6 +3365,31 @@
   </div>
 </div>
 
+<!-- REFUND DIALOG -->
+<div class="modal-bg" id="refundModal">
+  <div class="modal decline-modal">
+    <h3>Issue Refund</h3>
+    <p id="rf-desc">Refund the paid amount back to the customer's wallet. This cannot be undone.</p>
+    <div class="wal-summary" id="rf-summary"></div>
+    <div class="fg">
+      <label>Amount (â‚¦) â€” leave empty to refund in full</label>
+      <input type="number" id="rf-amount" min="0.01" step="0.01" placeholder="Full refundable amount">
+    </div>
+    <div class="fg">
+      <label>Reason *</label>
+      <textarea id="rf-reason" maxlength="500" placeholder="e.g. The customer cancelled before pickup..."></textarea>
+    </div>
+    <div class="decline-err" id="rf-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" id="rf-cancel" onclick="closeRefundModal()">Cancel</button>
+      <button class="btn btn-red" id="rf-confirm" onclick="submitRefund()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <span id="rf-confirm-label">Confirm Refund</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- HOTEL BOOKING DETAILS -->
 <div class="modal-bg order-modal-bg" id="hbModal">
   <div class="modal order-modal">
@@ -1726,22 +3461,234 @@
   </div>
 </div>
 
+<!-- SUPPORT STATUS CONFIRMATION -->
+<div class="modal-bg" id="supConfirmModal">
+  <div class="modal decline-modal">
+    <h3 id="sup-confirm-title">Update ticket</h3>
+    <p id="sup-confirm-desc">Confirm this ticket status change.</p>
+    <div class="fg">
+      <label id="sup-reason-label">Reason (optional, saved as an internal note)</label>
+      <textarea id="sup-reason" maxlength="1000" placeholder="e.g. Waiting on the user to confirm..."></textarea>
+    </div>
+    <div class="decline-err" id="sup-confirm-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeSupportConfirm()">Cancel</button>
+      <button class="btn btn-accent" id="sup-confirm-btn" onclick="applySupportConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION SEND CONFIRMATION -->
+<div class="modal-bg" id="ntfSendModal">
+  <div class="modal decline-modal">
+    <h3 id="ntf-send-title">Send this notification?</h3>
+    <p id="ntf-send-desc">Review the summary below. Push notifications cannot be recalled once delivery starts.</p>
+    <div class="ntf-send-summary" id="ntf-send-summary"></div>
+    <div class="decline-err" id="ntf-send-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="ntfCloseSend()">Cancel</button>
+      <button class="btn btn-accent" id="ntf-send-btn" onclick="ntfSubmitSend()">Confirm &amp; Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION DETAIL -->
+<div class="modal-bg order-modal-bg" id="ntfDetailModal">
+  <div class="modal order-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="ntf-detail-title">Notification</h3>
+        <span class="order-modal-ref" id="ntf-detail-ref"></span>
+      </div>
+      <button class="order-modal-close" onclick="ntfCloseDetail()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="ntf-detail-body"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION CANCEL CONFIRMATION -->
+<div class="modal-bg" id="ntfConfirmModal">
+  <div class="modal decline-modal">
+    <h3 id="ntf-confirm-title">Cancel scheduled notification?</h3>
+    <p id="ntf-confirm-desc">It will not be delivered. This cannot be undone.</p>
+    <div class="decline-err" id="ntf-confirm-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="ntfCloseConfirm()">Keep it</button>
+      <button class="btn btn-red" id="ntf-confirm-btn" onclick="ntfApplyConfirm()">Cancel Notification</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUDIT ENTRY DETAIL -->
+<div class="modal-bg order-modal-bg" id="auditModal">
+  <div class="modal order-modal audit-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="auditModalTitle">Audit Entry</h3>
+        <span class="order-modal-ref" id="auditModalRef"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeAuditModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="auditModalBody"></div>
+  </div>
+</div>
+
+<!-- ADMIN FORM (create / edit) -->
+<div class="modal-bg" id="staffFormModal">
+  <div class="modal staff-form-modal">
+    <h3 id="stf-title">New Admin</h3>
+    <div class="fg">
+      <label for="stf-name">Full name *</label>
+      <input id="stf-name" maxlength="255" placeholder="e.g. Ada Obi">
+    </div>
+    <div class="fg" id="stf-email-fg">
+      <label for="stf-email">Email *</label>
+      <input id="stf-email" type="email" maxlength="255" placeholder="name@enjoybadagry.com">
+    </div>
+    <div class="fg">
+      <label for="stf-phone">Phone</label>
+      <input id="stf-phone" maxlength="50" placeholder="Optional">
+    </div>
+    <div class="fg">
+      <label for="stf-role">Role *</label>
+      <select id="stf-role" onchange="stUpdateRoleHint()"></select>
+      <span class="pf-hint" id="stf-role-hint"></span>
+    </div>
+    <div class="fg" id="stf-pass-fg">
+      <label for="stf-pass">Initial password *</label>
+      <input id="stf-pass" type="text" placeholder="At least 8 characters" autocomplete="off">
+      <span class="pf-hint">Share it with the admin securely — they should change it after first sign-in.</span>
+    </div>
+    <div class="fg" id="stf-active-fg" style="display:none">
+      <label class="stf-check">
+        <input type="checkbox" id="stf-active" checked>
+        <span>Account active (uncheck to deactivate and revoke all sessions)</span>
+      </label>
+    </div>
+    <div class="decline-err" id="stf-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" id="stf-cancel" onclick="closeStaffForm()">Cancel</button>
+      <button class="btn btn-accent" id="stf-save" onclick="staffSaveForm()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN RESET PASSWORD -->
+<div class="modal-bg" id="staffResetModal">
+  <div class="modal staff-form-modal">
+    <h3>Reset Password</h3>
+    <p id="str-desc">Set a new password for this admin. Every active session of that account is revoked immediately.</p>
+    <div class="fg">
+      <label for="str-pass">New password (optional)</label>
+      <input id="str-pass" type="text" placeholder="Leave empty to generate one" autocomplete="off">
+      <span class="pf-hint">Minimum 8 characters when set. Otherwise a one-time password is generated and shown once.</span>
+    </div>
+    <div class="ua-result" id="str-result" style="display:none">
+      <div class="ua-result-label">Temporary password — shown once</div>
+      <div class="ua-result-row">
+        <code class="ua-result-value" id="str-result-value"></code>
+        <button class="btn btn-ghost btn-sm" onclick="pfCopyText(document.getElementById('str-result-value').textContent, this)">Copy</button>
+      </div>
+      <div class="ua-result-note" id="str-result-note"></div>
+    </div>
+    <div class="decline-err" id="str-err" role="alert"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" id="str-cancel" onclick="closeStaffReset()">Close</button>
+      <button class="btn btn-accent" id="str-confirm" onclick="staffConfirmReset()">Reset password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DETAIL (sessions + activity) -->
+<div class="modal-bg order-modal-bg" id="staffDetailModal">
+  <div class="modal order-modal staff-detail-modal">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="std-title">Admin Details</h3>
+        <span class="order-modal-ref" id="std-ref"></span>
+      </div>
+      <button class="order-modal-close" onclick="closeStaffDetail()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="order-modal-body" id="std-body"></div>
+  </div>
+</div>
+
+<!-- OFFLINE BANNER -->
+<div class="offline-banner" id="offlineBanner" role="status">You are offline - the API cannot be reached. Actions will fail until the connection returns.</div>
+
+<!-- COMMAND PALETTE (Ctrl+K) -->
+<div class="pal-bg" id="paletteBg" role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="pal">
+    <div class="pal-head">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="pal-input" id="palInput" placeholder="Search users, orders, drivers, bookings, content or type a page name..." autocomplete="off" spellcheck="false" aria-label="Search">
+      <button type="button" class="pal-clear" id="palClear" aria-label="Clear search">&times;</button>
+    </div>
+    <div class="pal-results" id="palResults"></div>
+    <div class="pal-foot">
+      <span><kbd>Up</kbd> <kbd>Down</kbd> navigate</span>
+      <span><kbd>Enter</kbd> open</span>
+      <span><kbd>Esc</kbd> close</span>
+      <span><kbd>Ctrl K</kbd> anywhere</span>
+    </div>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUTS -->
+<div class="modal-bg" id="shortcutsModal" onclick="if(event.target===this)closeShortcuts()">
+  <div class="modal">
+    <h3>Keyboard shortcuts</h3>
+    <p>Available anywhere in the panel.</p>
+    <div class="keys">
+      <div class="keys-row"><span>Command palette / search</span><kbd>Ctrl K</kbd></div>
+      <div class="keys-row"><span>Open search</span><kbd>/</kbd></div>
+      <div class="keys-row"><span>Create on this page</span><kbd>N</kbd></div>
+      <div class="keys-row"><span>This help</span><kbd>?</kbd></div>
+      <div class="keys-row"><span>Close palette or help</span><kbd>Esc</kbd></div>
+      <div class="keys-row"><span>Move / open in palette</span><kbd>Up Down Enter</kbd></div>
+    </div>
+    <div class="modal-acts">
+      <button type="button" class="btn btn-ghost" onclick="closeShortcuts()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast-box"></div>
 </div>
 
 <script defer src="assets/js/utils.js"></script>
+<script defer src="assets/js/theme.js"></script>
+<script defer src="assets/js/listkit.js"></script>
 <script defer src="assets/js/api.js"></script>
+<script defer src="assets/js/cms.js"></script>
 <script defer src="assets/js/overview.js"></script>
 <script defer src="assets/js/destinations.js"></script>
 <script defer src="assets/js/food.js"></script>
 <script defer src="assets/js/hotels.js"></script>
 <script defer src="assets/js/hotelBookings.js"></script>
+<script defer src="assets/js/events.js"></script>
+<script defer src="assets/js/tours.js"></script>
+<script defer src="assets/js/banners.js"></script>
+<script defer src="assets/js/taxonomy.js"></script>
 <script defer src="assets/js/reviews.js"></script>
 <script defer src="assets/js/orders.js"></script>
 <script defer src="assets/js/drivers.js"></script>
 <script defer src="assets/js/users.js"></script>
 <script defer src="assets/js/rides.js"></script>
 <script defer src="assets/js/wallets.js"></script>
+<script defer src="assets/js/support.js"></script>
+<script defer src="assets/js/notifications.js"></script>
+<script defer src="assets/js/revenue.js"></script>
+<script defer src="assets/js/audit.js"></script>
+<script defer src="assets/js/staff.js"></script>
+<script defer src="assets/js/profile.js"></script>
+<script defer src="assets/js/palette.js"></script>
 <script defer src="assets/js/auth.js"></script>
 </body>
 </html>

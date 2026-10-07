@@ -3,6 +3,14 @@
 var orderFilterValue = '';
 var orderModalActiveId = null;
 
+// Orders still open after this many hours are flagged as aging
+var ORDER_AGING_HOURS = 24;
+// Orders ticked for bulk status actions: { orderId: true }
+var orderBulkSelected = {};
+// Delivery map + live refresh state
+var orderMapInstance = null;
+var orderMapPollTimer = null;
+
 function orderStatusKey(status) {
   var s = (status || '').toLowerCase().replace(/_/g, ' ').trim();
   if (!s) return 'pending';
@@ -64,10 +72,20 @@ function paymentStatusBadge(status) {
   return '<span class="order-card-status ' + cls + '" style="font-size:12px;padding:5px 14px">' + esc(label) + '</span>';
 }
 
+// Short display form of an order reference: EB-FOOD-<timestamp>-<code> → #<code>
+function shortOrderRef(ref) {
+  ref = String(ref || '');
+  var m = ref.match(/^EB-FOOD-\d+-(\w+)$/);
+  if (m) return '#' + m[1];
+  if (ref.length <= 14) return ref;
+  return ref.slice(0, 6) + '…' + ref.slice(-4);
+}
+
 function orderSearchText(o) {
   var parts = [
     o.orderReference || '',
     o.orderNumber || '',
+    shortOrderRef(o.orderReference || o.orderNumber || ''),
     o.restaurantName || '',
     o.status || '',
     o.declineReason || '',
@@ -86,20 +104,93 @@ function orderSearchText(o) {
   return parts.join(' ').toLowerCase();
 }
 
+// Sort options mirror the keys GET /orders understands server-side
+// (created, updated, amount, status, reference, customer) so the same
+// vocabulary works whether the list is paged locally or remotely.
+var ORDER_SORT_OPTIONS = [
+  { value: 'created', label: 'Order date' },
+  { value: 'amount', label: 'Total amount' },
+  { value: 'customer', label: 'Customer name' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'status', label: 'Status' },
+  { value: 'reference', label: 'Order reference' }
+];
+
+function orderSortValue(row, key) {
+  var o = row.o;
+  if (key === 'amount') return Number(o.grandTotal) || 0;
+  if (key === 'status') return orderStatusKey(o.status);
+  if (key === 'reference') return String(o.orderReference || o.orderNumber || '');
+  if (key === 'customer') return String(o.customerName || '').toLowerCase();
+  if (key === 'restaurant') return String(o.restaurantName || '').toLowerCase();
+  if (key === 'updated') return String(o.updatedAt || o.createdAt || '');
+  return String(o.createdAt || '');
+}
+
+function renderOrdersControls() {
+  kitRenderSort('o-sort', 'orders', ORDER_SORT_OPTIONS, function() { renderOrders(cachedOrders); });
+}
+
+// ─── Panel refresh + local search ─────────────────────────────────
+// The orders panel has its own search box and refresh controls; the header
+// search (doSearch) stays global across every cached list.
+
+var orderSearchValue = '';
+var orderSearchTimer = null;
+
+// Re-fetches orders from the server and repaints the panel. Called by the
+// refresh button, the "N new" pill and the new-orders poll. Pass `quiet` to
+// skip the confirmation toast (used when simply opening the panel).
+async function loadOrders(quiet) {
+  if (typeof hasPerm === 'function' && !hasPerm('orders.food.view')) return;
+  load(true);
+  try {
+    var res = await api('GET', '/orders');
+    cachedOrders = {};
+    ((res.data && res.data.orders) || []).forEach(function(o) { cachedOrders[o.id] = o; });
+    renderOrders(cachedOrders);
+    var pill = document.getElementById('o-new-orders');
+    if (pill) pill.style.display = 'none';
+    if (!quiet) toast('Orders updated');
+  } catch (e) {
+    toast('Failed to load orders: ' + e.message, false);
+  } finally {
+    load(false);
+  }
+}
+
+// "N new · Refresh" pill: pull the fresh orders in and clear the pill.
+function ordersShowNew() {
+  loadOrders();
+}
+
+function onOrderSearch(v) {
+  if (orderSearchTimer) clearTimeout(orderSearchTimer);
+  orderSearchTimer = setTimeout(function() {
+    orderSearchValue = String(v || '').trim().toLowerCase();
+    kitSetPage('orders', 1);
+    renderOrders(cachedOrders);
+  }, 250);
+}
+
 function renderOrders(orders) {
   orders = orders || {};
-  var html = '';
-  var n = 0;
-  var sorted = Object.keys(orders).sort(function(a,b){
-    var da = orders[a].createdAt || '';
-    var db2 = orders[b].createdAt || '';
-    return String(db2).localeCompare(String(da));
-  });
-  sorted.forEach(function(id) {
+  kitList('orders', { sort: 'created', dir: 'desc', limit: 24 });
+  var rows = [];
+  Object.keys(orders).forEach(function(id) {
     var o = orders[id];
     if (search && orderSearchText(o).indexOf(search) < 0) return;
+    if (orderSearchValue && orderSearchText(o).indexOf(orderSearchValue) < 0) return;
     if (orderFilterValue && orderStatusKey(o.status) !== orderFilterValue) return;
-    n++;
+    rows.push({ id: id, o: o });
+  });
+  rows = kitSortRows(rows, orderSortValue, 'orders');
+  var page = kitSlice(rows, 'orders');
+
+  var html = '';
+  page.rows.forEach(function(row) {
+    var id = row.id;
+    var o = row.o;
 
     var itemsPreview = '';
     if (o.items && o.items.length) {
@@ -108,9 +199,13 @@ function renderOrders(orders) {
       if (names.length > 3) itemsPreview += ' +' + (names.length - 3) + ' more';
     }
 
-    html += '<div class="order-card" onclick="openOrderModal(\'' + id + '\')">' +
+    var cardStage = foodOrderStage(o.status);
+    var bulkEligible = cardStage === 'pending' || cardStage === 'accepted' || cardStage === 'processing' || cardStage === 'completed';
+
+    html += '<div class="order-card' + (orderBulkSelected[id] ? ' is-selected' : '') + '" onclick="openOrderModal(\'' + id + '\')">' +
       '<div class="order-card-header">' +
-        '<span class="order-card-ref">' + esc(o.orderReference || id) + '</span>' +
+        (bulkEligible ? '<label class="order-card-select" title="Select for bulk actions" onclick="event.stopPropagation()"><input type="checkbox"' + (orderBulkSelected[id] ? ' checked' : '') + ' onchange="toggleBulkOrder(\'' + id + '\', this.checked)"></label>' : '') +
+        '<span class="order-card-ref" title="' + esc(o.orderReference || String(id)) + '">' + esc(shortOrderRef(o.orderReference || id)) + '</span>' +
         orderStatusBadge(o.status) +
       '</div>' +
       '<div class="order-card-body">' +
@@ -125,16 +220,51 @@ function renderOrders(orders) {
       '</div>' +
       '<div class="order-card-footer">' +
         '<span class="order-card-total">' + fmtNaira(o.grandTotal) + '</span>' +
-        '<span class="order-card-date">' + fmtDate(o.createdAt) + '</span>' +
+        '<span class="order-card-footer-right">' +
+          orderAgingBadge(o) +
+          (o.createdAt ? '<span class="order-card-date"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + esc(fmtDate(o.createdAt)) + '</span>' : '') +
+        '</span>' +
       '</div>' +
     '</div>';
   });
-  document.getElementById('o-list').innerHTML = html || '<div class="order-empty"><div class="order-empty-icon">📦</div><div class="order-empty-title">No orders yet</div><div class="order-empty-text">Orders from customers will appear here once they start placing them.</div></div>';
-  document.getElementById('o-count').textContent = n + ' order' + (n !== 1 ? 's' : '');
+  if (!html) {
+    var filtered = !!(search || orderFilterValue || orderSearchValue);
+    html = '<div class="order-empty"><div class="order-empty-icon">' + (filtered ? '🔍' : '📦') + '</div>' +
+      '<div class="order-empty-title">' + (filtered ? 'No orders match your search' : 'No orders yet') + '</div>' +
+      '<div class="order-empty-text">' +
+        (filtered
+          ? 'Try a different search term or clear the status filter.'
+          : 'Orders from customers will appear here once they start placing them.') +
+      '</div></div>' +
+      '<div id="o-insights" style="margin-top:16px"></div>';
+  }
+  document.getElementById('o-list').innerHTML = html;
+  document.getElementById('o-count').textContent = page.total + ' order' + (page.total !== 1 ? 's' : '');
+  kitRenderPager('o-pager', 'orders', page.total ? page : null, function() { renderOrders(cachedOrders); });
+  renderOrdersControls();
+  kitRenderSavedBar('o-saved', {
+    key: 'orders',
+    current: {
+      name: kitList('orders').preset,
+      params: { sort: kitList('orders').sort, dir: kitList('orders').dir, status: orderFilterValue }
+    },
+    onApply: function(params, name) {
+      kitApplyParams('orders', params);
+      orderFilterValue = params.status || '';
+      var sel = document.getElementById('o-filter');
+      if (sel) sel.value = orderFilterValue;
+      kitList('orders').preset = name;
+      renderOrders(cachedOrders);
+    },
+    onSaved: function() { renderOrders(cachedOrders); }
+  });
+  if (document.getElementById('o-insights')) loadInsightsInto('o-insights');
 }
 
 function filterOrders() {
   orderFilterValue = document.getElementById('o-filter').value;
+  kitList('orders').preset = '';
+  kitSetPage('orders', 1);
   renderOrders(cachedOrders);
 }
 
@@ -257,6 +387,7 @@ function openOrderModal(id) {
   body += '<div class="order-detail-section">';
   body += '<div class="order-detail-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Status</div>';
   body += '<div class="order-detail-status-row">' + orderStatusBadgeLarge(o.status);
+  body += orderAgingBadge(o);
   if (o.paymentStatus) body += paymentStatusBadge(o.paymentStatus);
   body += '</div>';
 
@@ -308,9 +439,11 @@ function openOrderModal(id) {
   if (o.deliveryFee != null) body += detailField('Delivery Fee', fmtNaira(o.deliveryFee));
   body += '</div></div>';
 
-  // Driver & Tracking
+  // Driver & Tracking (with assignment picker while the order is still pre-delivery)
   var hasTracking = o.driverName || o.driverPhone || o.driverId || tracking.eta || tracking.expectedDeliveryTime || tracking.riderLatitude != null || tracking.riderLongitude != null;
-  if (hasTracking) {
+  var modalStage = foodOrderStage(o.status);
+  var canAssignDriver = modalStage === 'pending' || modalStage === 'accepted' || modalStage === 'processing' || modalStage === 'completed';
+  if (hasTracking || canAssignDriver) {
     body += '<div class="order-detail-section">';
     body += '<div class="order-detail-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Driver &amp; Tracking</div>';
     body += '<div class="order-detail-grid">';
@@ -323,8 +456,21 @@ function openOrderModal(id) {
     body += detailField('Rider Latitude', tracking.riderLatitude != null ? tracking.riderLatitude : '');
     body += detailField('Rider Longitude', tracking.riderLongitude != null ? tracking.riderLongitude : '');
     body += detailField('Tracking Last Updated', tracking.lastUpdated ? fmtDate(tracking.lastUpdated) : '');
-    body += '</div></div>';
+    body += '</div>';
+    if (canAssignDriver) {
+      body += '<div class="order-driver-assign">' +
+        '<select id="order-driver-select" class="order-driver-select">' + driverOptionsHtml(o.driverId || tracking.riderId || '') + '</select>' +
+        '<button type="button" class="btn btn-accent btn-sm" onclick="assignOrderDriver(\'' + id + '\', this)">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="16" y1="11" x2="22" y2="11"/></svg>' +
+          (o.driverId || tracking.riderId ? 'Update Driver' : 'Assign Driver') +
+        '</button>' +
+      '</div>';
+    }
+    body += '</div>';
   }
+
+  // Delivery Map — pickup/destination coordinates recorded on the order
+  body += orderMapSectionHtml(o);
 
   // Restaurant
   body += '<div class="order-detail-section">';
@@ -405,6 +551,10 @@ function openOrderModal(id) {
     body += '</div></div>';
   }
 
+  if (typeof refundActionsHtml === 'function' && o.orderReference) {
+    body += refundActionsHtml('food', o.orderReference, { paymentStatus: o.paymentStatus });
+  }
+
   // Notes
   if (o.notes || o.specialInstructions) {
     body += '<div class="order-detail-section">';
@@ -437,11 +587,15 @@ function openOrderModal(id) {
   document.getElementById('orderModal').classList.add('on');
   document.body.style.overflow = 'hidden';
   orderModalActiveId = id;
+  initOrderMap(o);
+  startOrderModalPoll();
 }
 
 function closeOrderModal() {
   oiActiveId = null;
   orderModalActiveId = null;
+  stopOrderModalPoll();
+  destroyOrderMap();
   var itemsModal = document.getElementById('orderItemsModal');
   if (itemsModal) itemsModal.classList.remove('on');
   document.getElementById('orderModal').classList.remove('on');
@@ -480,10 +634,20 @@ function runOrderAction(id, action, body, btn) {
 // ─── Decline modal (requires a problem/reason) ───
 
 var declineOrderId = null;
+var declineBulkMode = false;
 
-function openDeclineModal(id) {
-  if (!cachedOrders[id]) return;
-  declineOrderId = id;
+function setDeclineModalTexts(bulk) {
+  var titleEl = document.getElementById('decline-title');
+  var descEl = document.getElementById('decline-desc');
+  if (titleEl) titleEl.textContent = bulk ? 'Decline Selected Orders' : 'Decline Order';
+  if (descEl) {
+    descEl.textContent = bulk
+      ? 'Explain the problem with these orders. The reason will be saved with each selected order and shown in Order Details.'
+      : 'Explain the problem with this order. The reason will be saved with the order and shown in Order Details.';
+  }
+}
+
+function showDeclineModal() {
   var reasonEl = document.getElementById('decline-reason');
   var errEl = document.getElementById('decline-err');
   if (reasonEl) reasonEl.value = '';
@@ -492,9 +656,33 @@ function openDeclineModal(id) {
   setTimeout(function() { if (reasonEl) reasonEl.focus(); }, 120);
 }
 
+function openDeclineModal(id) {
+  if (!cachedOrders[id]) return;
+  declineBulkMode = false;
+  declineOrderId = id;
+  setDeclineModalTexts(false);
+  showDeclineModal();
+}
+
+function openBulkDeclineModal() {
+  var pendingSelected = bulkSelectedIds().filter(function(id) {
+    var o = cachedOrders[id];
+    return o && foodOrderStage(o.status) === 'pending';
+  });
+  if (!pendingSelected.length) {
+    toast('None of the selected orders are pending confirmation', false);
+    return;
+  }
+  declineBulkMode = true;
+  declineOrderId = null;
+  setDeclineModalTexts(true);
+  showDeclineModal();
+}
+
 function closeDeclineModal() {
   document.getElementById('declineModal').classList.remove('on');
   declineOrderId = null;
+  declineBulkMode = false;
 }
 
 function confirmDeclineOrder() {
@@ -507,8 +695,328 @@ function confirmDeclineOrder() {
     return;
   }
   var id = declineOrderId;
+  var bulk = declineBulkMode;
   closeDeclineModal();
-  runOrderAction(id, 'decline', { reason: reason });
+  if (bulk) runBulkOrderAction('decline', reason);
+  else runOrderAction(id, 'decline', { reason: reason });
+}
+
+// ═══════════════ ORDER AGING ═══════════════
+
+function orderAgeInfo(o) {
+  if (!o || !o.createdAt) return null;
+  var stage = foodOrderStage(o.status);
+  if (stage === 'declined' || stage === 'cancelled' || stage === 'refunded' || stage === 'delivered') return null;
+  var created = new Date(o.createdAt).getTime();
+  if (isNaN(created)) return null;
+  var hours = (Date.now() - created) / 36e5;
+  if (hours < ORDER_AGING_HOURS) return null;
+  var days = Math.floor(hours / 24);
+  return {
+    hours: hours,
+    label: days >= 1 ? days + 'd' : Math.floor(hours) + 'h'
+  };
+}
+
+function orderAgingBadge(o) {
+  var age = orderAgeInfo(o);
+  if (!age) return '';
+  return '<span class="order-aging-badge" title="Still open after ' + ORDER_AGING_HOURS + '+ hours">⏱ ' + age.label + '</span>';
+}
+
+// ═══════════════ BULK STATUS ACTIONS ═══════════════
+
+var BULK_ACTION_STAGES = {
+  accept: 'pending',
+  decline: 'pending',
+  processing: 'accepted',
+  complete: 'processing',
+  delivery: 'completed'
+};
+
+function bulkSelectedIds() {
+  return Object.keys(orderBulkSelected).filter(function(id) { return !!cachedOrders[id]; });
+}
+
+function toggleBulkOrder(id, checked) {
+  if (checked) orderBulkSelected[id] = true;
+  else delete orderBulkSelected[id];
+  renderBulkBar();
+  renderOrders(cachedOrders);
+}
+
+function clearBulkSelection() {
+  orderBulkSelected = {};
+  renderBulkBar();
+  renderOrders(cachedOrders);
+}
+
+function renderBulkBar() {
+  var bar = document.getElementById('o-bulk-bar');
+  if (!bar) return;
+  var ids = bulkSelectedIds();
+  if (!ids.length) {
+    bar.style.display = 'none';
+    bar.innerHTML = '';
+    return;
+  }
+  var stages = {};
+  ids.forEach(function(id) {
+    var st = foodOrderStage(cachedOrders[id].status);
+    stages[st] = (stages[st] || 0) + 1;
+  });
+  function bulkBtn(action, label, cls) {
+    var n = stages[BULK_ACTION_STAGES[action]] || 0;
+    return '<button type="button" class="btn btn-sm ' + cls + '"' + (n ? '' : ' disabled') +
+      ' onclick="runBulkOrderAction(\'' + action + '\')">' + label + (n ? ' (' + n + ')' : '') + '</button>';
+  }
+  bar.style.display = 'flex';
+  bar.innerHTML =
+    '<span class="order-bulk-count"><strong>' + ids.length + '</strong> selected</span>' +
+    '<div class="order-bulk-actions">' +
+      bulkBtn('accept', 'Accept', 'btn-green') +
+      bulkBtn('decline', 'Decline', 'btn-red') +
+      bulkBtn('processing', 'Start Processing', 'btn-accent') +
+      bulkBtn('complete', 'Mark Completed', 'btn-green') +
+      bulkBtn('delivery', 'Out for Delivery', 'btn-accent') +
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="clearBulkSelection()">Clear</button>' +
+    '</div>';
+}
+
+function runBulkOrderAction(action, reason) {
+  var neededStage = BULK_ACTION_STAGES[action];
+  var ids = bulkSelectedIds().filter(function(id) {
+    var o = cachedOrders[id];
+    return o && foodOrderStage(o.status) === neededStage;
+  });
+  var total = bulkSelectedIds().length;
+  if (!ids.length) {
+    toast('No selected orders are ready for this action', false);
+    return;
+  }
+  var skipped = total - ids.length;
+  var refs = ids.map(function(id) {
+    var o = cachedOrders[id];
+    return o.orderReference || id;
+  });
+
+  var body = { action: action, orderIds: refs };
+  if (action === 'decline' && reason) body.reason = reason;
+
+  load(true);
+  api('POST', '/orders/bulk', body).then(function(res) {
+    var d = res.data || {};
+    var failedRows = (d.results || []).filter(function(r) { return !r.ok; });
+    var parts = [];
+    parts.push((d.succeeded || 0) + ' of ' + refs.length + ' updated');
+    if (skipped) parts.push(skipped + ' skipped (status mismatch)');
+    if (failedRows.length) parts.push(failedRows.length + ' failed: ' + (failedRows[0].error || 'unknown error'));
+    toast(parts.join(' · '), !failedRows.length);
+    clearBulkSelection();
+    return loadAllData().then(function() {
+      renderOrders(cachedOrders);
+      if (orderModalActiveId != null && cachedOrders[orderModalActiveId]) {
+        openOrderModal(orderModalActiveId);
+      }
+    });
+  }).catch(function(e) {
+    toast('Error: ' + e.message, false);
+  }).finally(function() {
+    load(false);
+  });
+}
+
+// ═══════════════ DRIVER ASSIGNMENT ═══════════════
+
+function assignableDriverList() {
+  var list = [];
+  Object.keys(cachedDrivers).forEach(function(key) {
+    var d = cachedDrivers[key];
+    var status = (d.status || '').toLowerCase();
+    if (status && status !== 'active') return;
+    list.push(d);
+  });
+  list.sort(function(a, b) {
+    var aOnline = (a.onlineStatus || '').toLowerCase() === 'online' ? 0 : 1;
+    var bOnline = (b.onlineStatus || '').toLowerCase() === 'online' ? 0 : 1;
+    if (aOnline !== bOnline) return aOnline - bOnline;
+    return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+  });
+  return list;
+}
+
+function driverOptionsHtml(currentId) {
+  var list = assignableDriverList();
+  if (!list.length) {
+    return '<option value="">No eligible drivers (active accounts)</option>';
+  }
+  var html = '<option value="">Select a driver…</option>';
+  list.forEach(function(d) {
+    var online = (d.onlineStatus || '').toLowerCase() === 'online';
+    var label = (d.fullName || d.driverId || d.id || 'Driver');
+    label += ' — ' + (online ? 'Online' : 'Offline');
+    if (d.rating != null && d.rating !== '') label += ' · ★' + Number(d.rating).toFixed(1);
+    if (d.totalTrips) label += ' · ' + d.totalTrips + ' trips';
+    html += '<option value="' + esc(d.id) + '"' + (d.id === currentId ? ' selected' : '') + '>' + esc(label) + '</option>';
+  });
+  return html;
+}
+
+function assignOrderDriver(id, btn) {
+  var o = cachedOrders[id];
+  if (!o) return;
+  var sel = document.getElementById('order-driver-select');
+  var driverId = sel ? sel.value : '';
+  if (!driverId) {
+    toast('Select a driver first', false);
+    if (sel) sel.focus();
+    return;
+  }
+  var ref = o.orderReference || id;
+  if (btn) btn.disabled = true;
+  load(true);
+
+  api('POST', '/orders/' + encodeURIComponent(ref) + '/assign', { driverId: driverId }).then(function(res) {
+    var order = res.data && res.data.order;
+    if (order && order.id != null) cachedOrders[order.id] = order;
+    toast(res.message || 'Driver assigned');
+    return loadAllData().then(function() {
+      renderOrders(cachedOrders);
+      if (orderModalActiveId != null && cachedOrders[orderModalActiveId]) {
+        openOrderModal(orderModalActiveId);
+      }
+    });
+  }).catch(function(e) {
+    toast('Error: ' + e.message, false);
+  }).finally(function() {
+    load(false);
+    if (btn) btn.disabled = false;
+  });
+}
+
+// ═══════════════ DELIVERY MAP ═══════════════
+
+function orderMapCoords(o) {
+  var t = o.tracking || {};
+  var r = o.restaurant || {};
+  var d = o.delivery || {};
+  function coord(lat, lng) {
+    if (lat === null || lat === undefined || lat === '' || lng === null || lng === undefined || lng === '') return null;
+    var la = Number(lat);
+    var lo = Number(lng);
+    if (!isFinite(la) || !isFinite(lo) || (la === 0 && lo === 0)) return null;
+    return { lat: la, lng: lo };
+  }
+  return {
+    pickup: coord(t.restaurantLatitude, t.restaurantLongitude) || coord(r.latitude, r.longitude),
+    destination: coord(t.deliveryLatitude, t.deliveryLongitude) || coord(d.latitude, d.longitude),
+    rider: coord(t.riderLatitude, t.riderLongitude),
+    lastUpdated: t.lastUpdated || null
+  };
+}
+
+function orderMapSectionHtml(o) {
+  var coords = orderMapCoords(o);
+  var hasAny = coords.pickup || coords.destination || coords.rider;
+  var html = '<div class="order-detail-section">';
+  html += '<div class="order-detail-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> Delivery Map</div>';
+  if (!hasAny) {
+    html += '<div class="order-map-empty">No location data has been recorded for this order yet. The pickup, drop-off and rider position appear here as soon as coordinates are captured.</div>';
+  } else {
+    html += '<div class="order-map" id="orderMap"></div>';
+    html += '<div class="order-map-legend">';
+    if (coords.pickup) html += '<span class="order-map-legend-item"><i class="is-pickup"></i>Pickup</span>';
+    if (coords.destination) html += '<span class="order-map-legend-item"><i class="is-destination"></i>Destination</span>';
+    if (coords.rider) html += '<span class="order-map-legend-item"><i class="is-rider"></i>Rider</span>';
+    html += '</div>';
+    if (coords.lastUpdated) html += '<div class="order-map-updated">Tracking last updated ' + fmtDate(coords.lastUpdated) + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function destroyOrderMap() {
+  if (orderMapInstance) {
+    try { orderMapInstance.remove(); } catch (_) {}
+    orderMapInstance = null;
+  }
+}
+
+function initOrderMap(o) {
+  destroyOrderMap();
+  var el = document.getElementById('orderMap');
+  if (!el) return;
+  var coords = orderMapCoords(o);
+  if (typeof L === 'undefined') {
+    el.classList.add('order-map-failed');
+    el.innerHTML = '<div class="order-map-empty">The live map could not load. Check your internet connection — the coordinates are listed in the sections above.</div>';
+    return;
+  }
+  var map = L.map(el, { scrollWheelZoom: false });
+  orderMapInstance = map;
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  var points = [];
+  function pin(pt, color, label) {
+    if (!pt) return;
+    var latlng = [pt.lat, pt.lng];
+    points.push(latlng);
+    L.circleMarker(latlng, { radius: 8, color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 1 })
+      .addTo(map)
+      .bindTooltip(label, { permanent: true, direction: 'top', offset: [0, -8] });
+  }
+  pin(coords.pickup, '#22c55e', 'Pickup');
+  pin(coords.destination, '#ef4444', 'Destination');
+  pin(coords.rider, '#3b82f6', 'Rider');
+  if (coords.pickup && coords.destination) {
+    L.polyline(
+      [[coords.pickup.lat, coords.pickup.lng], [coords.destination.lat, coords.destination.lng]],
+      { color: '#3b82f6', weight: 3, opacity: 0.7, dashArray: '8 8' }
+    ).addTo(map);
+  }
+  if (points.length > 1) map.fitBounds(points, { padding: [35, 35] });
+  else map.setView(points[0], 14);
+  setTimeout(function() { map.invalidateSize(); }, 150);
+}
+
+function stopOrderModalPoll() {
+  if (orderMapPollTimer) {
+    clearTimeout(orderMapPollTimer);
+    orderMapPollTimer = null;
+  }
+}
+
+function startOrderModalPoll() {
+  stopOrderModalPoll();
+  orderMapPollTimer = setTimeout(refreshActiveOrder, 30000);
+}
+
+// Refreshes the open order from the server so the map and timeline stay current
+function refreshActiveOrder() {
+  var id = orderModalActiveId;
+  if (id == null) return;
+  var o = cachedOrders[id];
+  if (!o) { startOrderModalPoll(); return; }
+  var ref = o.orderReference || id;
+
+  api('GET', '/orders/' + encodeURIComponent(ref)).then(function(res) {
+    var fresh = res.data;
+    if (!fresh || fresh.id == null || orderModalActiveId == null) return;
+    cachedOrders[fresh.id] = fresh;
+    var bodyEl = document.getElementById('orderModalBody');
+    var scrollPos = bodyEl ? bodyEl.scrollTop : 0;
+    openOrderModal(fresh.id);
+    var newBody = document.getElementById('orderModalBody');
+    if (newBody) newBody.scrollTop = scrollPos;
+    renderOrders(cachedOrders);
+  }).catch(function() {
+    // transient fetch errors are ignored; polling resumes
+  }).finally(function() {
+    if (orderModalActiveId != null) startOrderModalPoll();
+  });
 }
 
 // ═══════════════ ORDER ITEMS MODAL ═══════════════

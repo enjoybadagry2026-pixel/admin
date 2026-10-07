@@ -1,10 +1,20 @@
 // ═══════════════ USER MANAGEMENT ═══════════════
 
-var umState = { page: 1, limit: 20, q: '', status: '', loaded: false, loading: false };
+var umState = { q: '', status: '', loaded: false, loading: false };
 var umListData = [];
 var umPagination = null;
 var umStats = null;
 var umSearchTimer = null;
+
+// Server sort keys accepted by GET /users (see the backend parseSort map).
+var USER_SORT_OPTIONS = [
+  { value: 'registered', label: 'Registration date' },
+  { value: 'lastseen', label: 'Last seen' },
+  { value: 'name', label: 'Name' },
+  { value: 'email', label: 'Email' },
+  { value: 'status', label: 'Status' },
+  { value: 'role', label: 'Role' }
+];
 
 var umActiveUserId = null;
 var umActiveUser = null;
@@ -65,8 +75,14 @@ function umActivityIcon(kind) {
 
 // ─── List ──────────────────────────────────────
 
+function umListKit() {
+  return kitList('users', { limit: 20, sort: 'registered', dir: 'desc' });
+}
+
 function umUsersPath() {
-  var p = '/users?page=' + umState.page + '&limit=' + umState.limit;
+  var s = umListKit();
+  var p = '/users?page=' + s.page + '&limit=' + s.limit +
+    '&sort=' + encodeURIComponent(s.sort) + '&dir=' + encodeURIComponent(s.dir);
   if (umState.q) p += '&q=' + encodeURIComponent(umState.q);
   if (umState.status) p += '&status=' + encodeURIComponent(umState.status);
   return p;
@@ -96,6 +112,11 @@ function loadUsers(force) {
     umStats = (res.data && res.data.stats) || null;
     umPagination = res.pagination || null;
     umState.loaded = true;
+    // Data shrank below our page (deletes/filters): fall back to the last page.
+    if (umPagination && umPagination.totalPages && umListKit().page > umPagination.totalPages) {
+      kitSetPage('users', umPagination.totalPages);
+      setTimeout(function() { loadUsers(true); }, 0);
+    }
     umShowListState('ready');
     umRenderStats();
     renderUsers();
@@ -154,33 +175,23 @@ function renderUsers() {
       '<div class="user-empty-icon">' + (hasFilters ? '🔍' : '👥') + '</div>' +
       '<div class="user-empty-title">' + (hasFilters ? 'No users match your search' : 'No users yet') + '</div>' +
       '<div class="user-empty-text">' + (hasFilters ? 'Try a different search term or clear the status filter.' : 'Registered app users will appear here.') + '</div>' +
-    '</div>';
+    '</div><div id="um-insights" style="margin-top:16px"></div>';
   }
   el.innerHTML = html;
+  if (document.getElementById('um-insights')) loadInsightsInto('um-insights');
 
   var total = umPagination ? umPagination.total : (umListData || []).length;
   umSetText('um-count', total + ' user' + (total === 1 ? '' : 's'));
   umRenderPagination();
+  kitRenderSort('um-sort', 'users', USER_SORT_OPTIONS, function() { loadUsers(true); });
 }
 
 function umRenderPagination() {
-  var el = document.getElementById('um-pagination');
-  if (!el) return;
-  var pg = umPagination;
-  if (!pg || !pg.totalPages || pg.totalPages <= 1) {
-    el.style.display = 'none';
-    el.innerHTML = '';
-    return;
-  }
-  el.style.display = '';
-  el.innerHTML =
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page <= 1 ? 'disabled' : '') + ' onclick="umGoPage(' + (pg.page - 1) + ')">Prev</button>' +
-    '<span class="um-page-info">Page ' + pg.page + ' of ' + pg.totalPages + '</span>' +
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page >= pg.totalPages ? 'disabled' : '') + ' onclick="umGoPage(' + (pg.page + 1) + ')">Next</button>';
+  kitRenderPager('um-pagination', 'users', umPagination, function() { loadUsers(true); });
 }
 
 function umGoPage(page) {
-  umState.page = page;
+  kitSetPage('users', page);
   loadUsers(true);
 }
 
@@ -188,7 +199,7 @@ function onUserSearch(v) {
   if (umSearchTimer) clearTimeout(umSearchTimer);
   umSearchTimer = setTimeout(function() {
     umState.q = String(v || '').trim();
-    umState.page = 1;
+    kitSetPage('users', 1);
     loadUsers(true);
   }, 300);
 }
@@ -196,7 +207,7 @@ function onUserSearch(v) {
 function filterUsers() {
   var sel = document.getElementById('um-status-filter');
   umState.status = sel ? sel.value : '';
-  umState.page = 1;
+  kitSetPage('users', 1);
   loadUsers(true);
 }
 

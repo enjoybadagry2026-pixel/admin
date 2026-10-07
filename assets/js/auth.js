@@ -50,7 +50,9 @@ function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   if (typeof renderAdminIdentity === 'function') renderAdminIdentity();
+  if (typeof applyNavPermissions === 'function') applyNavPermissions();
   loadAllData();
+  if (typeof loadSupportUnreadBadge === 'function') loadSupportUnreadBadge();
 }
 
 // ═══════════════ INIT ═══════════════

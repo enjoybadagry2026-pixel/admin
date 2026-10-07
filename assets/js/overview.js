@@ -21,6 +21,8 @@ async function loadOverviewStats() {
     var res = await api('GET', '/stats');
     var d = res.data;
     renderOverviewStats(d);
+    loadOvRevenue();
+    loadOvLicenseAlert();
     skeleton.style.display = 'none';
     content.style.display = '';
     errorEl.style.display = 'none';
@@ -147,9 +149,140 @@ function renderRecentDrivers(drivers) {
   }).join('');
 }
 
+// ═══════════════ EMPTY-STATE INSIGHTS ═══════════════
+// Real aggregates from GET /api/admin/insights, rendered wherever a list is
+// empty so a dead-end "nothing here" screen still tells the admin what the
+// platform is doing.
+
+var ovInsightsPromise = null;
+
+function ovInsightCard(icon, label, name, meta) {
+  return '<div class="insight-card">' +
+    '<div class="ic-ico">' + icon + '</div>' +
+    '<div class="ic-body">' +
+      '<div class="ic-label">' + esc(label) + '</div>' +
+      (name ? '<div class="ic-name" title="' + esc(name) + '">' + esc(name) + '</div>' +
+        '<div class="ic-meta">' + esc(meta) + '</div>'
+        : '<div class="ic-none">No activity yet</div>') +
+    '</div>' +
+  '</div>';
+}
+
+function ovInsightsHtml(d) {
+  var cards = '';
+  cards += ovInsightCard('📍', 'Most viewed destination',
+    d.topDestination && d.topDestination.name,
+    d.topDestination ? fmtNum(d.topDestination.views) + ' views · ' + fmtNum(d.topDestination.reviews) + ' reviews' : '');
+  cards += ovInsightCard('🍽️', 'Most ordered food (30d)',
+    d.topFood && d.topFood.name,
+    d.topFood ? fmtNum(d.topFood.orders) + ' orders' : '');
+  cards += ovInsightCard('🏨', 'Most booked hotel (30d)',
+    d.topHotel && d.topHotel.name,
+    d.topHotel ? fmtNum(d.topHotel.bookings) + ' bookings' : '');
+  cards += ovInsightCard('🚗', 'Most active driver (30d)',
+    d.topDriver && d.topDriver.name,
+    d.topDriver ? fmtNum(d.topDriver.trips) + ' trips' : '');
+
+  var trend = d.orderTrend || [];
+  var trendHtml = '';
+  if (trend.length) {
+    var max = trend.reduce(function(m, t) { return Math.max(m, Number(t.orders) || 0); }, 0) || 1;
+    var bars = trend.map(function(t) {
+      var n = Number(t.orders) || 0;
+      var pct = Math.round((n / max) * 100);
+      return '<div class="trend-bar' + (n ? ' has' : '') + '" style="height:' + Math.max(3, pct) + '%" title="' +
+        esc(t.day + ': ' + n + ' order' + (n === 1 ? '' : 's')) + '">' +
+        '<span class="t-val">' + n + '</span></div>';
+    }).join('');
+    var axis = trend.map(function(t) {
+      var parts = String(t.day || '').split('-');
+      return '<span>' + esc(parts.length === 3 ? parts[2] + '/' + parts[1] : t.day) + '</span>';
+    }).join('');
+    trendHtml = '<div class="insight-trend">' +
+      '<div class="ic-label">Order trend · last ' + trend.length + ' days</div>' +
+      '<div class="trend-bars">' + bars + '</div>' +
+      '<div class="trend-axis">' + axis + '</div>' +
+    '</div>';
+  } else {
+    trendHtml = '<div class="insight-trend"><div class="trend-empty">No orders placed in the last 14 days.</div></div>';
+  }
+
+  return '<div class="insight">' +
+    '<div class="insight-kicker">Platform insights · what is happening while this list is empty</div>' +
+    '<div class="insight-grid">' + cards + '</div>' +
+    trendHtml +
+  '</div>';
+}
+
+// Loads /insights once and paints it into the given container. Safe to call
+// on every empty render - the fetch happens at most once per session.
+function loadInsightsInto(containerId) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  if (ovInsightsPromise) {
+    ovInsightsPromise.then(function(d) { if (d) el.innerHTML = ovInsightsHtml(d); }).catch(function() {});
+    return;
+  }
+  ovInsightsPromise = api('GET', '/insights').then(function(res) {
+    var d = res.data || null;
+    var target = document.getElementById(containerId);
+    if (target && d) target.innerHTML = ovInsightsHtml(d);
+    return d;
+  }).catch(function(e) {
+    ovInsightsPromise = null;
+    console.warn('[Insights] unavailable:', e.message);
+    return null;
+  });
+}
+
 function setText(id, val) {
   var el = document.getElementById(id);
   if (el) el.textContent = val;
+}
+
+// Driver licence expiry alert strip on the Overview panel.
+async function loadOvLicenseAlert() {
+  var el = document.getElementById('ov-license-alert');
+  if (!el) return;
+  try {
+    var res = await api('GET', '/drivers/license-alerts');
+    var sum = res.data.summary || {};
+    if (!sum.total) { el.style.display = 'none'; return; }
+    el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+      '<span><strong>' + (sum.expired || 0) + '</strong> licences expired · <strong>' + (sum.expiring || 0) + '</strong> expiring within ' + (sum.windowDays || 30) + ' days</span>' +
+      '<button class="btn btn-ghost btn-sm" onclick="openDriLicenseAlerts()">Review</button>';
+    el.style.display = '';
+  } catch (e) { /* non-critical */ }
+}
+
+// Revenue strip on the Overview panel (uses the reports API).
+async function loadOvRevenue() {
+  var sel = document.getElementById('ov-rev-range');
+  var preset = sel ? sel.value : '30d';
+  var note = document.getElementById('ov-rev-note');
+  try {
+    var res = await api('GET', '/reports/summary?preset=' + encodeURIComponent(preset));
+    var d = res.data;
+    setText('ov-c-rev', fmtNaira(d.revenue.total));
+    setText('ov-c-gmv', fmtNaira(d.gmv.total));
+    setText('ov-c-dep', fmtNaira(d.cash.deposits));
+    setText('ov-c-refunds', d.cash.refunds && d.cash.refunds.count
+      ? fmtNaira(d.cash.refunds.amount) + ' (' + fmtNum(d.cash.refunds.count) + ')'
+      : fmtNaira(0));
+    if (note) {
+      note.textContent = d.range.from + ' → ' + d.range.to + ' · revenue = commission + platform fees on non-refunded orders';
+      note.style.display = '';
+    }
+  } catch (e) {
+    setText('ov-c-rev', '—');
+    setText('ov-c-gmv', '—');
+    setText('ov-c-dep', '—');
+    setText('ov-c-refunds', '—');
+    if (note) {
+      note.textContent = 'Revenue unavailable: ' + e.message;
+      note.style.display = '';
+    }
+  }
 }
 
 function fmtNum(n) {
@@ -166,7 +299,7 @@ function getInitials(name) {
 
 // Auto-load on first tab show
 document.addEventListener('DOMContentLoaded', function() {
-  if (document.getElementById('panel-overview') && document.getElementById('panel-overview').classList.contains('on')) {
+  if (hasPerm('overview.view') && document.getElementById('panel-overview') && document.getElementById('panel-overview').classList.contains('on')) {
     loadOverviewStats();
   }
 });

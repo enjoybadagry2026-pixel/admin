@@ -3,14 +3,47 @@
 // Shared with hotelBookings.js so the panel header count follows the open tab.
 var hotelCountText = '0 hotels';
 
+// Client-side sort keys, mirroring the fields GET /hotels returns.
+var HOTEL_SORT_OPTIONS = [
+  { value: 'created', label: 'Date added' },
+  { value: 'updated', label: 'Last updated' },
+  { value: 'name', label: 'Name' },
+  { value: 'rating', label: 'Rating' },
+  { value: 'price', label: 'Starting price' },
+  { value: 'category', label: 'Category' }
+];
+
+function hotelSortValue(h, key) {
+  if (key === 'rating') return parseFloat(h.rating) || 0;
+  if (key === 'price') return Number(h.startingPrice) || 0;
+  if (key === 'name') return String(h.name || '');
+  if (key === 'category') return String(h.category || '');
+  if (key === 'updated') return String(h.updatedAt || h.createdAt || '');
+  return String(h.createdAt || '');
+}
+
 function renderHotels(hotels) {
   hotels = hotels || {};
-  var html = '';
-  var n = 0;
+  kitList('hotel', { sort: 'created', dir: 'desc', limit: 24 });
+  if (!bulkStore.h) {
+    bulkRegister('h', 'hotels', function() { loadAllData(); },
+      { category: true, tags: false });
+  }
+  var filtered = [];
   Object.keys(hotels).forEach(function(id) {
     var h = hotels[id];
     if (search && (h.name||'').toLowerCase().indexOf(search) < 0 && (h.category||'').toLowerCase().indexOf(search) < 0 && (h.address||'').toLowerCase().indexOf(search) < 0) return;
-    n++;
+    filtered.push({ id: id, h: h });
+  });
+  filtered = kitSortRows(filtered, function(row, key) { return hotelSortValue(row.h, key); }, 'hotel');
+  var page = kitSlice(filtered, 'hotel');
+  var n = filtered.length;
+
+  var html = '';
+  var visibleIds = filtered.map(function(row) { return row.id; });
+  page.rows.forEach(function(row) {
+    var id = row.id;
+    var h = row.h;
     var catArr = (h.category||'').split(',').filter(Boolean);
     var catTags = '';
     catArr.forEach(function(c) {
@@ -28,7 +61,11 @@ function renderHotels(hotels) {
     var priceMeta = (h.startingPrice !== null && h.startingPrice !== undefined && h.startingPrice !== '')
       ? '<span class="hotel-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>' + esc(fmtNaira(h.startingPrice)) + ' / night</span>'
       : '';
-    html += '<div class="hotel-card" onclick="prevHotel(\'' + id + '\')">' +
+    html += '<div class="hotel-card' + (bulkStore.h && bulkStore.h.selected[id] ? ' is-selected' : '') + '" onclick="prevHotel(\'' + id + '\')">' +
+      '<div class="cms-card-check" onclick="event.stopPropagation()">' +
+        '<input type="checkbox" class="bulk-check" ' + (bulkStore.h && bulkStore.h.selected[id] ? 'checked' : '') +
+        ' onchange="bulkToggle(\'h\',\'' + id + '\',this.checked)">' +
+      '</div>' +
       '<div class="hotel-card-img-wrap">' +
         imgSection +
         '<div class="hotel-card-overlay"></div>' +
@@ -44,23 +81,58 @@ function renderHotels(hotels) {
           priceMeta +
         '</div>' +
         (catTags ? '<div class="hotel-card-tags">' + catTags + '</div>' : '') +
+        '<div class="cms-card-badges">' + cmsStatusBadge(h) + '</div>' +
         '<div class="hotel-card-acts">' +
           '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editHotel(\'' + id + '\')">Edit</button>' +
           '<button class="btn btn-red btn-sm" onclick="event.stopPropagation();delHotel(\'' + id + '\')">Delete</button>' +
+          '<select class="cms-quick-status" onclick="event.stopPropagation()" onchange="quickStatus(\'hotels\',\'' + id + '\',this.value)">' +
+            '<option value="draft" ' + (h.status === 'draft' ? 'selected' : '') + '>Draft</option>' +
+            '<option value="published" ' + (h.status !== 'draft' && h.status !== 'archived' ? 'selected' : '') + '>Published</option>' +
+            '<option value="archived" ' + (h.status === 'archived' ? 'selected' : '') + '>Archived</option>' +
+          '</select>' +
         '</div>' +
       '</div>' +
     '</div>';
   });
-  document.getElementById('h-list').innerHTML = html || '<div class="hotel-empty"><div class="hotel-empty-icon">\uD83C\uDFE8</div><div class="hotel-empty-title">No hotels yet</div><div class="hotel-empty-text">Create your first hotel to get started.</div><button class="btn btn-accent" onclick="openHotelModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create Hotel</button></div>';
+  bulkVisible['h'] = visibleIds;
+  if (!html && !n) {
+    var noMatch = !!search && Object.keys(hotels).length > 0;
+    html = noMatch
+      ? '<div class="hotel-empty"><div class="hotel-empty-icon">\uD83D\uDD0D</div><div class="hotel-empty-title">No hotels match your search</div><div class="hotel-empty-text">Try a different name, category or address.</div></div>'
+      : '<div class="hotel-empty"><div class="hotel-empty-icon">\uD83C\uDFE8</div><div class="hotel-empty-title">No hotels yet</div><div class="hotel-empty-text">Create your first hotel to get started.</div><button class="btn btn-accent" onclick="openHotelModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create Hotel</button></div>';
+    html += '<div id="h-insights" style="margin-top:16px"></div>';
+  }
+  document.getElementById('h-list').innerHTML = html;
   hotelCountText = n + ' hotel' + (n !== 1 ? 's' : '');
   if (typeof applyHotelHeaderCount === 'function') applyHotelHeaderCount();
   else document.getElementById('h-count').textContent = hotelCountText;
+  kitRenderPager('h-pager', 'hotel', n ? page : null, function() { renderHotels(cachedHotels); });
+  kitRenderSort('h-sort', 'hotel', HOTEL_SORT_OPTIONS, function() { renderHotels(cachedHotels); });
+  kitRenderSavedBar('h-saved', {
+    key: 'hotel',
+    current: { name: kitList('hotel').preset, params: { sort: kitList('hotel').sort, dir: kitList('hotel').dir } },
+    onApply: function(params, name) {
+      kitApplyParams('hotel', params);
+      kitList('hotel').preset = name;
+      renderHotels(cachedHotels);
+    },
+    onSaved: function() { renderHotels(cachedHotels); }
+  });
+  bulkRender('h');
+  if (document.getElementById('h-insights')) loadInsightsInto('h-insights');
 }
 
 // ═══════════════ MODAL CONTROLS ═══════════════
 
+// Fields kept as a local draft while a new hotel is being written.
+var HOTEL_DRAFT_FIELDS = ['h-name', 'h-cat', 'h-addr', 'h-maps', 'h-coords', 'h-phone',
+  'h-email', 'h-web', 'h-checkin', 'h-checkout', 'h-rating', 'h-rate', 'h-status'];
+
 function openHotelModal() {
   resetHotel();
+  cmsGalleryInit('h-gal', 'h-cover');
+  draftBind('hotel', HOTEL_DRAFT_FIELDS);
+  draftRestoreInto('hotel', HOTEL_DRAFT_FIELDS);
   document.getElementById('hotelModalTitle').textContent = 'Create Hotel';
   document.getElementById('h-save').textContent = 'Save Hotel';
   document.getElementById('hotelModal').classList.add('on');
@@ -99,13 +171,13 @@ async function saveHotel() {
   var name = document.getElementById('h-name').value.trim();
   var cat = document.getElementById('h-cat').value;
   var cover = document.getElementById('h-cover').value.trim();
-  var desc = document.getElementById('h-desc').value.trim();
+  var desc = rteText('h-desc');
   var addr = document.getElementById('h-addr').value.trim();
   if (!name || !cat || !cover || !desc || !addr) { toast('Fill all required fields', false); return; }
   load(true);
-  var gal = getGalInputs('h-gal-list');
   var data = {
     name: name, category: cat, coverImage: cover, description: desc, address: addr,
+    descriptionHtml: rteGet('h-desc'),
     mapsLink: document.getElementById('h-maps').value.trim(),
     coordinates: document.getElementById('h-coords').value.trim(),
     phone: document.getElementById('h-phone').value.trim(),
@@ -115,9 +187,17 @@ async function saveHotel() {
     checkOutTime: document.getElementById('h-checkout').value.trim(),
     rating: document.getElementById('h-rating').value.trim(),
     startingPrice: document.getElementById('h-rate').value.trim(),
-    gallery: gal,
+    gallery: cmsGalleryGet('h-gal'),
+    status: document.getElementById('h-status').value,
     featured: document.getElementById('h-feat').classList.contains('on')
   };
+  if (data.featured) {
+    data.featuredFrom = document.getElementById('h-feat-from').value || null;
+    data.featuredUntil = document.getElementById('h-feat-until').value || null;
+  } else {
+    data.featuredFrom = null;
+    data.featuredUntil = null;
+  }
   var editId = document.getElementById('h-edit').value;
   try {
     if (editId) {
@@ -127,7 +207,9 @@ async function saveHotel() {
     }
     load(false);
     closeHotelModal();
+    draftClear('hotel');
     toast(editId ? 'Hotel updated!' : 'Hotel created!');
+    cmsLoadTaxonomy(true);
     loadAllData();
   } catch (e) {
     load(false);
@@ -142,8 +224,6 @@ function editHotel(id) {
   document.getElementById('h-name').value = h.name || '';
   document.getElementById('h-cat').value = h.category || '';
   document.getElementById('h-rating').value = h.rating || '';
-  document.getElementById('h-cover').value = h.coverImage || '';
-  document.getElementById('h-desc').value = h.description || '';
   document.getElementById('h-addr').value = h.address || '';
   document.getElementById('h-maps').value = h.mapsLink || '';
   document.getElementById('h-coords').value = h.coordinates || '';
@@ -153,9 +233,16 @@ function editHotel(id) {
   document.getElementById('h-checkin').value = h.checkInTime || '';
   document.getElementById('h-checkout').value = h.checkOutTime || '';
   document.getElementById('h-rate').value = (h.startingPrice !== null && h.startingPrice !== undefined) ? h.startingPrice : '';
+  document.getElementById('h-status').value = h.status || 'published';
   renderTagChips('h-cat');
-  setGalInputs('h-gal-list', h.gallery || []);
+  cmsCoverSet('h-cover', h.coverImage || '');
+  cmsGallerySet('h-gal', h.gallery || []);
+  cmsGalleryInit('h-gal', 'h-cover');
+  rteSet('h-desc', h.descriptionHtml || '');
   document.getElementById('h-feat').classList.toggle('on', !!h.featured);
+  cmsFeatToggle('h');
+  document.getElementById('h-feat-from').value = cmsToLocalInput(h.featuredFrom);
+  document.getElementById('h-feat-until').value = cmsToLocalInput(h.featuredUntil);
   document.getElementById('hotelModalTitle').textContent = 'Edit Hotel';
   document.getElementById('h-save').textContent = 'Update Hotel';
   document.getElementById('hotelModal').classList.add('on');
@@ -182,14 +269,22 @@ function resetHotel() {
   document.getElementById('hotelForm').reset();
   document.getElementById('h-edit').value = '';
   document.getElementById('h-cat').value = '';
+  document.getElementById('h-status').value = 'published';
   document.getElementById('h-feat').classList.remove('on');
+  cmsFeatToggle('h');
+  document.getElementById('h-feat-from').value = '';
+  document.getElementById('h-feat-until').value = '';
   document.getElementById('h-save').textContent = 'Save Hotel';
-  document.getElementById('h-gal-list').innerHTML = '<div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>';
+  cmsCoverSet('h-cover', '');
+  cmsGallerySet('h-gal', []);
+  rteClear('h-desc');
   var catInput = document.getElementById('h-cat-input');
   var wrap = document.getElementById('h-cat-wrap');
-  wrap.innerHTML = '';
-  wrap.appendChild(catInput);
-  catInput.value = '';
+  if (catInput && wrap) {
+    wrap.innerHTML = '';
+    wrap.appendChild(catInput);
+    catInput.value = '';
+  }
 }
 
 function prevHotel(id) {

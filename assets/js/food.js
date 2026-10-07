@@ -1,5 +1,22 @@
 // ═══════════════ FOODS ═══════════════
 
+// Client-side sort keys, mirroring the fields GET /foods returns.
+var FOOD_SORT_OPTIONS = [
+  { value: 'created', label: 'Date added' },
+  { value: 'updated', label: 'Last updated' },
+  { value: 'name', label: 'Name' },
+  { value: 'price', label: 'Price' },
+  { value: 'category', label: 'Category' }
+];
+
+function foodSortValue(f, key) {
+  if (key === 'price') return Number(f.price) || 0;
+  if (key === 'name') return String(f.name || '');
+  if (key === 'category') return String(f.category || '');
+  if (key === 'updated') return String(f.updatedAt || f.createdAt || '');
+  return String(f.createdAt || '');
+}
+
 function updateDestDropdown() {
   var sel = document.getElementById('f-dest');
   var cur = sel.value;
@@ -16,17 +33,37 @@ function updateDestDropdown() {
 function renderFood(foods, places) {
   foods = foods || {};
   places = places || {};
-  var html = '';
-  var n = 0;
+  kitList('food', { sort: 'created', dir: 'desc', limit: 24 });
+  if (!bulkStore.f) {
+    bulkRegister('f', 'foods', function() { loadAllData(); },
+      { category: true, tags: true });
+  }
+  var filtered = [];
   Object.keys(foods).forEach(function(id) {
     var f = foods[id];
     if (search && (f.name||'').toLowerCase().indexOf(search) < 0 && (f.category||'').toLowerCase().indexOf(search) < 0) return;
-    n++;
+    filtered.push({ id: id, f: f });
+  });
+  filtered = kitSortRows(filtered, function(row, key) { return foodSortValue(row.f, key); }, 'food');
+  var page = kitSlice(filtered, 'food');
+  var n = filtered.length;
+
+  var html = '';
+  var visibleIds = filtered.map(function(row) { return row.id; });
+  page.rows.forEach(function(row) {
+    var id = row.id;
+    var f = row.f;
     var price = f.price ? fmtNaira(f.price) : '';
     var dest = f.destinationId && places[f.destinationId] ? places[f.destinationId].name : '';
     var catDisplay = esc((f.category||'').replace(/,/g, ', '));
-    var tags = f.tags ? f.tags.split(',').map(function(t){return t.trim()}).filter(Boolean) : [];
-    html += '<div class="food-card" onclick="prevFood(\''+id+'\')">' +
+    var tagRaw = f.tags;
+    var tagList = Array.isArray(tagRaw) ? tagRaw : (tagRaw ? String(tagRaw).split(',') : []);
+    var tags = tagList.map(function(t){return String(t).trim()}).filter(Boolean);
+    html += '<div class="food-card' + (bulkStore.f && bulkStore.f.selected[id] ? ' is-selected' : '') + '" onclick="prevFood(\''+id+'\')">' +
+      '<div class="cms-card-check" onclick="event.stopPropagation()">' +
+        '<input type="checkbox" class="bulk-check" ' + (bulkStore.f && bulkStore.f.selected[id] ? 'checked' : '') +
+        ' onchange="bulkToggle(\'f\',\'' + id + '\',this.checked)">' +
+      '</div>' +
       '<div class="food-card-img-wrap">' +
         (f.image
           ? '<img class="food-card-img" src="'+esc(f.image)+'" onerror="this.outerHTML=\'<div class=food-card-img-fallback>🍽️</div>\'">'
@@ -47,34 +84,76 @@ function renderFood(foods, places) {
         '<div style="margin-bottom:8px">' +
           '<span class="food-card-status '+(f.available !== false ? 'food-card-status-available' : 'food-card-status-unavailable')+'">'+(f.available !== false ? '● Available' : '● Unavailable')+'</span>' +
         '</div>' +
+        '<div class="cms-card-badges">' + cmsStatusBadge(f) + '</div>' +
         '<div class="food-card-acts">' +
           '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editFood(\''+id+'\')">Edit</button>' +
           '<button class="btn btn-red btn-sm" onclick="event.stopPropagation();delFood(\''+id+'\')">Delete</button>' +
+          '<select class="cms-quick-status" onclick="event.stopPropagation()" onchange="quickStatus(\'foods\',\'' + id + '\',this.value)">' +
+            '<option value="draft" ' + (f.status === 'draft' ? 'selected' : '') + '>Draft</option>' +
+            '<option value="published" ' + (f.status !== 'draft' && f.status !== 'archived' ? 'selected' : '') + '>Published</option>' +
+            '<option value="archived" ' + (f.status === 'archived' ? 'selected' : '') + '>Archived</option>' +
+          '</select>' +
         '</div>' +
       '</div></div>';
   });
-  document.getElementById('f-list').innerHTML = html || '<div class="food-empty"><div class="food-empty-icon">🍽️</div><div class="food-empty-title">No food items yet</div><div class="food-empty-text">Add your first menu item to start managing the food catalog.</div></div>';
+  bulkVisible['f'] = visibleIds;
+  if (!html && !n) {
+    var noMatch = !!search && Object.keys(foods).length > 0;
+    html = noMatch
+      ? '<div class="food-empty"><div class="food-empty-icon">\uD83D\uDD0D</div><div class="food-empty-title">No food items match your search</div><div class="food-empty-text">Try a different name or category.</div></div>'
+      : '<div class="food-empty"><div class="food-empty-icon">🍽️</div><div class="food-empty-title">No food items yet</div><div class="food-empty-text">Add your first menu item to start managing the food catalog.</div></div>';
+    html += '<div id="f-insights" style="margin-top:16px"></div>';
+  }
+  document.getElementById('f-list').innerHTML = html;
   document.getElementById('f-count').textContent = n + ' item' + (n !== 1 ? 's' : '');
+  kitRenderPager('f-pager', 'food', n ? page : null, function() { renderFood(cachedFoods, cachedPlaces); });
+  kitRenderSort('f-sort', 'food', FOOD_SORT_OPTIONS, function() { renderFood(cachedFoods, cachedPlaces); });
+  kitRenderSavedBar('f-saved', {
+    key: 'food',
+    current: { name: kitList('food').preset, params: { sort: kitList('food').sort, dir: kitList('food').dir } },
+    onApply: function(params, name) {
+      kitApplyParams('food', params);
+      kitList('food').preset = name;
+      renderFood(cachedFoods, cachedPlaces);
+    },
+    onSaved: function() { renderFood(cachedFoods, cachedPlaces); }
+  });
+  bulkRender('f');
+  if (document.getElementById('f-insights')) loadInsightsInto('f-insights');
 }
+
+// Fields kept as a local draft while a new food item is being written.
+var FOOD_DRAFT_FIELDS = ['f-name', 'f-cat', 'f-price', 'f-dest', 'f-prep', 'f-tags', 'f-status'];
 
 function openFoodModal(editId) {
   resetFood();
+  cmsGalleryInit('f-gal', 'f-img');
+  if (!editId) {
+    draftBind('food', FOOD_DRAFT_FIELDS);
+    draftRestoreInto('food', FOOD_DRAFT_FIELDS);
+  }
   if (editId) {
     var f = cachedFoods[editId];
     if (!f) return;
     document.getElementById('f-edit').value = editId;
     document.getElementById('f-name').value = f.name || '';
     document.getElementById('f-cat').value = f.category || '';
-    document.getElementById('f-img').value = f.image || '';
     document.getElementById('f-price').value = f.price || '';
-    document.getElementById('f-desc').value = f.description || '';
     document.getElementById('f-dest').value = f.destinationId || '';
     document.getElementById('f-prep').value = f.prepTime || '';
-    document.getElementById('f-tags').value = f.tags || '';
+    var tagRaw = f.tags;
+    document.getElementById('f-tags').value = Array.isArray(tagRaw) ? tagRaw.join(', ') : (tagRaw || '');
+    document.getElementById('f-status').value = f.status || 'published';
     renderTagChips('f-cat');
-    setGalInputs('f-gal-list', f.gallery || []);
+    cmsCoverSet('f-img', f.image || '');
+    cmsGallerySet('f-gal', f.gallery || []);
+    cmsGalleryInit('f-gal', 'f-img');
+    rteSet('f-desc', f.descriptionHtml || '');
     document.getElementById('f-avail').classList.toggle('on', f.available !== false);
     document.getElementById('f-feat').classList.toggle('on', !!f.featured);
+    cmsFeatToggle('f');
+    document.getElementById('f-feat-from').value = cmsToLocalInput(f.featuredFrom);
+    document.getElementById('f-feat-until').value = cmsToLocalInput(f.featuredUntil);
     document.getElementById('foodModalTitle').textContent = 'Edit Food Item';
     document.getElementById('f-save').textContent = 'Update Food Item';
   }
@@ -108,18 +187,26 @@ async function saveFood() {
   var price = document.getElementById('f-price').value;
   if (!name || !cat || !img || !price) { toast('Fill all required fields', false); return; }
   load(true);
-  var gal = getGalInputs('f-gal-list');
   var data = {
     name: name, category: cat, image: img,
     price: Number(price),
     destinationId: document.getElementById('f-dest').value || null,
-    description: document.getElementById('f-desc').value.trim(),
+    description: rteText('f-desc'),
+    descriptionHtml: rteGet('f-desc'),
     prepTime: document.getElementById('f-prep').value.trim(),
     tags: document.getElementById('f-tags').value.trim(),
-    gallery: gal,
+    gallery: cmsGalleryGet('f-gal'),
     available: document.getElementById('f-avail').classList.contains('on'),
+    status: document.getElementById('f-status').value,
     featured: document.getElementById('f-feat').classList.contains('on')
   };
+  if (data.featured) {
+    data.featuredFrom = document.getElementById('f-feat-from').value || null;
+    data.featuredUntil = document.getElementById('f-feat-until').value || null;
+  } else {
+    data.featuredFrom = null;
+    data.featuredUntil = null;
+  }
   var editId = document.getElementById('f-edit').value;
   try {
     if (editId) {
@@ -128,8 +215,10 @@ async function saveFood() {
       await api('POST', '/foods', data);
     }
     load(false);
+    draftClear('food');
     toast(editId ? 'Updated!' : 'Added!');
     closeFoodModal();
+    cmsLoadTaxonomy(true);
     loadAllData();
   } catch (e) {
     load(false);
@@ -162,15 +251,23 @@ function resetFood() {
   document.getElementById('f-edit').value = '';
   document.getElementById('f-cat').value = '';
   document.getElementById('f-avail').classList.add('on');
+  document.getElementById('f-status').value = 'published';
   document.getElementById('f-feat').classList.remove('on');
+  cmsFeatToggle('f');
+  document.getElementById('f-feat-from').value = '';
+  document.getElementById('f-feat-until').value = '';
   document.getElementById('f-save').textContent = 'Save Food Item';
   document.getElementById('foodModalTitle').textContent = 'Create Food Item';
-  document.getElementById('f-gal-list').innerHTML = '<div class="img-add-row"><input placeholder="Image URL 1" class="gal-input"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">&times;</button></div>';
+  cmsCoverSet('f-img', '');
+  cmsGallerySet('f-gal', []);
+  rteClear('f-desc');
   var catInput = document.getElementById('f-cat-input');
   var wrap = document.getElementById('f-cat-wrap');
-  wrap.innerHTML = '';
-  wrap.appendChild(catInput);
-  catInput.value = '';
+  if (catInput && wrap) {
+    wrap.innerHTML = '';
+    wrap.appendChild(catInput);
+    catInput.value = '';
+  }
 }
 
 function prevFood(id) {

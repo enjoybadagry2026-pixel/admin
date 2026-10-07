@@ -4,7 +4,7 @@
 //          GET  /api/admin/hotel-bookings/:ref        (details + wallet transactions)
 //          POST /api/admin/hotel-bookings/:ref/<action>  (confirm | checkin | complete | decline | cancel)
 
-var hbState = { page: 1, limit: 20, q: '', status: '', payment: '', hotelId: '', from: '', to: '', loaded: false, loading: false };
+var hbState = { q: '', status: '', payment: '', hotelId: '', from: '', to: '', loaded: false, loading: false };
 var hbListData = [];
 var hbPagination = null;
 var hbStats = null;
@@ -115,8 +115,25 @@ function hbTag(label, cls) {
 
 // ─── List ──────────────────────────────────────
 
+// Server sort keys accepted by GET /hotel-bookings (backend parseSort map).
+var HB_SORT_OPTIONS = [
+  { value: 'created', label: 'Date booked' },
+  { value: 'checkin', label: 'Check-in date' },
+  { value: 'amount', label: 'Total amount' },
+  { value: 'guest', label: 'Guest name' },
+  { value: 'hotel', label: 'Hotel' },
+  { value: 'status', label: 'Status' },
+  { value: 'reference', label: 'Booking reference' }
+];
+
+function hbListKit() {
+  return kitList('hotelbookings', { limit: 20, sort: 'created', dir: 'desc' });
+}
+
 function hbListPath() {
-  var p = '/hotel-bookings?page=' + hbState.page + '&limit=' + hbState.limit;
+  var s = hbListKit();
+  var p = '/hotel-bookings?page=' + s.page + '&limit=' + s.limit +
+    '&sort=' + encodeURIComponent(s.sort) + '&dir=' + encodeURIComponent(s.dir);
   if (hbState.q) p += '&q=' + encodeURIComponent(hbState.q);
   if (hbState.status) p += '&status=' + encodeURIComponent(hbState.status);
   if (hbState.payment) p += '&paymentStatus=' + encodeURIComponent(hbState.payment);
@@ -154,6 +171,10 @@ function loadHotelBookings(force) {
     hbStats = (res.data && res.data.stats) || null;
     hbPagination = res.pagination || null;
     hbState.loaded = true;
+    if (hbPagination && hbPagination.totalPages && hbListKit().page > hbPagination.totalPages) {
+      kitSetPage('hotelbookings', hbPagination.totalPages);
+      setTimeout(function() { loadHotelBookings(true); }, 0);
+    }
     hbShowListState('ready');
     hbRenderStats();
     hbRenderHotelFilter((res.data && res.data.hotels) || []);
@@ -260,16 +281,18 @@ function renderHotelBookings() {
           ? 'Try a different search term or clear the filters below.'
           : 'Hotel bookings from guests will appear here as soon as they are made.') +
       '</div>' +
-    '</div>';
+    '</div><div id="hb-insights" style="margin-top:16px"></div>';
   }
   el.innerHTML = html;
+  if (document.getElementById('hb-insights')) loadInsightsInto('hb-insights');
 
   var total = hbPagination ? hbPagination.total : (hbListData || []).length;
   hbBookingCountText = total + ' booking' + (total === 1 ? '' : 's');
   if (hbActiveTab === 'bookings') hbSetText('h-count', hbBookingCountText);
 
   if (total) {
-    var start = (hbState.page - 1) * hbState.limit + 1;
+    var s = hbListKit();
+    var start = (s.page - 1) * s.limit + 1;
     var end = Math.min(total, start + (hbListData || []).length - 1);
     hbSetText('hb-hint', start === end ? String(total) : start + '–' + end + ' of ' + total);
   } else {
@@ -283,23 +306,12 @@ function renderHotelBookings() {
 }
 
 function hbRenderPagination() {
-  var el = document.getElementById('hb-pagination');
-  if (!el) return;
-  var pg = hbPagination;
-  if (!pg || !pg.totalPages || pg.totalPages <= 1) {
-    el.style.display = 'none';
-    el.innerHTML = '';
-    return;
-  }
-  el.style.display = '';
-  el.innerHTML =
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page <= 1 ? 'disabled' : '') + ' onclick="hbGoPage(' + (pg.page - 1) + ')">Prev</button>' +
-    '<span class="um-page-info">Page ' + pg.page + ' of ' + pg.totalPages + '</span>' +
-    '<button class="btn btn-ghost btn-sm" ' + (pg.page >= pg.totalPages ? 'disabled' : '') + ' onclick="hbGoPage(' + (pg.page + 1) + ')">Next</button>';
+  kitRenderPager('hb-pagination', 'hotelbookings', hbPagination, function() { loadHotelBookings(true); });
+  kitRenderSort('hb-sort', 'hotelbookings', HB_SORT_OPTIONS, function() { loadHotelBookings(true); });
 }
 
 function hbGoPage(page) {
-  hbState.page = page;
+  kitSetPage('hotelbookings', page);
   loadHotelBookings(true);
   var el = document.getElementById('hb-list');
   if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -311,7 +323,7 @@ function onHotelBookingSearch(v) {
   if (hbSearchTimer) clearTimeout(hbSearchTimer);
   hbSearchTimer = setTimeout(function() {
     hbState.q = String(v || '').trim();
-    hbState.page = 1;
+    kitSetPage('hotelbookings', 1);
     loadHotelBookings(true);
   }, 300);
 }
@@ -331,7 +343,7 @@ function filterHotelBookings() {
     toast('From date must be before the To date', false);
     return;
   }
-  hbState.page = 1;
+  kitSetPage('hotelbookings', 1);
   loadHotelBookings(true);
 }
 
@@ -342,7 +354,7 @@ function clearHotelBookingFilters() {
   hbState.hotelId = '';
   hbState.from = '';
   hbState.to = '';
-  hbState.page = 1;
+  kitSetPage('hotelbookings', 1);
   var search = document.getElementById('hb-search');
   if (search) search.value = '';
   ['hb-status-filter', 'hb-payment-filter', 'hb-hotel-filter'].forEach(function(id) {
@@ -612,6 +624,10 @@ function renderHotelBookingModal() {
 
   // ── Actions ──
   html += hbActionButtons(bk);
+
+  if (typeof refundActionsHtml === 'function') {
+    html += refundActionsHtml('hotel', bk.bookingReference || bk.reference || '', { paymentStatus: bk.paymentStatus });
+  }
 
   body.innerHTML = html || hbEmptyInline('No booking information available.');
   body.scrollTop = 0;
