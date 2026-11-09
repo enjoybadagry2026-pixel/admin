@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/verify-account/:token", "destination": "/verify-account/index.html" },
-    { "source": "/reset-password/:token", "destination": "/reset-password/index.html" }
-  ]
-}
