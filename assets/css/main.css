@@ -2244,10 +2244,41 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .order-bulk-count strong{color:var(--text)}
 .order-bulk-actions{display:flex;gap:8px;flex-wrap:wrap}
 .order-bulk-actions .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
-.order-driver-assign{display:flex;gap:10px;margin-top:14px;align-items:stretch}
-.order-driver-select{flex:1;min-width:0;background:var(--input);border:1px solid var(--input-border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;outline:none;transition:border .2s,box-shadow .2s}
-.order-driver-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.order-driver-assign{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap}
 .order-driver-assign .btn{white-space:nowrap;justify-content:center}
+.order-driver-assign-hint{font-size:12px;color:var(--text2);line-height:1.5;min-width:0}
+.order-card-actions{display:flex;gap:8px;padding:0 18px 14px}
+.order-card-actions .btn{white-space:nowrap}
+
+/* ── Assign delivery driver modal (food orders) ───────────── */
+.assign-driver-modal{max-width:560px}
+.assign-driver-footer{flex-shrink:0;border-top:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--soft)}
+.assign-driver-selected{font-size:12.5px;color:var(--text2);line-height:1.5;min-width:0;flex:1}
+.assign-driver-selected strong{color:var(--text);font-weight:600}
+.assign-driver-selected.is-reassign,.assign-driver-selected.is-reassign strong{color:var(--accent)}
+.assign-driver-acts{display:flex;gap:8px;flex-shrink:0}
+.assign-driver-summary{font-size:12px;color:var(--text2);margin-bottom:12px}
+.assign-driver-group-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin:18px 0 8px}
+.assign-driver-list{display:flex;flex-direction:column;gap:8px}
+.assign-driver-list .drv-loading,.assign-driver-list .drv-error{padding:32px 8px}
+
+.ad-option{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;cursor:pointer;color:var(--text);font-family:inherit;transition:border .15s,background .15s,box-shadow .15s}
+.ad-option:hover:not(:disabled){border-color:var(--accent);background:var(--hover)}
+.ad-option.is-selected{border-color:var(--accent);background:var(--accent-glow);box-shadow:0 0 0 3px var(--accent-glow)}
+.ad-option:disabled{opacity:.6;cursor:not-allowed}
+.ad-option.is-muted{background:transparent}
+.ad-option.is-muted:hover:not(:disabled){background:transparent}
+.ad-avatar{width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0}
+.ad-main{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.ad-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ad-meta{font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ad-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.ad-badge{font-size:10px;font-weight:700;padding:3px 7px;border-radius:20px;background:var(--card);border:1px solid var(--border);color:var(--text2);white-space:nowrap}
+.ad-badge-online,.ad-badge-ready{color:var(--green);border-color:rgba(46,204,113,.35);background:rgba(46,204,113,.10)}
+.ad-badge-current{color:var(--accent);border-color:rgba(232,138,58,.40);background:var(--accent-glow)}
+.ad-reason{font-size:11px;font-weight:600;color:var(--red);margin-top:2px}
+.ad-check{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);display:none;align-items:center;justify-content:center;color:#fff;background:var(--accent);flex-shrink:0}
+.ad-option.is-selected .ad-check{display:flex}
 .order-map{height:300px;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:#12121a;margin-top:4px}
 .order-map .leaflet-container{background:var(--map-bg);font-family:inherit}
 .order-map-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
@@ -2261,7 +2292,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 @media(max-width:600px){
   .order-bulk-bar{flex-direction:column;align-items:stretch}
   .order-bulk-actions{justify-content:flex-start}
-  .order-driver-assign{flex-direction:column}
+  .order-driver-assign{flex-direction:column;align-items:stretch}
+  .order-card-actions{padding:0 14px 12px}
+  .assign-driver-footer{flex-direction:column;align-items:stretch}
+  .assign-driver-acts{justify-content:flex-end}
+  .assign-driver-modal{max-width:100%}
 }
 .order-map.order-map-failed{height:auto;background:transparent;border:none;margin-top:0}
 .order-map.order-map-failed .order-map-empty{margin-top:4px}
@@ -2837,3 +2872,48 @@ body.is-offline #toast-box{bottom:54px}
   .pager{justify-content:center}
   .pal-bg{padding-top:6vh}
 }
+/* Driver application review */
+.da-help{font-size:12px;color:var(--text2);margin:0 0 14px}
+.da-dialog [hidden]{display:none}
+.da-dialog .order-modal-title{min-width:0;overflow-wrap:anywhere}
+.da-dialog .order-modal-close{flex-shrink:0}
+.da-stats.um-stats{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
+.da-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px}
+.da-filters .fg{margin:0;min-width:0}
+.da-filters input,.da-filters select{width:100%;min-width:0}
+.da-filter-actions{display:flex;align-items:flex-end}
+.da-state{text-align:center;padding:36px 20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2)}
+.da-state p{margin-bottom:14px}
+.da-table{min-width:950px}
+.da-table small{display:block;color:var(--text2);margin-top:5px;overflow-wrap:anywhere}
+.da-table td:first-child{max-width:280px}
+.da-badge{display:inline-flex;padding:4px 9px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:11px;font-weight:700;white-space:nowrap}
+.da-badge-approved{color:var(--green)}
+.da-badge-rejected{color:var(--red)}
+.da-badge-pending{color:var(--accent);border-style:dashed}
+.da-badge-under_review,.da-badge-needs_information{color:var(--accent);background:var(--accent-glow)}
+.da-overlay[hidden]{display:none}
+.da-overlay{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim)}
+.da-confirm-overlay{z-index:9010}
+.da-dialog{display:flex;flex-direction:column;width:min(900px,100%);max-height:calc(100dvh - 48px);min-height:0;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);box-shadow:var(--shadow-lg);overflow:hidden}
+.da-confirm-dialog{width:min(520px,100%)}
+.da-dialog .order-modal-header{background:var(--surface);gap:16px}
+.da-dialog .order-modal-body{min-height:0;overscroll-behavior:contain}
+.da-dialog .order-detail-field{min-width:0}
+.da-dialog .order-detail-field-value,.da-history p{white-space:pre-wrap;overflow-wrap:anywhere}
+.da-dialog .fg{margin-top:16px}
+.da-dialog textarea{width:100%;box-sizing:border-box}
+.da-dialog small{color:var(--text2)}
+.da-notice{padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);margin-bottom:20px}
+.da-actions{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.da-actions:last-child{margin-bottom:0}
+.da-history{list-style:none;padding:0;display:grid;gap:10px}
+.da-history li{border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;background:var(--input)}
+.da-history p{margin:8px 0 0}
+.da-history small{display:block;margin-top:6px}
+.da-history li{position:relative;border-left:3px solid var(--accent)}
+.da-error{color:var(--red);margin:12px 0;overflow-wrap:anywhere}
+#da-note-form{margin-top:16px}
+.da-overlay :focus-visible,#panel-applications :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:700px){.da-filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px}.da-overlay{padding:10px}.da-dialog{max-height:calc(100dvh - 20px)}.da-dialog .order-detail-grid{grid-template-columns:1fr}}
+@media(max-width:400px){.da-filters{grid-template-columns:1fr}.da-stats.um-stats{grid-template-columns:1fr 1fr}}

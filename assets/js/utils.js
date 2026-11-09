@@ -11,6 +11,7 @@ var TAB_META = {
   orders:   { label: 'Food Orders',  group: 'Operations' },
   users:    { label: 'Users',        group: 'Management' },
   drivers:  { label: 'Drivers',      group: 'Management' },
+  applications: { label: 'Driver Applications', group: 'Management' },
   dest:     { label: 'Destinations', group: 'Content' },
   hotel:    { label: 'Hotels',       group: 'Content' },
   food:     { label: 'Food Menu',    group: 'Content' },
@@ -28,7 +29,7 @@ var TAB_META = {
   profile:  { label: 'My Profile', group: 'Account' }
 };
 
-var PANEL_IDS = ['overview', 'users', 'dest', 'hotel', 'food', 'events', 'tours', 'banners', 'taxonomy', 'reviews', 'orders', 'rides', 'drivers', 'wallets', 'revenue', 'support', 'notifications', 'audit', 'staff', 'profile'];
+var PANEL_IDS = ['overview', 'users', 'dest', 'hotel', 'food', 'events', 'tours', 'banners', 'taxonomy', 'reviews', 'orders', 'rides', 'drivers', 'applications', 'wallets', 'revenue', 'support', 'notifications', 'audit', 'staff', 'profile'];
 
 // Permission required to see each tab. '' = every signed-in admin.
 // Mirrors requirePermission(...) in routes/admin.js so the sidebar hides
@@ -41,6 +42,7 @@ var TAB_PERMS = {
   notifications: 'notifications.view',
   users: 'users.view',
   drivers: 'drivers.view',
+  applications: 'drivers.view',
   wallets: 'wallets.view',
   revenue: 'reports.view',
   dest: 'content.destinations.read',
@@ -181,6 +183,7 @@ function switchTab(t) {
   }
   if (t === 'overview' && typeof loadOverviewStats === 'function') loadOverviewStats();
   if (t === 'users' && typeof loadUsers === 'function') loadUsers();
+  if (t === 'applications' && typeof loadDriverApplications === 'function') loadDriverApplications();
   if (t === 'rides' && typeof loadRides === 'function') loadRides();
   if (t === 'wallets' && typeof loadWalletPanel === 'function') loadWalletPanel();
   if (t === 'revenue' && typeof loadRevenuePanel === 'function') loadRevenuePanel();
@@ -293,7 +296,14 @@ function showDel(txt, cb) {
 function closeDel() { document.getElementById('delModal').classList.remove('on'); delCb = null; }
 function confirmDel() { var cb = delCb; closeDel(); if (cb) cb(); }
 
-function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+// Quote-safe: image URLs and other values are interpolated straight into
+// HTML attributes (`src="…"`), so `"`/`'` must be escaped too — the
+// textContent/innerHTML trick only covers <>&.
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
 
 function fmtDate(iso) {
   if (!iso) return '';

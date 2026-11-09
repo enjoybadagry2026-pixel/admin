@@ -768,6 +768,7 @@ function supClearAttach() {
 
 function supSendReply() {
   if (!supActive || supSending) return;
+  if (supUploading) { toast('Image is still uploading…', false); return; }
   var input = document.getElementById('sup-composer-input');
   var text = input ? input.value.trim() : '';
   if (!text && !supAttach) {

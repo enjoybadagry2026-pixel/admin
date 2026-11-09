@@ -168,12 +168,14 @@ document.addEventListener('keydown', function(e) {
 // ═══════════════ CRUD ═══════════════
 
 async function saveHotel() {
+  var editId = document.getElementById('h-edit').value;
   var name = document.getElementById('h-name').value.trim();
   var cat = document.getElementById('h-cat').value;
   var cover = document.getElementById('h-cover').value.trim();
   var desc = rteText('h-desc');
   var addr = document.getElementById('h-addr').value.trim();
-  if (!name || !cat || !cover || !desc || !addr) { toast('Fill all required fields', false); return; }
+  // Required-field check only applies when creating; editing is a partial update.
+  if (!editId && (!name || !cat || !cover || !desc || !addr)) { toast('Fill all required fields', false); return; }
   load(true);
   var data = {
     name: name, category: cat, coverImage: cover, description: desc, address: addr,
@@ -198,7 +200,15 @@ async function saveHotel() {
     data.featuredFrom = null;
     data.featuredUntil = null;
   }
-  var editId = document.getElementById('h-edit').value;
+  if (editId) {
+    // Partial update: drop empty text fields so the backend keeps existing values
+    // (backend updateHotel only skips NULL, an empty string would overwrite).
+    ['name','category','coverImage','description','descriptionHtml','address',
+     'mapsLink','coordinates','phone','email','website','checkInTime','checkOutTime',
+     'rating','startingPrice'].forEach(function(k) {
+      if (data[k] === '') delete data[k];
+    });
+  }
   try {
     if (editId) {
       await api('PUT', '/hotels/' + editId, data);
@@ -238,7 +248,7 @@ function editHotel(id) {
   cmsCoverSet('h-cover', h.coverImage || '');
   cmsGallerySet('h-gal', h.gallery || []);
   cmsGalleryInit('h-gal', 'h-cover');
-  rteSet('h-desc', h.descriptionHtml || '');
+  rteSet('h-desc', h.descriptionHtml || h.description || '');
   document.getElementById('h-feat').classList.toggle('on', !!h.featured);
   cmsFeatToggle('h');
   document.getElementById('h-feat-from').value = cmsToLocalInput(h.featuredFrom);

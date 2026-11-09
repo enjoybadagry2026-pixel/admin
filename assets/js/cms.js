@@ -123,11 +123,22 @@ function cmsFromLocalInput(v) {
 function cmsUploadFiles(files, onProgress) {
   return new Promise(function(resolve, reject) {
     if (!files || !files.length) { reject(new Error('No files selected')); return; }
+    // Mirror the backend limits (middleware/upload.js: 5 MB, 12 files,
+    // image mime types) so bad input fails instantly with a clear message
+    // instead of after a full upload round-trip.
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      if (f.size > 5 * 1024 * 1024) { reject(new Error(f.name + ' is larger than the 5 MB limit')); return; }
+      if (f.type && f.type.indexOf('image/') !== 0) { reject(new Error(f.name + ' is not an image file')); return; }
+    }
+    if (files.length > 12) { reject(new Error('Maximum is 12 images per upload')); return; }
+
     var fd = new FormData();
-    for (var i = 0; i < files.length; i++) fd.append('images', files[i]);
+    for (var j = 0; j < files.length; j++) fd.append('images', files[j]);
 
     var xhr = new XMLHttpRequest();
     xhr.open('POST', API_BASE + '/media');
+    xhr.timeout = 120000;
     var token = localStorage.getItem('admin_token');
     if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 
@@ -141,11 +152,18 @@ function cmsUploadFiles(files, onProgress) {
       try { json = JSON.parse(xhr.responseText); } catch (e) {}
       if (xhr.status === 401) { doLogout(); reject(new Error('Session expired')); return; }
       if (!json || !json.success) {
-        reject(new Error((json && json.message) || 'Upload failed (' + xhr.status + ')'));
+        var msg = (json && json.message) || 'Upload failed (' + xhr.status + ')';
+        if (json && Array.isArray(json.errors) && json.errors.length) {
+          msg += ' — ' + json.errors.map(function(er) { return er.message || er.field || ''; }).filter(Boolean).join('; ');
+        }
+        reject(new Error(msg));
         return;
       }
-      resolve((json.data && json.data.media) || []);
+      var list = (json.data && json.data.media) || [];
+      if (!list.length) { reject(new Error('Upload returned no media')); return; }
+      resolve(list);
     };
+    xhr.ontimeout = function() { reject(new Error('Upload timed out — try again')); };
     xhr.onerror = function() { reject(new Error('Network error during upload')); };
     xhr.send(fd);
   });
@@ -158,6 +176,8 @@ function cmsPickFiles(multiple) {
     input.accept = 'image/jpeg,image/png,image/webp,image/gif';
     if (multiple) input.multiple = true;
     input.onchange = function() { resolve(Array.prototype.slice.call(input.files || [])); };
+    // Cancelling the dialog must resolve too, otherwise every await hangs.
+    input.oncancel = function() { resolve([]); };
     input.click();
   });
 }
@@ -201,6 +221,7 @@ async function cmsCoverUpload(hiddenId, progressEl) {
       if (bar) bar.firstElementChild.style.width = pct + '%';
     });
     if (bar) { bar.firstElementChild.style.width = '100%'; setTimeout(function() { bar.style.display = 'none'; }, 400); }
+    if (!media || !media.length || !media[0].url) { toast('Upload returned no image', false); return null; }
     cmsCoverSet(hiddenId, media[0].url);
     return media[0].url;
   } catch (e) {
@@ -393,6 +414,7 @@ async function cmsGalReplace(listId, i) {
     var files = await cmsPickFiles(false);
     if (!files.length) return;
     var media = await cmsUploadFiles(files, null);
+    if (!media || !media.length || !media[0].url) { toast('Upload returned no image', false); return; }
     var st = cmsGalleryState(listId);
     if (st.coverId) {
       var coverInput = document.getElementById(st.coverId);
@@ -408,7 +430,29 @@ async function cmsGalReplace(listId, i) {
 
 // ─────────────── Image cropper (shared modal) ───────────────
 
-var cmsCropState = { url: null, done: null, natW: 0, natH: 0, box: null, ratio: 0 };
+var cmsCropState = { url: null, done: null, natW: 0, natH: 0, box: null, ratio: 0, blobUrl: null, token: 0 };
+
+// Stored images live on the R2 public domain, which sends no CORS headers:
+// loaded straight into the cropper they taint the canvas and canvas.toBlob()
+// throws "Tainted canvases may not be exported". Fetch the bytes through the
+// backend proxy instead — the blob: URL it returns is same-origin, so the
+// canvas stays exportable. URLs the proxy rejects (data:, same-origin,
+// pasted external hosts) fall back to loading directly, as before.
+function cmsCropLoad(url) {
+  if (!/^https?:\/\/\S+$/i.test(url)) return Promise.resolve(url);
+  return fetch(API_BASE + '/media/proxy-image?url=' + encodeURIComponent(url), {
+    headers: authToken ? { 'Authorization': 'Bearer ' + authToken } : {}
+  }).then(function(res) {
+    if (!res.ok) throw new Error('proxy ' + res.status);
+    return res.blob();
+  }).then(function(blob) {
+    if (cmsCropState.blobUrl) URL.revokeObjectURL(cmsCropState.blobUrl);
+    cmsCropState.blobUrl = URL.createObjectURL(blob);
+    return cmsCropState.blobUrl;
+  }).catch(function() {
+    return url;
+  });
+}
 
 function cmsOpenCrop(url, onDone) {
   var modal = document.getElementById('cropModal');
@@ -416,13 +460,20 @@ function cmsOpenCrop(url, onDone) {
   cmsCropState.url = url;
   cmsCropState.done = onDone;
   cmsCropState.ratio = 0;
+  // Reset metrics so a previous crop can never be applied to this image
+  // while the new one is still loading.
+  cmsCropState.natW = 0;
+  cmsCropState.natH = 0;
+  cmsCropState.box = null;
 
   var img = document.getElementById('cropImg');
   var stage = document.getElementById('cropStage');
   var box = document.getElementById('cropBox');
   box.style.display = 'none';
 
+  var token = ++cmsCropState.token;
   img.onload = function() {
+    if (token !== cmsCropState.token) return;
     cmsCropState.natW = img.naturalWidth;
     cmsCropState.natH = img.naturalHeight;
     var r = img.getBoundingClientRect();
@@ -433,8 +484,16 @@ function cmsOpenCrop(url, onDone) {
     box.style.display = 'block';
     document.getElementById('cropDims').textContent = cmsCropState.natW + ' × ' + cmsCropState.natH + ' px';
   };
-  img.src = url;
+  img.onerror = function() {
+    if (token !== cmsCropState.token) return;
+    toast('Could not load the image for cropping', false);
+    cmsCloseCrop();
+  };
   modal.classList.add('on');
+  cmsCropLoad(url).then(function(src) {
+    if (token !== cmsCropState.token) return;
+    img.src = src;
+  });
 }
 
 function cmsCropBoxPaint() {
@@ -450,6 +509,13 @@ function cmsCropBoxPaint() {
 function cmsCloseCrop() {
   var modal = document.getElementById('cropModal');
   if (modal) modal.classList.remove('on');
+  cmsCropState.token++;
+  var img = document.getElementById('cropImg');
+  if (img) { img.onload = null; img.onerror = null; img.removeAttribute('src'); }
+  if (cmsCropState.blobUrl) { URL.revokeObjectURL(cmsCropState.blobUrl); cmsCropState.blobUrl = null; }
+  cmsCropState.url = null;
+  cmsCropState.box = null;
+  cmsCropState.ratio = 0;
   cmsCropState.done = null;
 }
 
@@ -535,6 +601,9 @@ function cmsCropInitDrag() {
 async function cmsCropApply() {
   var b = cmsCropState.box;
   var done = cmsCropState.done;
+  // natW is 0 until the (proxied) image has loaded — drawing now would use
+  // stale metrics from the previous crop.
+  if (!cmsCropState.natW) { toast('Image is still loading', false); return; }
   if (!b) { toast('Nothing to crop', false); return; }
   var img = document.getElementById('cropImg');
   var btn = document.getElementById('cropApplyBtn');

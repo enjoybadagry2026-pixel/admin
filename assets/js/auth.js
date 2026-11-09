@@ -32,6 +32,7 @@ function showLoginErr(msg) {
 }
 
 function doLogout() {
+  if (typeof daReset === 'function') daReset();
   if (authToken) {
     fetch(API_BASE + '/logout', {
       method: 'POST',

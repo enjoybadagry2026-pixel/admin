@@ -202,6 +202,18 @@ function renderOrders(orders) {
     var cardStage = foodOrderStage(o.status);
     var bulkEligible = cardStage === 'pending' || cardStage === 'accepted' || cardStage === 'processing' || cardStage === 'completed';
 
+    // Direct assignment entry point on the card for orders being prepared.
+    var cardDriverAction = '';
+    if (cardStage === 'processing') {
+      var cardAssignedId = o.driverId || (o.tracking && o.tracking.riderId) || '';
+      cardDriverAction = '<div class="order-card-actions">' +
+        '<button type="button" class="btn btn-accent btn-sm" onclick="event.stopPropagation();openAssignDriverModal(\'' + id + '\')">' +
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="16" y1="11" x2="22" y2="11"/></svg>' +
+          (cardAssignedId ? 'Reassign Driver' : 'Assign Driver') +
+        '</button>' +
+      '</div>';
+    }
+
     html += '<div class="order-card' + (orderBulkSelected[id] ? ' is-selected' : '') + '" onclick="openOrderModal(\'' + id + '\')">' +
       '<div class="order-card-header">' +
         (bulkEligible ? '<label class="order-card-select" title="Select for bulk actions" onclick="event.stopPropagation()"><input type="checkbox"' + (orderBulkSelected[id] ? ' checked' : '') + ' onchange="toggleBulkOrder(\'' + id + '\', this.checked)"></label>' : '') +
@@ -218,6 +230,7 @@ function renderOrders(orders) {
           (o.deliveryAddress ? '<span class="order-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(o.deliveryAddress.length > 30 ? o.deliveryAddress.substring(0, 30) + '...' : o.deliveryAddress) + '</span>' : '') +
         '</div>' +
       '</div>' +
+      cardDriverAction +
       '<div class="order-card-footer">' +
         '<span class="order-card-total">' + fmtNaira(o.grandTotal) + '</span>' +
         '<span class="order-card-footer-right">' +
@@ -439,7 +452,8 @@ function openOrderModal(id) {
   if (o.deliveryFee != null) body += detailField('Delivery Fee', fmtNaira(o.deliveryFee));
   body += '</div></div>';
 
-  // Driver & Tracking (with assignment picker while the order is still pre-delivery)
+  // Driver & Tracking — assignment itself happens in its own modal so the
+  // driver list can be fetched fresh and given proper loading/error states.
   var hasTracking = o.driverName || o.driverPhone || o.driverId || tracking.eta || tracking.expectedDeliveryTime || tracking.riderLatitude != null || tracking.riderLongitude != null;
   var modalStage = foodOrderStage(o.status);
   var canAssignDriver = modalStage === 'pending' || modalStage === 'accepted' || modalStage === 'processing' || modalStage === 'completed';
@@ -458,12 +472,15 @@ function openOrderModal(id) {
     body += detailField('Tracking Last Updated', tracking.lastUpdated ? fmtDate(tracking.lastUpdated) : '');
     body += '</div>';
     if (canAssignDriver) {
+      var assignedDriverId = o.driverId || tracking.riderId || '';
       body += '<div class="order-driver-assign">' +
-        '<select id="order-driver-select" class="order-driver-select">' + driverOptionsHtml(o.driverId || tracking.riderId || '') + '</select>' +
-        '<button type="button" class="btn btn-accent btn-sm" onclick="assignOrderDriver(\'' + id + '\', this)">' +
+        '<button type="button" class="btn btn-accent btn-sm" onclick="openAssignDriverModal(\'' + id + '\')">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="16" y1="11" x2="22" y2="11"/></svg>' +
-          (o.driverId || tracking.riderId ? 'Update Driver' : 'Assign Driver') +
+          (assignedDriverId ? 'Reassign Driver' : 'Assign Driver') +
         '</button>' +
+        '<span class="order-driver-assign-hint">' +
+          (assignedDriverId ? 'Currently assigned — you can replace the driver.' : 'No driver assigned to this order yet.') +
+        '</span>' +
       '</div>';
     }
     body += '</div>';
@@ -827,59 +844,298 @@ function runBulkOrderAction(action, reason) {
 }
 
 // ═══════════════ DRIVER ASSIGNMENT ═══════════════
+// The picker lives in its own modal (#assignDriverModal) so the driver list is
+// fetched fresh from the backend on every open instead of relying on whatever
+// happened to be cached at sign-in, and so loading / empty / error / busy
+// states are all explicit.
 
-function assignableDriverList() {
-  var list = [];
-  Object.keys(cachedDrivers).forEach(function(key) {
-    var d = cachedDrivers[key];
-    var status = (d.status || '').toLowerCase();
-    if (status && status !== 'active') return;
-    list.push(d);
-  });
-  list.sort(function(a, b) {
-    var aOnline = (a.onlineStatus || '').toLowerCase() === 'online' ? 0 : 1;
-    var bOnline = (b.onlineStatus || '').toLowerCase() === 'online' ? 0 : 1;
-    if (aOnline !== bOnline) return aOnline - bOnline;
-    return (Number(b.rating) || 0) - (Number(a.rating) || 0);
-  });
-  return list;
+var assignDriverState = {
+  orderId: null,     // key into cachedOrders
+  drivers: [],       // last response from /orders/assignable-drivers
+  selectedId: null,
+  loading: false,
+  error: null,
+  submitting: false,
+  confirmReassign: false
+};
+
+function assignDriverOrder() {
+  if (assignDriverState.orderId == null) return null;
+  return cachedOrders[assignDriverState.orderId] || null;
 }
 
-function driverOptionsHtml(currentId) {
-  var list = assignableDriverList();
-  if (!list.length) {
-    return '<option value="">No eligible drivers (active accounts)</option>';
+function assignDriverCurrentId(order) {
+  if (!order) return '';
+  var tracking = order.tracking || {};
+  return order.driverId || tracking.riderId || '';
+}
+
+function findAssignableDriver(driverId) {
+  if (!driverId) return null;
+  for (var i = 0; i < assignDriverState.drivers.length; i++) {
+    if (assignDriverState.drivers[i].id === driverId) return assignDriverState.drivers[i];
   }
-  var html = '<option value="">Select a driver…</option>';
-  list.forEach(function(d) {
-    var online = (d.onlineStatus || '').toLowerCase() === 'online';
-    var label = (d.fullName || d.driverId || d.id || 'Driver');
-    label += ' — ' + (online ? 'Online' : 'Offline');
-    if (d.rating != null && d.rating !== '') label += ' · ★' + Number(d.rating).toFixed(1);
-    if (d.totalTrips) label += ' · ' + d.totalTrips + ' trips';
-    html += '<option value="' + esc(d.id) + '"' + (d.id === currentId ? ' selected' : '') + '>' + esc(label) + '</option>';
-  });
-  return html;
+  return null;
 }
 
-function assignOrderDriver(id, btn) {
-  var o = cachedOrders[id];
-  if (!o) return;
-  var sel = document.getElementById('order-driver-select');
-  var driverId = sel ? sel.value : '';
-  if (!driverId) {
-    toast('Select a driver first', false);
-    if (sel) sel.focus();
+function assignDriverIneligibleLabel(reason) {
+  if (reason === 'busy_on_ride') return 'Busy — handling an active ride';
+  if (reason === 'driving') return 'Currently driving another trip';
+  if (reason === 'missing_driver') return 'Driver record incomplete';
+  if (reason && reason.indexOf('account_') === 0) {
+    return 'Account ' + reason.substring(8);
+  }
+  return 'Not eligible for assignment';
+}
+
+function openAssignDriverModal(id) {
+  var order = cachedOrders[id];
+  if (!order) {
+    toast('Order not found', false);
     return;
   }
-  var ref = o.orderReference || id;
+
+  assignDriverState.orderId = id;
+  assignDriverState.drivers = [];
+  assignDriverState.selectedId = null;
+  assignDriverState.loading = true;
+  assignDriverState.error = null;
+  assignDriverState.submitting = false;
+  assignDriverState.confirmReassign = false;
+
+  document.getElementById('assignDriverRef').textContent = order.orderReference || String(id);
+  renderAssignDriverBody();
+  renderAssignDriverFooter();
+
+  document.getElementById('assignDriverModal').classList.add('on');
+  document.body.style.overflow = 'hidden';
+
+  loadAssignableDrivers();
+}
+
+function closeAssignDriverModal() {
+  assignDriverState.orderId = null;
+  assignDriverState.selectedId = null;
+  assignDriverState.loading = false;
+  assignDriverState.error = null;
+  assignDriverState.submitting = false;
+  assignDriverState.confirmReassign = false;
+
+  var modal = document.getElementById('assignDriverModal');
+  if (modal) modal.classList.remove('on');
+  // Only hand scrolling back if no other modal is still open.
+  var orderModal = document.getElementById('orderModal');
+  if (!orderModal || !orderModal.classList.contains('on')) document.body.style.overflow = '';
+}
+
+// Fresh fetch on every open: availability changes between openings and a
+// stale cache could offer a driver who is no longer eligible.
+function loadAssignableDrivers() {
+  assignDriverState.loading = true;
+  assignDriverState.error = null;
+  renderAssignDriverBody();
+
+  api('GET', '/orders/assignable-drivers').then(function(res) {
+    if (assignDriverState.orderId == null) return; // modal already closed
+    assignDriverState.drivers = (res.data && res.data.drivers) || [];
+    assignDriverState.loading = false;
+    renderAssignDriverBody();
+    renderAssignDriverFooter();
+  }).catch(function(e) {
+    if (assignDriverState.orderId == null) return;
+    assignDriverState.loading = false;
+    assignDriverState.error = e.message;
+    renderAssignDriverBody();
+    renderAssignDriverFooter();
+  });
+}
+
+function renderAssignDriverBody() {
+  var body = document.getElementById('assignDriverBody');
+  if (!body) return;
+
+  if (assignDriverState.loading) {
+    body.innerHTML = '<div class="drv-loading"><div class="drv-loading-spinner"></div>' +
+      '<div class="drv-loading-text">Loading available drivers...</div></div>';
+    return;
+  }
+
+  if (assignDriverState.error) {
+    body.innerHTML = '<div class="drv-error"><div class="drv-error-icon">⚠️</div>' +
+      '<div class="drv-error-title">Could not load drivers</div>' +
+      '<div class="drv-error-text">' + esc(assignDriverState.error) + '</div>' +
+      '<button type="button" class="btn btn-accent" onclick="loadAssignableDrivers()">Retry</button>' +
+      '</div>';
+    return;
+  }
+
+  var list = assignDriverState.drivers || [];
+  if (!list.length) {
+    body.innerHTML = '<div class="drv-empty-inline"><div class="drv-empty-inline-icon">🚗</div>' +
+      '<div class="drv-empty-inline-text">No drivers are registered yet. Add drivers in the Drivers panel, then come back to assign this order.</div>' +
+      '</div>';
+    return;
+  }
+
+  var currentId = assignDriverCurrentId(assignDriverOrder());
+  var eligible = list.filter(function(d) { return d.eligible; });
+  var blocked = list.filter(function(d) { return !d.eligible; });
+
+  var html = '<div class="assign-driver-summary">' +
+    eligible.length + ' of ' + list.length + ' driver' + (list.length !== 1 ? 's' : '') +
+    ' can take this delivery</div>';
+
+  html += eligible.length
+    ? '<div class="assign-driver-list">' + eligible.map(function(d) {
+        return assignDriverOptionHtml(d, currentId, false);
+      }).join('') + '</div>'
+    : '<div class="drv-empty-inline"><div class="drv-empty-inline-icon">🚫</div>' +
+      '<div class="drv-empty-inline-text">No driver is eligible right now. Drivers must have an active account and not be on another trip.</div>' +
+      '</div>';
+
+  if (blocked.length) {
+    html += '<div class="assign-driver-group-label">Unavailable</div>' +
+      '<div class="assign-driver-list">' + blocked.map(function(d) {
+        return assignDriverOptionHtml(d, currentId, true);
+      }).join('') + '</div>';
+  }
+
+  body.innerHTML = html;
+}
+
+function assignDriverOptionHtml(driver, currentId, muted) {
+  var selected = assignDriverState.selectedId === driver.id;
+  var vehicle = driver.vehicle || {};
+  var vehicleBits = [];
+  if (vehicle.plateNumber) vehicleBits.push(vehicle.plateNumber);
+  if (vehicle.make || vehicle.model) vehicleBits.push([vehicle.make, vehicle.model].filter(Boolean).join(' '));
+  if (vehicle.color) vehicleBits.push(vehicle.color);
+  if (vehicle.type) vehicleBits.push(vehicle.type);
+
+  var badges = '';
+  badges += driver.online
+    ? '<span class="ad-badge ad-badge-online">Online</span>'
+    : '<span class="ad-badge">Offline</span>';
+  badges += driver.available
+    ? '<span class="ad-badge ad-badge-ready">Available</span>'
+    : '<span class="ad-badge">Unavailable</span>';
+  if (currentId && driver.id === currentId) {
+    badges += '<span class="ad-badge ad-badge-current">Assigned</span>';
+  }
+  if (driver.rating != null) {
+    badges += '<span class="ad-badge">★ ' + Number(driver.rating).toFixed(1) + '</span>';
+  }
+
+  var initials = assignDriverInitials(driver.name || driver.driverId);
+
+  return '<button type="button" class="ad-option' +
+      (selected ? ' is-selected' : '') + (muted ? ' is-muted' : '') + '"' +
+      (muted ? ' disabled' : '') +
+      ' onclick="selectAssignDriver(\'' + driver.id + '\')">' +
+    '<span class="ad-avatar">' + esc(initials) + '</span>' +
+    '<span class="ad-main">' +
+      '<span class="ad-name">' + esc(driver.name || driver.driverId || 'Driver') + '</span>' +
+      '<span class="ad-meta">' + esc(driver.phone || 'No phone number') + '</span>' +
+      (vehicleBits.length
+        ? '<span class="ad-meta">' + esc(vehicleBits.join(' · ')) + '</span>'
+        : (driver.totalTrips ? '<span class="ad-meta">' + driver.totalTrips + ' trips</span>' : '')) +
+      '<span class="ad-badges">' + badges + '</span>' +
+      (muted ? '<span class="ad-reason">' + esc(assignDriverIneligibleLabel(driver.ineligibleReason)) + '</span>' : '') +
+    '</span>' +
+    '<span class="ad-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>' +
+  '</button>';
+}
+
+function assignDriverInitials(name) {
+  var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+function selectAssignDriver(driverId) {
+  var driver = findAssignableDriver(driverId);
+  if (!driver || !driver.eligible) return; // muted rows are disabled anyway
+  assignDriverState.selectedId = assignDriverState.selectedId === driverId ? null : driverId;
+  assignDriverState.confirmReassign = false;
+  renderAssignDriverBody();
+  renderAssignDriverFooter();
+}
+
+function renderAssignDriverFooter() {
+  var selectedEl = document.getElementById('assignDriverSelected');
+  var confirmBtn = document.getElementById('assignDriverConfirm');
+  if (!selectedEl || !confirmBtn) return;
+
+  var chosen = findAssignableDriver(assignDriverState.selectedId);
+  if (!chosen || !chosen.eligible) {
+    selectedEl.textContent = 'Select a driver to continue';
+    selectedEl.className = 'assign-driver-selected';
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Assign Driver';
+    return;
+  }
+
+  var currentId = assignDriverCurrentId(assignDriverOrder());
+  var isReassign = !!currentId && currentId !== chosen.id;
+
+  selectedEl.innerHTML = '<strong>' + esc(chosen.name || chosen.driverId) + '</strong>' +
+    (isReassign
+      ? (assignDriverState.confirmReassign
+          ? ' will replace the driver currently on this order.'
+          : ' — replaces the driver currently on this order.')
+      : ' will handle this delivery.');
+  selectedEl.className = 'assign-driver-selected' + (isReassign ? ' is-reassign' : '');
+
+  confirmBtn.disabled = assignDriverState.submitting;
+  confirmBtn.textContent = assignDriverState.submitting
+    ? 'Assigning…'
+    : (isReassign && assignDriverState.confirmReassign
+        ? 'Confirm Reassign'
+        : (isReassign ? 'Reassign Driver' : 'Assign Driver'));
+}
+
+// First click on a reassignment arms a confirmation step instead of firing the
+// request, so an existing driver is never replaced by accident.
+function confirmAssignDriver(btn) {
+  var state = assignDriverState;
+  if (state.submitting || state.orderId == null) return;
+
+  var order = assignDriverOrder();
+  if (!order) return;
+
+  var chosen = findAssignableDriver(state.selectedId);
+  if (!chosen || !chosen.eligible) {
+    toast('Select an eligible driver first', false);
+    return;
+  }
+
+  var currentId = assignDriverCurrentId(order);
+  var isReassign = !!currentId && currentId !== chosen.id;
+  if (isReassign && !state.confirmReassign) {
+    state.confirmReassign = true;
+    renderAssignDriverFooter();
+    return;
+  }
+
+  // Duplicate-submission guard: the flag plus the disabled button both block a
+  // second in-flight request.
+  state.submitting = true;
+  renderAssignDriverFooter();
   if (btn) btn.disabled = true;
   load(true);
 
-  api('POST', '/orders/' + encodeURIComponent(ref) + '/assign', { driverId: driverId }).then(function(res) {
-    var order = res.data && res.data.order;
-    if (order && order.id != null) cachedOrders[order.id] = order;
-    toast(res.message || 'Driver assigned');
+  var ref = order.orderReference || state.orderId;
+  api('POST', '/orders/' + encodeURIComponent(ref) + '/assign', { driverId: chosen.id }).then(function(res) {
+    var updatedOrder = res.data && res.data.order;
+    if (updatedOrder && updatedOrder.id != null) cachedOrders[updatedOrder.id] = updatedOrder;
+    var push = res.data && res.data.notification && res.data.notification.push;
+    if (push && push.success === false) {
+      toast('Driver assigned, but push notification was not sent: ' + (push.reason || 'unknown error'), false);
+    } else {
+      toast(res.message || 'Driver assigned', true);
+    }
+    closeAssignDriverModal();
     return loadAllData().then(function() {
       renderOrders(cachedOrders);
       if (orderModalActiveId != null && cachedOrders[orderModalActiveId]) {
@@ -888,9 +1144,11 @@ function assignOrderDriver(id, btn) {
     });
   }).catch(function(e) {
     toast('Error: ' + e.message, false);
+    state.confirmReassign = false;
   }).finally(function() {
+    state.submitting = false;
     load(false);
-    if (btn) btn.disabled = false;
+    if (state.orderId != null) renderAssignDriverFooter();
   });
 }
 
@@ -1337,6 +1595,8 @@ function closeOrderItemsModal() {
 document.addEventListener('click', function(e) {
   var declineBg = document.getElementById('declineModal');
   if (declineBg && e.target === declineBg) { closeDeclineModal(); return; }
+  var assignBg = document.getElementById('assignDriverModal');
+  if (assignBg && e.target === assignBg) { closeAssignDriverModal(); return; }
   var itemsBg = document.getElementById('orderItemsModal');
   if (itemsBg && e.target === itemsBg) { closeOrderItemsModal(); return; }
   var bg = document.getElementById('orderModal');
@@ -1347,9 +1607,15 @@ document.addEventListener('keydown', function(e) {
   if (e.key !== 'Escape') return;
   var declineBg = document.getElementById('declineModal');
   if (declineBg && declineBg.classList.contains('on')) { closeDeclineModal(); return; }
+  // Dismissed while a submission is in flight would hide a pending write, so
+  // the assign modal only yields to Escape when idle.
+  var assignBg = document.getElementById('assignDriverModal');
+  if (assignBg && assignBg.classList.contains('on')) {
+    if (!assignDriverState.submitting) closeAssignDriverModal();
+    return;
+  }
   var itemsBg = document.getElementById('orderItemsModal');
   if (itemsBg && itemsBg.classList.contains('on')) { closeOrderItemsModal(); return; }
   var bg = document.getElementById('orderModal');
   if (bg && bg.classList.contains('on')) closeOrderModal();
 });
-

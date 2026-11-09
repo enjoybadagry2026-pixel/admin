@@ -30,7 +30,11 @@ async function api(method, path, body) {
     doLogout();
     throw new Error('Session expired');
   }
-  if (!json.success) throw apiError(json, 'Request failed');
+  if (!res.ok || !json.success) {
+    var error = apiError(json, 'Request failed');
+    error.status = res.status;
+    throw error;
+  }
   return json;
 }
 
@@ -86,6 +90,35 @@ async function apiDownload(path, fallbackName) {
     truncated: res.headers.get('X-Export-Truncated') === 'true'
   };
 }
+
+// ═══════════════ GLOBAL DRAG & DROP GUARD ═══════════════
+// Dropping a file anywhere outside the gallery/banner widgets made the browser
+// navigate to it, wiping the page and every unsaved form. Bubble phase only:
+// never stopPropagation, so the gallery/banner tile handlers (which live on
+// their own elements) still run first — and when they already called
+// preventDefault we simply do nothing.
+
+function isFileDrag(e) {
+  var dt = e.dataTransfer;
+  if (!dt || !dt.types) return false;
+  for (var i = 0; i < dt.types.length; i++) {
+    if (dt.types[i] === 'Files') return true;
+  }
+  return false;
+}
+
+document.addEventListener('dragover', function(e) {
+  if (e.defaultPrevented || !isFileDrag(e)) return;
+  e.preventDefault();
+});
+
+document.addEventListener('drop', function(e) {
+  if (e.defaultPrevented || !isFileDrag(e)) return;
+  // Dropping onto a file input (e.g. the CSV import) must keep filling it.
+  var t = e.target;
+  if (t && t.closest && t.closest('input[type=file]')) return;
+  e.preventDefault();
+});
 
 // ═══════════════ CACHED DATA ═══════════════
 var cachedPlaces = {};

@@ -370,6 +370,8 @@ function runNewAction() {
 }
 
 document.addEventListener('keydown', function(e) {
+  var applicationModal = document.getElementById('da-modal');
+  if (applicationModal && !applicationModal.hidden) return;
   var mod = e.ctrlKey || e.metaKey;
 
   if (mod && (e.key === 'k' || e.key === 'K')) {

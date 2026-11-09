@@ -550,6 +550,8 @@ function ntfFormErrors(form) {
   if (!form.message) errors.push('Message is required.');
   else if (form.message.length > 1000) errors.push('Message must be 1000 characters or fewer.');
   if (form.imageUrl && !/^https?:\/\/[^\s"']+$/i.test(form.imageUrl)) errors.push('Image must be a valid http(s) URL without quotes.');
+  // Backend (adminNotificationController) rejects URLs longer than 2048 with a 422.
+  if (form.imageUrl && form.imageUrl.length > 2048) errors.push('Image URL must be 2048 characters or fewer.');
   if (ntfUploading) errors.push('Wait for the image upload to finish.');
 
   if (ntfSegmentNeedsValue(form.segment) && !form.segmentValue) {
