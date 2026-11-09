@@ -1,0 +1,115 @@
+/* ============================================================
+   Enjoy Badagry — Account deletion page
+   Loaded after styles.css + reset.css; reuses the .rwrap /
+   .rcard / .rstate / .rform scaffold from reset.css and adds
+   the destructive-action styling specific to this page.
+   ============================================================ */
+
+:root {
+  --danger: #c0392b;
+  --danger-deep: #a5301f;
+  --danger-tint: rgba(192, 57, 43, 0.1);
+  --danger-line: rgba(192, 57, 43, 0.3);
+}
+
+/* Danger status icon (mirrors the rcard__icon sizing) */
+.dcard__icon {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 1.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dcard__icon--danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+/* Deletion scope lists — left-aligned so long lines stay readable */
+.dlist {
+  text-align: left;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 16px);
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.85rem;
+}
+
+.dlist--keep {
+  background: rgba(11, 77, 58, 0.05);
+}
+
+.dlist__heading {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.dlist--keep .dlist__heading {
+  color: var(--forest);
+}
+
+.dlist__items {
+  list-style: disc;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* Permanence warning */
+.ddanger {
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--danger-deep);
+  background: var(--danger-tint);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-md, 16px);
+  padding: 0.9rem 1.15rem;
+  margin-bottom: 1.6rem;
+}
+
+/* Confirmation input: the phrase must be typed exactly */
+.rform__input--confirm {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+/* Destructive submit button (sits on top of the shared btn styles) */
+.btn--danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn--danger:hover,
+.btn--danger:focus-visible {
+  background: var(--danger-deep);
+  color: #fff;
+}
+
+.rform__submit.btn--danger[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Intro state: keep title centered, body content left like the form */
+.rstate[data-state="intro"] .dlist,
+.rstate[data-state="intro"] .ddanger {
+  text-align: left;
+}
+
+@media (max-width: 480px) {
+  .dlist,
+  .ddanger {
+    padding: 0.85rem 1rem;
+  }
+}

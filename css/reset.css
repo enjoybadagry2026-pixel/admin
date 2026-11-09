@@ -1,0 +1,296 @@
+/* ============================================================
+   Enjoy Badagry — Password reset page
+   Loaded after styles.css; relies on its design tokens.
+   ============================================================ */
+
+/* Page shell: vertically centered card on a warm backdrop */
+.rwrap {
+  min-height: calc(100vh - var(--nav-h) - 210px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(2.5rem, 7vw, 5rem);
+  background:
+    radial-gradient(1100px 480px at 50% -10%, rgba(11, 77, 58, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--cream) 0%, var(--sand) 100%);
+}
+
+.rcard {
+  width: 100%;
+  max-width: 540px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: clamp(1.85rem, 5vw, 2.9rem);
+  text-align: center;
+  animation: rrise 0.45s var(--ease-out) both;
+}
+
+@keyframes rrise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Status icon */
+.rcard__icon {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 1.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rcard__icon--spinner {
+  border: 3px solid var(--line);
+  border-top-color: var(--forest);
+  background: transparent;
+  animation: rspin 0.8s linear infinite;
+}
+
+@keyframes rspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rcard__icon--lock {
+  background: rgba(11, 77, 58, 0.1);
+  color: var(--forest);
+}
+
+.rcard__icon--success {
+  background: rgba(22, 160, 133, 0.12);
+  color: var(--teal);
+}
+
+.rcard__icon--error {
+  background: rgba(232, 138, 58, 0.14);
+  color: var(--sunset);
+}
+
+.rcard__icon--missing {
+  background: var(--sand);
+  color: var(--muted);
+}
+
+/* Text */
+.rcard__eyebrow {
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sunset);
+}
+
+.rcard__title {
+  font-size: clamp(1.55rem, 4vw, 2.05rem);
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+}
+
+.rcard__text {
+  color: var(--muted);
+  font-size: 0.99rem;
+  line-height: 1.72;
+  margin-bottom: 1.7rem;
+}
+
+.rcard__text strong {
+  color: var(--ink);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* Action row */
+.rcard__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: stretch;
+  margin-inline: auto;
+  max-width: 320px;
+}
+
+.rcard__actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Helper link under the actions */
+.rcard__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--forest);
+  text-decoration: none;
+}
+
+.rcard__note:hover {
+  color: var(--sunset);
+}
+
+/* State visibility helper */
+.rstate[hidden] {
+  display: none;
+}
+
+/* ============================================================
+   Form
+   ============================================================ */
+
+.rform {
+  text-align: left;
+  max-width: 380px;
+  margin-inline: auto;
+}
+
+.rform__field {
+  margin-bottom: 1.15rem;
+}
+
+.rform__label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+
+.rform__input-wrap {
+  position: relative;
+}
+
+.rform__input {
+  width: 100%;
+  padding: 0.8rem 2.8rem 0.8rem 0.95rem;
+  font: inherit;
+  font-size: 0.98rem;
+  color: var(--ink);
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 10px);
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.rform__input:focus {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 3px rgba(11, 77, 58, 0.12);
+}
+
+.rform__input.is-invalid {
+  border-color: var(--sunset);
+  box-shadow: 0 0 0 3px rgba(232, 138, 58, 0.14);
+}
+
+/* Show/hide password toggle */
+.rform__toggle {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.rform__toggle:hover {
+  color: var(--ink);
+}
+
+/* Icon visibility: the HTML `hidden` attribute/IDL property does not apply
+   to inline <svg> elements (it exists only on HTMLElement), so eye/eye-off
+   are switched with an author class instead. */
+.rform__toggle .icon-eye-off {
+  display: none;
+}
+
+.rform__toggle.is-revealed .icon-eye {
+  display: none;
+}
+
+.rform__toggle.is-revealed .icon-eye-off {
+  display: block;
+}
+
+.rform__hint {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.rform__error {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #9a3412;
+  background: rgba(232, 138, 58, 0.12);
+  border: 1px solid rgba(232, 138, 58, 0.28);
+  border-radius: 10px;
+}
+
+/* Submit button */
+.rform__submit {
+  width: 100%;
+  justify-content: center;
+  position: relative;
+}
+
+.rform__submit[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.rform__submit-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: rspin 0.7s linear infinite;
+}
+
+.rform__submit.is-loading .rform__submit-label {
+  visibility: hidden;
+}
+
+.rform__submit.is-loading .rform__submit-spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -9px;
+  margin-top: -9px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .rcard__actions {
+    max-width: 100%;
+  }
+
+  .rform {
+    max-width: 100%;
+  }
+}

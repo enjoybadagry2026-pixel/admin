@@ -1,0 +1,457 @@
+/* ============================================================
+   Enjoy Badagry — Contact page
+   Reuses the shared design system in css/styles.css
+   ============================================================ */
+
+/* ---------- Active nav state (survives main.js scroll-spy) ---------- */
+.nav__link[aria-current="page"] {
+  color: var(--forest);
+  background: rgba(11, 77, 58, 0.1);
+  font-weight: 600;
+}
+
+/* ---------- Hero ---------- */
+.chero {
+  position: relative;
+  min-height: min(520px, 64vh);
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+  background: var(--forest-deep);
+  color: var(--on-dark);
+}
+
+.chero__image,
+.chero::after {
+  position: absolute;
+  inset: 0;
+}
+
+.chero__image {
+  background: url("../images/hero-beach.jpg") center / cover no-repeat;
+  transform: scale(1.02);
+}
+
+.chero::after {
+  content: "";
+  background:
+    linear-gradient(90deg, rgba(7, 53, 39, 0.92), rgba(7, 53, 39, 0.42) 64%, rgba(7, 53, 39, 0.2)),
+    linear-gradient(0deg, rgba(7, 53, 39, 0.72), transparent 58%);
+}
+
+.chero__content {
+  position: relative;
+  z-index: 1;
+  width: min(var(--container), 100% - var(--gutter) * 2);
+  padding-block: clamp(6.5rem, 15vw, 9.5rem) clamp(3.5rem, 8vw, 5.5rem);
+}
+
+.chero__eyebrow {
+  color: var(--gold);
+}
+
+.chero__title {
+  max-width: 720px;
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  letter-spacing: -0.04em;
+}
+
+.chero__lede {
+  max-width: 620px;
+  margin-top: 1.35rem;
+  color: var(--on-dark-muted);
+  font-size: clamp(1.03rem, 2vw, 1.2rem);
+}
+
+.chero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+
+/* ---------- Section backgrounds ---------- */
+.c-sec--paper {
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+}
+
+.c-sec--sand {
+  background: var(--sand);
+}
+
+.c-sec--cream {
+  background: var(--cream);
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Channel cards ---------- */
+.c-channels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  gap: 1.35rem;
+}
+
+.c-channels .contact-card {
+  gap: 0.7rem;
+}
+
+.c-channels .link-arrow {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Message composer ---------- */
+.c-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(2rem, 6vw, 4.5rem);
+  align-items: start;
+}
+
+.c-compose__intro .section__lede {
+  max-width: 46ch;
+}
+
+.c-tips {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.c-tips li {
+  position: relative;
+  padding-left: 1.7rem;
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.c-tips li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+
+.composer {
+  padding: clamp(1.4rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+
+.composer__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.field__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--forest-deep);
+}
+
+.field__optional {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.field__input {
+  width: 100%;
+  padding: 0.72rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.94rem;
+  transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+
+.field__input::placeholder {
+  color: #a4937f;
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(22, 160, 133, 0.16);
+}
+
+.field__select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236f5d4e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  padding-right: 2.4rem;
+  cursor: pointer;
+}
+
+.field__area {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.composer__error {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(192, 57, 43, 0.35);
+  border-radius: var(--radius-sm);
+  background: rgba(192, 57, 43, 0.07);
+  color: #a5301f;
+  font-size: 0.87rem;
+}
+
+.composer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 0.4rem;
+}
+
+.btn--ghost-dark {
+  border-color: rgba(11, 77, 58, 0.28);
+  background: transparent;
+  color: var(--forest);
+}
+
+.btn--ghost-dark:hover {
+  background: rgba(11, 77, 58, 0.07);
+  color: var(--forest-deep);
+}
+
+.composer__status {
+  min-height: 1.3rem;
+  margin: 0.9rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--forest);
+}
+
+.composer__output {
+  margin-top: 0.6rem;
+}
+
+.composer__note {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ---------- Business section ---------- */
+.c-business {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(2rem, 6vw, 4.5rem);
+  align-items: start;
+}
+
+.c-business__copy .btn {
+  margin-top: 1.75rem;
+}
+
+.c-business__panels {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.c-panel {
+  padding: clamp(1.25rem, 3vw, 1.7rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--cream);
+}
+
+.c-panel__title {
+  font-size: 1.15rem;
+  color: var(--forest-deep);
+}
+
+.c-checklist {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+  padding: 0;
+  list-style: none;
+}
+
+.c-checklist li {
+  position: relative;
+  padding-left: 1.6rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.c-checklist li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.c-steps {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.c-step {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 0.9rem;
+  align-items: start;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+}
+
+.c-step__num {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--orange);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.c-step strong {
+  color: var(--forest-deep);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.c-step p {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+/* ---------- Quick routes ---------- */
+.c-routes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.c-route {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.3rem 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+}
+
+.c-route:hover {
+  transform: translateY(-4px);
+  border-color: rgba(11, 77, 58, 0.25);
+  box-shadow: var(--shadow-card);
+}
+
+.c-route__title {
+  color: var(--forest-deep);
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 600;
+}
+
+.c-route__text {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+/* ---------- App CTA band ---------- */
+.capp {
+  padding-block: clamp(3.5rem, 7vw, 5.5rem);
+  background: var(--forest);
+  color: var(--on-dark);
+}
+
+.capp__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.capp__eyebrow {
+  color: var(--gold);
+}
+
+.capp h2 {
+  max-width: 640px;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+}
+
+.capp p:not(.eyebrow) {
+  max-width: 600px;
+  margin-top: 0.8rem;
+  color: var(--on-dark-muted);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 920px) {
+  .c-compose,
+  .c-business {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .capp__inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .chero__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chero__actions .btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .c-channels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .composer__actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

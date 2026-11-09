@@ -1,0 +1,155 @@
+/* ============================================================
+   Enjoy Badagry — Email verification page
+   Loaded after styles.css; relies on its design tokens.
+   ============================================================ */
+
+/* Page shell: vertically centered card on a warm backdrop */
+.vwrap {
+  min-height: calc(100vh - var(--nav-h) - 210px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: clamp(2.5rem, 7vw, 5rem);
+  background:
+    radial-gradient(1100px 480px at 50% -10%, rgba(11, 77, 58, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--cream) 0%, var(--sand) 100%);
+}
+
+.vcard {
+  width: 100%;
+  max-width: 540px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: clamp(1.85rem, 5vw, 2.9rem);
+  text-align: center;
+}
+
+/* Status icon */
+.vcard__icon {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 1.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vcard__icon--spinner {
+  border: 3px solid var(--line);
+  border-top-color: var(--forest);
+  background: transparent;
+  animation: vspin 0.8s linear infinite;
+}
+
+@keyframes vspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vcard__icon--success {
+  background: rgba(22, 160, 133, 0.12);
+  color: var(--teal);
+}
+
+.vcard__icon--error {
+  background: rgba(232, 138, 58, 0.14);
+  color: var(--sunset);
+}
+
+.vcard__icon--missing {
+  background: var(--sand);
+  color: var(--muted);
+}
+
+/* Text */
+.vcard__eyebrow {
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sunset);
+}
+
+.vcard__title {
+  font-size: clamp(1.55rem, 4vw, 2.05rem);
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+}
+
+.vcard__text {
+  color: var(--muted);
+  font-size: 0.99rem;
+  line-height: 1.72;
+  margin-bottom: 1.7rem;
+}
+
+.vcard__text strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Action row — stacked so the primary CTA is full-width and prominent */
+.vcard__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: stretch;
+  margin-inline: auto;
+  max-width: 320px;
+}
+
+.vcard__actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Helper link under the actions */
+.vcard__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--forest);
+  text-decoration: none;
+}
+
+.vcard__note:hover {
+  color: var(--sunset);
+}
+
+/* State visibility helper */
+.vstate[hidden] {
+  display: none;
+}
+
+/* Subtle entrance */
+.vcard {
+  animation: vrise 0.45s var(--ease-out) both;
+}
+
+@keyframes vrise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .vcard__actions {
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,807 @@
+/* ============================================================
+   Enjoy Badagry — Founder page (about-owner)
+   Loaded after styles.css; relies on its design tokens.
+   ============================================================ */
+
+/* Slim founder-page header (same language as policy.css .pnav) */
+.onav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  background: rgba(255, 249, 243, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.onav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 100%;
+}
+
+.onav__brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.onav__logo {
+  height: 44px;
+  width: auto;
+}
+
+.onav__links {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem 1.4rem;
+}
+
+.onav__link {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--forest);
+  text-decoration: none;
+  transition: color 0.2s var(--ease-out);
+}
+
+.onav__link:hover {
+  color: var(--sunset);
+}
+
+@media (max-width: 640px) {
+  .onav__link {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Hero — Meet the founder
+   ============================================================ */
+
+.ohero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(155deg, var(--forest-deep) 0%, var(--forest) 62%, var(--forest-soft) 100%);
+  color: var(--on-dark);
+}
+
+/* Soft decorative glows — static, motion-safe */
+.ohero::before,
+.ohero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ohero::before {
+  top: -180px;
+  right: -140px;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(232, 138, 58, 0.22) 0%, transparent 68%);
+}
+
+.ohero::after {
+  bottom: -220px;
+  left: -160px;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(241, 196, 15, 0.12) 0%, transparent 70%);
+}
+
+.ohero__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: clamp(2.5rem, 6vw, 4.5rem);
+  align-items: center;
+  padding-block: clamp(3.25rem, 8vw, 6rem);
+}
+
+.ohero__eyebrow {
+  display: inline-block;
+  margin-bottom: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.ohero__title {
+  font-size: clamp(2.4rem, 6vw, 3.75rem);
+  color: #fff;
+}
+
+.ohero__role {
+  display: block;
+  margin-top: 0.55rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  color: var(--gold);
+}
+
+.ohero__lede {
+  margin-top: 1.35rem;
+  max-width: 52ch;
+  font-size: 1.06rem;
+  line-height: 1.75;
+  color: var(--on-dark-muted);
+}
+
+.ohero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2rem;
+}
+
+.ohero__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 2.1rem;
+}
+
+.ohero__pills li {
+  padding: 0.42rem 0.95rem;
+  border: 1px solid rgba(244, 237, 228, 0.28);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--on-dark-muted);
+}
+
+/* Framed portrait */
+.ohero__figure {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 420px);
+  padding: 14px;
+  border-radius: calc(var(--radius-lg) + 6px);
+  background: linear-gradient(160deg, rgba(241, 196, 15, 0.55), rgba(232, 138, 58, 0.32) 46%, rgba(255, 255, 255, 0.08));
+  box-shadow: var(--shadow-pop);
+}
+
+.ohero__img-wrap {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--forest-deep);
+}
+
+.ohero__img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: center 18%;
+  display: block;
+}
+
+.ohero__caption {
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 2.5rem);
+  padding: 0.55rem 1.15rem;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.ohero__caption span {
+  color: var(--sunset);
+}
+
+@media (max-width: 920px) {
+  .ohero__grid {
+    grid-template-columns: 1fr;
+    padding-block: clamp(2.75rem, 7vw, 4rem) clamp(3.25rem, 8vw, 4.5rem);
+  }
+
+  .ohero__figure {
+    order: -1;
+    width: min(100%, 360px);
+  }
+
+  .ohero__copy {
+    text-align: center;
+  }
+
+  .ohero__lede {
+    margin-inline: auto;
+  }
+
+  .ohero__actions,
+  .ohero__pills {
+    justify-content: center;
+  }
+}
+
+/* ============================================================
+   Shared story primitives
+   ============================================================ */
+
+.opullquote {
+  position: relative;
+  padding: 1.75rem 1.85rem 1.75rem 2rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--orange);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.opullquote p {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.18rem, 2.3vw, 1.45rem);
+  line-height: 1.5;
+  color: var(--forest);
+  text-wrap: pretty;
+}
+
+.opullquote footer {
+  margin-top: 1rem;
+  font-family: var(--font-body);
+  font-style: normal;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sunset);
+}
+
+/* Meet Kingnewman */
+.omeet__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+}
+
+.omeet__copy p {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.8;
+  max-width: 62ch;
+}
+
+.omeet__copy p:first-of-type {
+  font-size: 1.12rem;
+  color: var(--ink);
+}
+
+@media (max-width: 920px) {
+  .omeet__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* His story — full-bleed sand band */
+.ostory {
+  background: var(--sand);
+}
+
+.ostory__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(2rem, 5vw, 4.25rem);
+  align-items: center;
+}
+
+.ostory__figure {
+  position: relative;
+}
+
+.ostory__img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center 12%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  border: 6px solid var(--paper);
+}
+
+.ostory__badge {
+  position: absolute;
+  right: -10px;
+  bottom: 26px;
+  padding: 0.65rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: var(--forest);
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-card);
+}
+
+.ostory__copy p {
+  margin-top: 1.05rem;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.8;
+}
+
+.ostory__copy p:first-of-type {
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.ostory__signature {
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--forest);
+}
+
+@media (max-width: 920px) {
+  .ostory__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ostory__figure {
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  .ostory__badge {
+    right: 10px;
+  }
+}
+
+/* ============================================================
+   Vision — dark band with pillars
+   ============================================================ */
+
+.ovision {
+  background: linear-gradient(160deg, var(--forest-deep) 0%, var(--forest) 75%, var(--forest-soft) 100%);
+  color: var(--on-dark);
+}
+
+.ovision__lede {
+  color: var(--on-dark-muted);
+}
+
+.ovision__pillars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.1rem, 2.5vw, 1.75rem);
+}
+
+.ovision__pillar {
+  padding: 1.6rem 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(244, 237, 228, 0.16);
+  border-radius: var(--radius-md);
+  transition: transform 0.25s var(--ease-out), background-color 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+}
+
+.ovision__pillar:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(241, 196, 15, 0.45);
+}
+
+.ovision__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 1.05rem;
+  border-radius: 14px;
+  background: rgba(232, 138, 58, 0.18);
+  color: var(--gold);
+}
+
+.ovision__pillar h3 {
+  font-size: 1.18rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.ovision__pillar p {
+  font-size: 0.94rem;
+  line-height: 1.65;
+  color: var(--on-dark-muted);
+}
+
+@media (max-width: 920px) {
+  .ovision__pillars {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Mosaic — what makes Badagry special
+   ============================================================ */
+
+.omosaic__grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 118px;
+  gap: clamp(0.8rem, 1.8vw, 1.15rem);
+}
+
+.omosaic__item {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  background: var(--sand);
+}
+
+.omosaic__item--a {
+  grid-column: span 7;
+  grid-row: span 3;
+}
+
+.omosaic__item--b {
+  grid-column: span 5;
+  grid-row: span 2;
+}
+
+.omosaic__item--c {
+  grid-column: span 5;
+  grid-row: span 2;
+}
+
+.omosaic__item--d {
+  grid-column: span 7;
+  grid-row: span 2;
+}
+
+.omosaic__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease-out);
+}
+
+.omosaic__item:hover img {
+  transform: scale(1.04);
+}
+
+.omosaic__item figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 2.4rem 1.15rem 0.95rem;
+  background: linear-gradient(to top, rgba(7, 53, 39, 0.88), transparent);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.omosaic__item figcaption span {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@media (max-width: 920px) {
+  .omosaic__grid {
+    grid-auto-rows: 100px;
+  }
+
+  .omosaic__item--a,
+  .omosaic__item--d {
+    grid-column: span 12;
+  }
+
+  .omosaic__item--b,
+  .omosaic__item--c {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 640px) {
+  .omosaic__grid {
+    grid-auto-rows: 92px;
+  }
+
+  .omosaic__item--b,
+  .omosaic__item--c {
+    grid-column: span 12;
+    grid-row: span 2;
+  }
+}
+
+/* ============================================================
+   Services — a better way to experience Badagry
+   ============================================================ */
+
+.oservices {
+  background: var(--paper);
+}
+
+.oservices__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1rem, 2.2vw, 1.5rem);
+}
+
+.oservice {
+  display: flex;
+  flex-direction: column;
+  padding: 1.7rem 1.5rem;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+}
+
+.oservice:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-soft);
+  border-color: rgba(232, 138, 58, 0.55);
+}
+
+.oservice__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1.15rem;
+  border-radius: 14px;
+  background: var(--forest);
+  color: var(--gold);
+}
+
+.oservice h3 {
+  font-size: 1.15rem;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.oservice p {
+  font-size: 0.93rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+@media (max-width: 1080px) {
+  .oservices__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .oservices__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Values
+   ============================================================ */
+
+.ovalues__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 2.2vw, 1.5rem);
+}
+
+.ovalue {
+  padding: 1.6rem 1.5rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.ovalue__num {
+  display: inline-block;
+  margin-bottom: 0.85rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--orange);
+}
+
+.ovalue h3 {
+  font-size: 1.08rem;
+  color: var(--ink);
+  margin-bottom: 0.45rem;
+}
+
+.ovalue p {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+@media (max-width: 920px) {
+  .ovalues__list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Personal welcome — closing letter
+   ============================================================ */
+
+.owelcome {
+  background: linear-gradient(165deg, var(--sand) 0%, var(--cream) 60%, var(--paper) 100%);
+}
+
+.owelcome__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+}
+
+.owelcome__figure {
+  position: relative;
+  max-width: 400px;
+  margin-inline: auto;
+}
+
+.owelcome__img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center 10%;
+  border-radius: var(--radius-lg);
+  border: 6px solid var(--paper);
+  box-shadow: var(--shadow-soft);
+}
+
+.owelcome__frame {
+  position: absolute;
+  inset: 18px -14px -14px 18px;
+  border: 2px solid rgba(232, 138, 58, 0.5);
+  border-radius: var(--radius-lg);
+}
+
+.owelcome__letter {
+  padding: clamp(1.6rem, 3.5vw, 2.5rem);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.owelcome__letter p {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.8;
+}
+
+.owelcome__letter p:first-of-type {
+  margin-top: 0;
+  font-size: 1.12rem;
+  color: var(--ink);
+}
+
+.owelcome__closing {
+  margin-top: 1.4rem;
+  padding-top: 1.3rem;
+  border-top: 1px dashed var(--line);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+  line-height: 1.45;
+  color: var(--forest);
+  text-wrap: balance;
+}
+
+.owelcome__sign {
+  margin-top: 1.1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sunset);
+}
+
+@media (max-width: 920px) {
+  .owelcome__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .owelcome__figure {
+    order: -1;
+  }
+}
+
+/* ============================================================
+   Final CTA — explore
+   ============================================================ */
+
+.oexplore {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(150deg, var(--forest) 0%, var(--forest-deep) 100%);
+  color: var(--on-dark);
+  text-align: center;
+}
+
+.oexplore::before {
+  content: "";
+  position: absolute;
+  top: -160px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  height: 320px;
+  background: radial-gradient(ellipse, rgba(232, 138, 58, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.oexplore__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.oexplore__title {
+  color: #fff;
+}
+
+.oexplore__lede {
+  margin-top: 1rem;
+  color: var(--on-dark-muted);
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.oexplore__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 2rem;
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ovision__pillar,
+  .oservice,
+  .omosaic__item img {
+    transition: none;
+  }
+
+  .ovision__pillar:hover,
+  .oservice:hover {
+    transform: none;
+  }
+
+  .omosaic__item:hover img {
+    transform: none;
+  }
+}

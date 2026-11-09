@@ -1,0 +1,13 @@
+# Enjoy Badagry — robots.txt
+# https://enjoybadagry.online/robots.txt
+#
+# Public marketing pages are fully crawlable. Account-flow pages
+# (/verify-account/, /reset-password/, /delete-account/) are intentionally
+# NOT blocked here: they carry their own noindex meta tags, and crawlers
+# must be able to fetch those pages to see the directives.
+
+User-agent: *
+
+Allow: /
+
+Sitemap: https://enjoybadagry.online/sitemap.xml

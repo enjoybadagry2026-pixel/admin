@@ -1,0 +1,42 @@
+/* Plan your visit — built on the shared Enjoy Badagry design system */
+.visit-hero { position: relative; display: grid; align-items: end; min-height: 580px; color: var(--on-dark); background: linear-gradient(90deg, rgba(7,53,39,.94), rgba(7,53,39,.35)), linear-gradient(0deg, rgba(7,53,39,.7), transparent 65%), url("../images/hero-beach.jpg") center / cover; }
+.visit-hero__content { padding-block: clamp(7rem, 15vw, 11rem) clamp(4rem, 8vw, 6rem); }
+.visit-hero__title { max-width: 720px; font-size: clamp(3rem, 8vw, 6rem); letter-spacing: -.04em; }
+.visit-hero__text { max-width: 570px; margin-top: 1.3rem; color: var(--on-dark-muted); font-size: clamp(1.05rem, 2vw, 1.25rem); }
+.visit-hero__actions, .visit-cta__actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+.visit-intro, .visit-checklist { background: var(--cream); }
+.visit-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.visit-card { display: flex; flex-direction: column; align-items: flex-start; gap: .8rem; padding: 1.8rem; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out); }
+.visit-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-pop); }
+.visit-card__number { color: var(--sunset); font: 600 1.4rem var(--font-display); }
+.visit-card h3, .visit-detail h3 { color: var(--forest-deep); font-size: 1.4rem; }
+.visit-card p, .visit-detail p:not(.eyebrow), .visit-day__copy > p:not(.eyebrow) { color: var(--muted); }
+.visit-card .link-arrow { margin-top: auto; padding-top: .6rem; }
+.visit-essentials { background: var(--paper); }
+.visit-essentials__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.visit-detail { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--cream); box-shadow: var(--shadow-card); }
+.visit-detail__image { overflow: hidden; aspect-ratio: 1.5; background: var(--sand); }
+.visit-detail__image img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease-out); }
+.visit-detail:hover img { transform: scale(1.04); }
+.visit-detail__body { display: flex; flex-direction: column; align-items: flex-start; gap: .7rem; padding: 1.5rem; }
+.visit-detail .link-arrow { margin-top: .3rem; }
+.visit-day { background: var(--sand); }
+.visit-day__grid, .visit-checklist__grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: clamp(2rem, 7vw, 6rem); }
+.visit-day__copy > p:not(.eyebrow) { margin-top: 1.2rem; }
+.visit-day__copy .btn { margin-top: 1.7rem; }
+.visit-day__steps { display: grid; gap: .9rem; margin: 0; padding: 0; list-style: none; }
+.visit-day__steps li { display: grid; grid-template-columns: 48px 1fr; gap: 1rem; padding: 1.2rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: rgba(255,255,255,.65); }
+.visit-day__steps span { color: var(--sunset); font: 600 1.3rem var(--font-display); }
+.visit-day__steps h3 { color: var(--forest-deep); font-size: 1.2rem; }
+.visit-day__steps p { margin-top: .25rem; color: var(--muted); }
+.visit-checklist__list { display: grid; gap: .8rem; margin: 0; padding: 0; list-style: none; }
+.visit-checklist__list li { position: relative; padding: 1rem 1rem 1rem 3rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); color: var(--muted); }
+.visit-checklist__list li::before { content: '✓'; position: absolute; left: 1.1rem; color: var(--teal); font-weight: 700; }
+.visit-cta { padding-block: clamp(3.5rem, 7vw, 5.5rem); color: var(--on-dark); background: var(--forest); }
+.visit-cta__inner { display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+.visit-cta h2 { font-size: clamp(2rem, 4vw, 3rem); }
+.visit-cta p:not(.eyebrow) { max-width: 600px; margin-top: .8rem; color: var(--on-dark-muted); }
+.visit-cta__actions { flex-shrink: 0; margin-top: 0; }
+@media (max-width: 920px) { .visit-cards, .visit-essentials__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .visit-cta__inner { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 640px) { .visit-hero { min-height: 500px; } .visit-cards, .visit-essentials__grid, .visit-day__grid, .visit-checklist__grid { grid-template-columns: 1fr; } .visit-hero__actions .btn { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .visit-card, .visit-detail__image img { transition: none; } .visit-card:hover, .visit-detail:hover img { transform: none; } }

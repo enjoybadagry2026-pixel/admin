@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0B4D3A" />
+
+  <title>Reset Your Password — Enjoy Badagry</title>
+  <meta name="description" content="Choose a new password for your Enjoy Badagry account." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Reset Your Password — Enjoy Badagry" />
+  <meta property="og:description" content="Choose a new password for your Enjoy Badagry account." />
+  <meta property="og:locale" content="en_NG" />
+  <meta name="twitter:card" content="summary" />
+
+  <link rel="icon" type="image/png" href="../images/favicon.png" />
+  <link rel="apple-touch-icon" href="../images/favicon.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="../css/policy.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="pnav">
+    <div class="container pnav__inner">
+      <a class="pnav__brand" href="../index.html" aria-label="Enjoy Badagry — main website">
+        <img src="../images/logo-light.png" alt="Enjoy Badagry" width="100" height="59" class="pnav__logo" />
+      </a>
+      <a class="btn btn--primary" href="../index.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Back to main website
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="rwrap">
+      <div class="rcard" id="rcard" role="status" aria-live="polite">
+
+        <!-- ---------- Checking (validating token on load) ---------- -->
+        <div class="rstate" data-state="checking">
+          <div class="rcard__icon rcard__icon--spinner" aria-hidden="true"></div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">Checking your reset link&hellip;</h1>
+          <p class="rcard__text">
+            Please wait while we confirm your password reset link.
+          </p>
+        </div>
+
+        <!-- ---------- Form (valid token) ---------- -->
+        <div class="rstate" data-state="form" hidden>
+          <div class="rcard__icon rcard__icon--lock" aria-hidden="true">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">Set a new password</h1>
+          <p class="rcard__text">
+            Choose a new password for <strong data-role="email"></strong>.
+          </p>
+
+          <form class="rform" id="reset-form" novalidate>
+            <div class="rform__field">
+              <label class="rform__label" for="new-password">New password</label>
+              <div class="rform__input-wrap">
+                <input
+                  class="rform__input"
+                  type="password"
+                  id="new-password"
+                  name="newPassword"
+                  autocomplete="new-password"
+                  minlength="8"
+                  maxlength="64"
+                  required
+                  aria-describedby="password-hint"
+                />
+                <button class="rform__toggle" type="button" data-toggle="new-password" aria-label="Show password">
+                  <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.7 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.5 17.5 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10.3 10.3 0 0 0 5.4-1.6"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="m2 2 20 20"/></svg>
+                </button>
+              </div>
+              <p class="rform__hint" id="password-hint">Must be 8–64 characters.</p>
+            </div>
+
+            <div class="rform__field">
+              <label class="rform__label" for="confirm-password">Confirm new password</label>
+              <div class="rform__input-wrap">
+                <input
+                  class="rform__input"
+                  type="password"
+                  id="confirm-password"
+                  name="confirmPassword"
+                  autocomplete="new-password"
+                  minlength="8"
+                  maxlength="64"
+                  required
+                />
+                <button class="rform__toggle" type="button" data-toggle="confirm-password" aria-label="Show password">
+                  <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.7 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.5 17.5 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10.3 10.3 0 0 0 5.4-1.6"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="m2 2 20 20"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <p class="rform__error" data-role="form-error" hidden></p>
+
+            <button class="btn btn--primary btn--lg rform__submit" type="submit" data-role="submit">
+              <span class="rform__submit-label">Update password</span>
+              <span class="rform__submit-spinner" hidden aria-hidden="true"></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- ---------- Success ---------- -->
+        <div class="rstate" data-state="success" hidden>
+          <div class="rcard__icon rcard__icon--success" aria-hidden="true">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">Password updated!</h1>
+          <p class="rcard__text" data-role="message">
+            Your password has been changed. You can now sign in to Enjoy Badagry with your new password.
+          </p>
+          <div class="rcard__actions">
+            <a
+              class="btn btn--primary btn--lg"
+              href="https://play.google.com/store/apps/details?id=com.kingnewman.enjoybadagry"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Get the app
+            </a>
+            <a class="btn btn--ghost btn--lg" href="../index.html">Back to website</a>
+          </div>
+        </div>
+
+        <!-- ---------- Expired ---------- -->
+        <div class="rstate" data-state="expired" hidden>
+          <div class="rcard__icon rcard__icon--error" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 16.5h.01"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">This link has expired</h1>
+          <p class="rcard__text" data-role="message">
+            Reset links are valid for 60 minutes. Please open the Enjoy Badagry app and request a new password reset email.
+          </p>
+          <div class="rcard__actions">
+            <a class="btn btn--primary btn--lg" href="../index.html">Back to website</a>
+          </div>
+        </div>
+
+        <!-- ---------- Already used ---------- -->
+        <div class="rstate" data-state="used" hidden>
+          <div class="rcard__icon rcard__icon--error" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 16.5h.01"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">This link was already used</h1>
+          <p class="rcard__text" data-role="message">
+            This reset link has already been used. If you need another reset, please open the Enjoy Badagry app and request a new email.
+          </p>
+          <div class="rcard__actions">
+            <a class="btn btn--primary btn--lg" href="../index.html">Back to website</a>
+          </div>
+        </div>
+
+        <!-- ---------- Revoked ---------- -->
+        <div class="rstate" data-state="revoked" hidden>
+          <div class="rcard__icon rcard__icon--error" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">This link is no longer valid</h1>
+          <p class="rcard__text" data-role="message">
+            A newer password reset email was sent, so this link has been cancelled. Please open the Enjoy Badagry app and request a new email.
+          </p>
+          <div class="rcard__actions">
+            <a class="btn btn--primary btn--lg" href="../index.html">Back to website</a>
+          </div>
+        </div>
+
+        <!-- ---------- Invalid ---------- -->
+        <div class="rstate" data-state="invalid" hidden>
+          <div class="rcard__icon rcard__icon--error" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">Invalid reset link</h1>
+          <p class="rcard__text" data-role="message">
+            This reset link is not valid. Please open the Enjoy Badagry app and request a new password reset email.
+          </p>
+          <div class="rcard__actions">
+            <a class="btn btn--primary btn--lg" href="../index.html">Back to website</a>
+          </div>
+        </div>
+
+        <!-- ---------- Network / server error ---------- -->
+        <div class="rstate" data-state="network" hidden>
+          <div class="rcard__icon rcard__icon--error" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M16.7 16.7A9 9 0 0 1 12 18"/><path d="M5 12.5A9 9 0 0 1 8.5 6.3"/><path d="M19.8 12.6a9 9 0 0 0-3.2-5.4"/><path d="M2 8.8A15 15 0 0 1 7 5.7"/><path d="M22 8.8a15 15 0 0 0-6.5-3.1"/><path d="M12 20h.01"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">Something went wrong</h1>
+          <p class="rcard__text" data-role="message">
+            We could not check your reset link right now. Please check your connection and try again.
+          </p>
+          <div class="rcard__actions">
+            <button class="btn btn--primary btn--lg" type="button" data-role="retry">Try again</button>
+            <a class="btn btn--ghost btn--lg" href="../index.html">Back to website</a>
+          </div>
+        </div>
+
+        <!-- ---------- Missing token ---------- -->
+        <div class="rstate" data-state="missing" hidden>
+          <div class="rcard__icon rcard__icon--missing" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          </div>
+          <p class="rcard__eyebrow">Account · Password reset</p>
+          <h1 class="rcard__title">Reset link incomplete</h1>
+          <p class="rcard__text" data-role="message">
+            This page needs the reset link from your email. Please open the link in the message we sent you, or request a new one from the Enjoy Badagry app.
+          </p>
+          <div class="rcard__actions">
+            <a class="btn btn--primary btn--lg" href="../index.html">Back to website</a>
+          </div>
+        </div>
+
+        <a class="rcard__note" href="https://play.google.com/store/apps/details?id=com.kingnewman.enjoybadagry" target="_blank" rel="noopener noreferrer">
+          Need help? Visit Google Play
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+        </a>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div class="footer__brand">
+        <img src="../images/logo-dark.png" alt="Enjoy Badagry" width="122" height="72" class="footer__logo" />
+        <p class="footer__tagline">Explore. Experience. Enjoy.</p>
+        <p class="footer__desc">
+          Enjoy Badagry helps you explore destinations, book rides, order food and find
+          places to stay — all from one platform, focused on Badagry, Lagos.
+        </p>
+      </div>
+
+      <nav class="footer__col" aria-label="Footer — platform">
+        <h3 class="footer__heading">Platform</h3>
+        <ul class="footer__links" role="list">
+          <li><a href="../index.html#about">About</a></li>
+          <li><a href="../index.html#explore">Explore Badagry</a></li>
+          <li><a href="../index.html#offer">What We Offer</a></li>
+          <li><a href="../index.html#why">Why Enjoy Badagry</a></li>
+          <li><a href="../index.html#faq">FAQ</a></li>
+          <li><a href="../contact/">Contact</a></li>
+        </ul>
+      </nav>
+
+      <nav class="footer__col" aria-label="Footer — services">
+        <h3 class="footer__heading">Services</h3>
+        <ul class="footer__links" role="list">
+          <li><a href="../index.html#offer">Destinations</a></li>
+          <li><a href="../index.html#offer">Hotels &amp; Stays</a></li>
+          <li><a href="../index.html#offer">Food &amp; Cuisine</a></li>
+          <li><a href="../index.html#offer">Rides</a></li>
+          <li><a href="../index.html#offer">Events</a></li>
+          <li><a href="../index.html#offer">Tour Packages</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer__col">
+        <h3 class="footer__heading">Get started</h3>
+        <ul class="footer__links" role="list">
+          <li><a href="mailto:support@enjoybadagry.online">support@enjoybadagry.online</a></li>
+          <li><a href="mailto:kingnewmanlive@gmail.com">Email support</a></li>
+          <li><a href="../contact/#channels">In-app support information</a></li>
+          <li>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.kingnewman.enjoybadagry"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Download on Google Play
+            </a>
+          </li>
+          <li><a href="../index.html#app">About the app</a></li>
+          <li><a href="../index.html#business">List your business</a></li>
+          <li><a href="../privacy-policy/">Privacy Policy</a></li>
+          <li><a href="../terms/">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container footer__bottom">
+      <p>&copy; <span id="year">2026</span> Enjoy Badagry. All rights reserved.</p>
+      <p>Badagry · Lagos, Nigeria</p>
+    </div>
+  </footer>
+
+  <!-- ===================== BACK TO TOP ===================== -->
+  <button class="to-top" id="to-top" type="button" aria-label="Back to top" hidden>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+  </button>
+
+  <script src="../js/main.js" defer></script>
+  <script src="../js/reset.js" defer></script>
+</body>
+</html>
