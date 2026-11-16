@@ -61,6 +61,14 @@
   </div>
   <div class="hdr-right">
     <span class="conn" id="connState" title="Live status from the API health endpoint"><span class="dot"></span> <span id="connTxt">Connected</span></span>
+    <button type="button" class="icon-btn mod-alert-trigger" id="mod-alert-trigger" title="Moderation alerts" aria-label="Moderation alerts" onclick="openModerationAlerts()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="mod-alert-count" id="mod-alert-count" hidden>0</span>
+    </button>
+    <div class="mod-alert-popover" id="mod-alert-popover" hidden role="dialog" aria-label="Moderation alerts">
+      <div class="mod-alert-popover-head"><div><strong>Moderation alerts</strong><span id="mod-alert-popover-count">Unread alerts</span></div><button type="button" class="mod-alert-popover-close" onclick="closeModerationAlerts()" aria-label="Close alerts">×</button></div>
+      <div class="mod-alert-popover-list" id="mod-alert-popover-list"><div class="mod-alert-popover-empty">No new moderation alerts.</div></div>
+      <div class="mod-alert-popover-foot"><button type="button" class="btn btn-ghost btn-sm" onclick="markAllModerationAlertsRead()">Mark all read</button><button type="button" class="btn btn-accent btn-sm" onclick="openModerationAlertsPage()">View all alerts</button></div>
+    </div>
     <button type="button" class="search-trigger" id="searchTrigger" title="Search or jump to (Ctrl+K)" aria-label="Open command palette">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <span class="st-label">Search or jump to…</span>
@@ -109,6 +117,7 @@
       <button class="side-item" data-tab="notifications" onclick="switchTab('notifications')">
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span>Notifications</span>
+        <span class="side-badge" id="mod-alert-side-badge" style="display:none">0</span>
       </button>
     </div>
 
@@ -169,6 +178,10 @@
       <button class="side-item" data-tab="taxonomy" onclick="switchTab('taxonomy')">
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
         <span>Tags &amp; Categories</span>
+      </button>
+      <button class="side-item" data-tab="coupons" onclick="switchTab('coupons')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a2 2 0 0 0 0-4V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 3 2 2 0 0 0 0 4 2 2 0 0 0 0 4 2 2 0 0 0 2 3h12a2 2 0 0 0 2-2v-3a2 2 0 0 0 0-4Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>
+        <span>Coupons &amp; Promotions</span>
       </button>
       <button class="side-item" data-tab="reviews" onclick="switchTab('reviews')">
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -246,7 +259,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-total">â€”</div>
+            <div class="ov-card-value" id="ov-u-total">—</div>
             <div class="ov-card-label">Total Users</div>
           </div>
         </div>
@@ -255,7 +268,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-active">â€”</div>
+            <div class="ov-card-value" id="ov-u-active">—</div>
             <div class="ov-card-label">Active</div>
           </div>
         </div>
@@ -264,7 +277,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-onboarded">â€”</div>
+            <div class="ov-card-value" id="ov-u-onboarded">—</div>
             <div class="ov-card-label">Onboarded</div>
           </div>
         </div>
@@ -273,7 +286,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-u-today">â€”</div>
+            <div class="ov-card-value" id="ov-u-today">—</div>
             <div class="ov-card-label">New Today</div>
           </div>
         </div>
@@ -292,7 +305,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-total">â€”</div>
+            <div class="ov-card-value" id="ov-dr-total">—</div>
             <div class="ov-card-label">Total Drivers</div>
           </div>
         </div>
@@ -301,7 +314,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-online">â€”</div>
+            <div class="ov-card-value" id="ov-dr-online">—</div>
             <div class="ov-card-label">Online Now</div>
           </div>
         </div>
@@ -310,7 +323,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-onride">â€”</div>
+            <div class="ov-card-value" id="ov-dr-onride">—</div>
             <div class="ov-card-label">On Ride</div>
           </div>
         </div>
@@ -319,16 +332,16 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-suspended">â€”</div>
+            <div class="ov-card-value" id="ov-dr-suspended">—</div>
             <div class="ov-card-label">Suspended</div>
           </div>
         </div>
-        <div class="ov-card" onclick="switchTab('drivers');setTimeout(function(){openDriLicenseAlerts()},300)" title="Licences expired or expiring within 30 days â€” click to review">
+        <div class="ov-card" onclick="switchTab('drivers');setTimeout(function(){openDriLicenseAlerts()},300)" title="Licences expired or expiring within 30 days — click to review">
           <div class="ov-card-icon ov-icon-orange">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-dr-licalerts">â€”</div>
+            <div class="ov-card-value" id="ov-dr-licalerts">—</div>
             <div class="ov-card-label">Licence Alerts</div>
           </div>
         </div>
@@ -346,7 +359,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-total">â€”</div>
+            <div class="ov-card-value" id="ov-r-total">—</div>
             <div class="ov-card-label">Total Rides</div>
           </div>
         </div>
@@ -355,7 +368,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-completed">â€”</div>
+            <div class="ov-card-value" id="ov-r-completed">—</div>
             <div class="ov-card-label">Completed</div>
           </div>
         </div>
@@ -364,7 +377,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-pending">â€”</div>
+            <div class="ov-card-value" id="ov-r-pending">—</div>
             <div class="ov-card-label">Pending</div>
           </div>
         </div>
@@ -373,7 +386,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-r-cancelled">â€”</div>
+            <div class="ov-card-value" id="ov-r-cancelled">—</div>
             <div class="ov-card-label">Cancelled</div>
           </div>
         </div>
@@ -391,7 +404,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-fare">â€”</div>
+            <div class="ov-card-value" id="ov-f-fare">—</div>
             <div class="ov-card-label">Total Ride Fare</div>
           </div>
         </div>
@@ -400,7 +413,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-wallet">â€”</div>
+            <div class="ov-card-value" id="ov-f-wallet">—</div>
             <div class="ov-card-label">User Wallet Balance</div>
           </div>
         </div>
@@ -409,7 +422,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-earnings">â€”</div>
+            <div class="ov-card-value" id="ov-f-earnings">—</div>
             <div class="ov-card-label">Total Driver Earnings</div>
           </div>
         </div>
@@ -418,7 +431,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-f-rating">â€”</div>
+            <div class="ov-card-value" id="ov-f-rating">—</div>
             <div class="ov-card-label">Avg Driver Rating</div>
           </div>
         </div>
@@ -437,7 +450,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-total">â€”</div>
+            <div class="ov-card-value" id="ov-fo-total">—</div>
             <div class="ov-card-label">Total Orders</div>
           </div>
         </div>
@@ -446,7 +459,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-completed">â€”</div>
+            <div class="ov-card-value" id="ov-fo-completed">—</div>
             <div class="ov-card-label">Completed</div>
           </div>
         </div>
@@ -455,7 +468,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-pending">â€”</div>
+            <div class="ov-card-value" id="ov-fo-pending">—</div>
             <div class="ov-card-label">Pending</div>
           </div>
         </div>
@@ -464,7 +477,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-fo-cancelled">â€”</div>
+            <div class="ov-card-value" id="ov-fo-cancelled">—</div>
             <div class="ov-card-label">Cancelled</div>
           </div>
         </div>
@@ -482,7 +495,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-dest">â€”</div>
+            <div class="ov-card-value" id="ov-c-dest">—</div>
             <div class="ov-card-label">Destinations</div>
           </div>
         </div>
@@ -491,7 +504,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-hotels">â€”</div>
+            <div class="ov-card-value" id="ov-c-hotels">—</div>
             <div class="ov-card-label">Hotels</div>
           </div>
         </div>
@@ -500,7 +513,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-foods">â€”</div>
+            <div class="ov-card-value" id="ov-c-foods">—</div>
             <div class="ov-card-label">Food Items</div>
           </div>
         </div>
@@ -527,7 +540,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-rev">â€”</div>
+            <div class="ov-card-value" id="ov-c-rev">—</div>
             <div class="ov-card-label">Platform Revenue</div>
           </div>
         </div>
@@ -536,7 +549,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-gmv">â€”</div>
+            <div class="ov-card-value" id="ov-c-gmv">—</div>
             <div class="ov-card-label">Total GMV</div>
           </div>
         </div>
@@ -545,7 +558,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-dep">â€”</div>
+            <div class="ov-card-value" id="ov-c-dep">—</div>
             <div class="ov-card-label">Deposits</div>
           </div>
         </div>
@@ -554,7 +567,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </div>
           <div class="ov-card-body">
-            <div class="ov-card-value" id="ov-c-refunds">â€”</div>
+            <div class="ov-card-value" id="ov-c-refunds">—</div>
             <div class="ov-card-label">Refunds</div>
           </div>
         </div>
@@ -604,8 +617,104 @@
   <p id="da-filter-error" class="da-error" role="alert" hidden></p>
   <div id="da-list" aria-live="polite"></div><div class="pager" id="da-pager"></div>
 </div>
-<div class="da-overlay" id="da-modal" hidden><div class="da-dialog" role="dialog" aria-modal="true" aria-labelledby="da-title" tabindex="-1"><div class="order-modal-header"><h3 class="order-modal-title" id="da-title">Application details</h3><button type="button" class="order-modal-close" onclick="daClose()" aria-label="Close application details">×</button></div><div class="order-modal-body" id="da-detail" aria-live="polite"></div></div></div>
+ <div class="da-overlay" id="da-modal" hidden><div class="da-dialog" role="dialog" aria-modal="true" aria-labelledby="da-title" tabindex="-1"><div class="order-modal-header"><div class="order-modal-header-info"><h3 class="order-modal-title" id="da-title">Driver application</h3><span class="order-modal-ref">Review workspace</span></div><button type="button" class="order-modal-close" onclick="daClose()" aria-label="Close application details"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="order-modal-body" id="da-detail" aria-live="polite"></div></div></div>
 <div class="da-overlay da-confirm-overlay" id="da-confirm" hidden><div class="da-dialog da-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="da-confirm-title" tabindex="-1"><div class="order-modal-header"><h3 class="order-modal-title" id="da-confirm-title">Confirm action</h3><button type="button" class="order-modal-close" onclick="daCancelConfirm()" aria-label="Close confirmation">×</button></div><form class="order-modal-body" id="da-confirm-form"><p id="da-confirm-description"></p><div class="fg" id="da-reason-field"><label for="da-reason">Reason (required)</label><textarea id="da-reason" maxlength="2000" rows="5" aria-describedby="da-reason-help"></textarea><small id="da-reason-help">Maximum 2,000 characters. No notification is sent.</small></div><p class="da-error" id="da-confirm-error" role="alert"></p><div class="da-actions"><button type="button" class="btn btn-ghost" onclick="daCancelConfirm()">Cancel</button><button type="submit" class="btn btn-accent" id="da-confirm-submit">Confirm</button></div></form></div></div>
+<div class="da-overlay" id="da-document-preview" hidden><div class="da-dialog da-workflow-dialog" role="dialog" aria-modal="true" aria-labelledby="da-document-title"><div class="order-modal-header"><h3 class="order-modal-title" id="da-document-title">Document preview</h3><button type="button" class="order-modal-close" onclick="daCloseDocumentPreview()" aria-label="Close document preview">×</button></div><div class="order-modal-body"><iframe id="da-document-frame" title="Application document preview" style="width:100%;min-height:65vh;border:0"></iframe></div></div></div>
+
+<!-- APPROVE: interview details → preview → send & approve -->
+<div class="da-overlay da-workflow-overlay" id="da-approve" hidden>
+  <div class="da-dialog da-workflow-dialog" role="dialog" aria-modal="true" aria-labelledby="da-approve-title" tabindex="-1">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="da-approve-title">Approve Driver &amp; Schedule Interview</h3>
+        <span class="order-modal-ref" id="da-approve-ref"></span>
+      </div>
+      <button type="button" class="order-modal-close" onclick="daWorkflowCancel('approve')" aria-label="Close approval dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <form class="order-modal-body" id="da-approve-form" novalidate>
+      <div id="da-approve-fields">
+        <p class="da-help" id="da-approve-intro"></p>
+        <div class="da-form-grid">
+          <div class="fg"><label for="da-i-date">Interview date</label><input id="da-i-date" type="date" required><small>All dates and times use Africa/Lagos (WAT).</small></div>
+          <div class="fg"><label for="da-i-start">Start time</label><input id="da-i-start" type="time" required></div>
+          <div class="fg"><label for="da-i-end">End time</label><input id="da-i-end" type="time"><small>Provide an end time or a duration below.</small></div>
+          <div class="fg"><label for="da-i-duration">…or duration (minutes)</label><input id="da-i-duration" type="number" inputmode="numeric" min="5" max="600" placeholder="e.g. 60"></div>
+          <div class="fg"><label for="da-i-format">Interview format</label><select id="da-i-format"><option value="physical">Physical (in person)</option><option value="online">Online (video call)</option></select></div>
+          <div class="fg"><label for="da-i-contact">Contact person name</label><input id="da-i-contact" maxlength="120" placeholder="Full name" autocomplete="off"></div>
+          <div class="fg"><label for="da-i-phone">Contact phone number</label><input id="da-i-phone" type="tel" maxlength="25" placeholder="+234 …" autocomplete="off"></div>
+        </div>
+        <div class="fg" id="da-i-address-field"><label for="da-i-address">Interview location / address</label><input id="da-i-address" maxlength="300" placeholder="Physical address"><small>Required for physical interviews.</small></div>
+        <div class="fg" id="da-i-link-field" hidden><label for="da-i-link">Meeting link</label><input id="da-i-link" type="url" maxlength="500" placeholder="https://…"><small>Required for online interviews.</small></div>
+        <div class="fg"><label for="da-i-documents">Documents the applicant should bring</label><textarea id="da-i-documents" rows="2" maxlength="2000" placeholder="e.g. Driver's licence, ID card, passport photographs"></textarea></div>
+        <div class="fg"><label for="da-i-instructions">Additional instructions</label><textarea id="da-i-instructions" rows="2" maxlength="2000" placeholder="Arrival time, what to expect, directions…"></textarea></div>
+        <div class="fg"><label for="da-i-notes">Optional notes for the applicant</label><textarea id="da-i-notes" rows="2" maxlength="2000"></textarea></div>
+      </div>
+      <div id="da-approve-preview" hidden>
+        <p class="da-help">Review the generated invitation below. Nothing is sent until you confirm.</p>
+        <div class="da-email-summary" id="da-approve-summary"></div>
+        <div class="da-email-frame-wrap"><iframe id="da-approve-frame" class="da-email-frame" title="Interview invitation email preview" sandbox></iframe></div>
+      </div>
+      <p class="da-error" id="da-approve-error" role="alert"></p>
+      <div class="da-actions" id="da-approve-acts">
+        <button type="button" class="btn btn-ghost" id="da-approve-cancel" onclick="daWorkflowCancel('approve')">Cancel</button>
+        <button type="button" class="btn btn-ghost" id="da-approve-back" hidden onclick="daWorkflowBack('approve')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Edit Details</button>
+        <button type="button" class="btn btn-accent" id="da-approve-generate" onclick="daWorkflowGenerate('approve')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Generate Email Preview</button>
+        <button type="submit" class="btn btn-green" id="da-approve-send" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Send Invitation &amp; Approve</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- REJECT: reason details → preview → send & confirm -->
+<div class="da-overlay da-workflow-overlay" id="da-reject" hidden>
+  <div class="da-dialog da-workflow-dialog" role="dialog" aria-modal="true" aria-labelledby="da-reject-title" tabindex="-1">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="da-reject-title">Reject Driver Application</h3>
+        <span class="order-modal-ref" id="da-reject-ref"></span>
+      </div>
+      <button type="button" class="order-modal-close" onclick="daWorkflowCancel('reject')" aria-label="Close rejection dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <form class="order-modal-body" id="da-reject-form" novalidate>
+      <div id="da-reject-fields">
+        <div class="da-email-summary" id="da-reject-applicant"></div>
+        <div class="fg"><label for="da-r-reason">Rejection reason</label><select id="da-r-reason" required><option value="">Select a reason</option><option value="incomplete_application">Incomplete application</option><option value="eligibility_not_met">Eligibility requirements not met</option><option value="documents_unavailable">Required documents unavailable</option><option value="position_unavailable">Position currently unavailable</option><option value="other">Other</option></select><small>Stored internally — never included in the email.</small></div>
+        <div class="fg" id="da-r-detail-field" hidden><label for="da-r-detail">Reason description</label><input id="da-r-detail" maxlength="1000" placeholder="Describe the reason for administrators"><small>Required when the reason is “Other”. Internal only.</small></div>
+        <div class="fg"><label for="da-r-explanation">Additional explanation for the applicant (optional)</label><textarea id="da-r-explanation" rows="3" maxlength="2000" placeholder="Included in the rejection email."></textarea></div>
+        <div class="fg"><label for="da-r-note">Internal admin note (optional)</label><textarea id="da-r-note" rows="3" maxlength="4000"></textarea><small>Saved with the application. Never sent to the applicant.</small></div>
+      </div>
+      <div id="da-reject-preview" hidden>
+        <p class="da-help">Review the generated rejection letter below. Nothing is sent until you confirm.</p>
+        <div class="da-email-summary" id="da-reject-summary"></div>
+        <div class="da-email-frame-wrap"><iframe id="da-reject-frame" class="da-email-frame" title="Rejection email preview" sandbox></iframe></div>
+      </div>
+      <p class="da-error" id="da-reject-error" role="alert"></p>
+      <div class="da-actions" id="da-reject-acts">
+        <button type="button" class="btn btn-ghost" id="da-reject-cancel" onclick="daWorkflowCancel('reject')">Cancel</button>
+        <button type="button" class="btn btn-ghost" id="da-reject-back" hidden onclick="daWorkflowBack('reject')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Edit Details</button>
+        <button type="button" class="btn btn-accent" id="da-reject-generate" onclick="daWorkflowGenerate('reject')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Generate Rejection Email</button>
+        <button type="submit" class="btn btn-red" id="da-reject-send" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="7.86 2 16.14 2 22 7.86 16.14 13.71 7.86 13.71 2 7.86 7.86 2"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>Send Rejection &amp; Confirm</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Stored email viewer (Email & Communication History) -->
+<div class="da-overlay da-emailview-overlay" id="da-email-view" hidden>
+  <div class="da-dialog da-emailview-dialog" role="dialog" aria-modal="true" aria-labelledby="da-email-view-title" tabindex="-1">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info">
+        <h3 class="order-modal-title" id="da-email-view-title">Email content</h3>
+        <span class="order-modal-ref" id="da-email-view-ref"></span>
+      </div>
+      <button type="button" class="order-modal-close" onclick="daCloseEmailView()" aria-label="Close email viewer">×</button>
+    </div>
+    <div class="order-modal-body">
+      <div class="da-email-summary" id="da-email-view-summary"></div>
+      <div class="da-email-frame-wrap"><iframe id="da-email-view-frame" class="da-email-frame" title="Stored email content" sandbox></iframe></div>
+    </div>
+  </div>
+</div>
 
 <!-- USERS -->
 <div class="content" id="panel-users">
@@ -638,7 +747,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-total">â€”</div>
+        <div class="um-stat-value" id="um-s-total">—</div>
         <div class="um-stat-label">Total Users</div>
       </div>
     </div>
@@ -647,7 +756,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-active">â€”</div>
+        <div class="um-stat-value" id="um-s-active">—</div>
         <div class="um-stat-label">Active</div>
       </div>
     </div>
@@ -656,7 +765,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-suspended">â€”</div>
+        <div class="um-stat-value" id="um-s-suspended">—</div>
         <div class="um-stat-label">Suspended</div>
       </div>
     </div>
@@ -665,7 +774,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="um-s-new">â€”</div>
+        <div class="um-stat-value" id="um-s-new">—</div>
         <div class="um-stat-label">New This Week</div>
       </div>
     </div>
@@ -686,7 +795,7 @@
 
   <!-- Error state -->
   <div id="um-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">âš ï¸</div>
+    <div class="drv-error-icon">⚠️</div>
     <div class="drv-error-title">Failed to load users</div>
     <div class="drv-error-text" id="um-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="loadUsers(true)">Retry</button>
@@ -763,7 +872,7 @@
             </div>
           </div>
           <div class="fg wide">
-            <label>Tags <span class="cms-label-hint">(optional â€” press Enter to add, suggestions appear as you type)</span></label>
+            <label>Tags <span class="cms-label-hint">(optional — press Enter to add, suggestions appear as you type)</span></label>
             <div class="tag-input-wrap" id="d-tags-wrap" onclick="this.querySelector('input').focus()">
               <input id="d-tags-input" placeholder="Type and press Enter..." onkeydown="addTag(event,'d-tags')" oninput="cmsSuggest('d-tags','tags')">
             </div>
@@ -778,7 +887,7 @@
           <div class="fg"><label>Website</label><input id="d-web" placeholder="https://..."></div>
           <div class="fg"><label>Hours</label><input id="d-hours" placeholder="9AM - 6PM"></div>
           <div class="fg wide">
-            <label>Gallery Images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <label>Gallery Images <span class="cms-label-hint">(drag to reorder · ✂ crop · ★ set as cover)</span></label>
             <div class="cms-gal-tools-row">
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('d-gal')">Upload images</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('d-gal')">+ Add by URL</button>
@@ -844,7 +953,7 @@
     <button class="drv-tab" data-hotel-tab="bookings" onclick="hotelSwitchTab('bookings', this)">Bookings <span class="wl-tab-badge" id="hb-pending-badge" style="display:none"></span></button>
   </div>
 
-  <!-- â”€â”€ Tab: Properties â”€â”€ -->
+  <!-- ── Tab: Properties ── -->
   <div id="hotel-pane-properties">
     <div class="cms-list-bar">
       <label class="cms-select-all"><input type="checkbox" id="h-select-all" onchange="bulkSelectAll('h', bulkVisible['h'] || [], this.checked)"> Select all visible</label>
@@ -860,7 +969,7 @@
     <div class="pager" id="h-pager"></div>
   </div>
 
-  <!-- â”€â”€ Tab: Bookings â”€â”€ -->
+  <!-- ── Tab: Bookings ── -->
   <div id="hotel-pane-bookings" style="display:none">
     <!-- Booking statistics -->
     <div class="um-stats">
@@ -869,7 +978,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-total">â€”</div>
+          <div class="um-stat-value" id="hb-s-total">—</div>
           <div class="um-stat-label">Total Bookings</div>
         </div>
       </div>
@@ -878,7 +987,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-pending">â€”</div>
+          <div class="um-stat-value" id="hb-s-pending">—</div>
           <div class="um-stat-label">Awaiting Confirmation</div>
         </div>
       </div>
@@ -887,7 +996,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-active">â€”</div>
+          <div class="um-stat-value" id="hb-s-active">—</div>
           <div class="um-stat-label">Confirmed / In-house</div>
         </div>
       </div>
@@ -896,7 +1005,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="hb-s-revenue">â€”</div>
+          <div class="um-stat-value" id="hb-s-revenue">—</div>
           <div class="um-stat-label">Paid Revenue</div>
         </div>
       </div>
@@ -949,7 +1058,7 @@
 
     <!-- Error state -->
     <div id="hb-error" class="drv-error" style="display:none">
-      <div class="drv-error-icon">âš ï¸</div>
+      <div class="drv-error-icon">⚠️</div>
       <div class="drv-error-title">Failed to load bookings</div>
       <div class="drv-error-text" id="hb-error-text"></div>
       <button class="btn btn-accent btn-sm" onclick="loadHotelBookings(true)">Retry</button>
@@ -1017,7 +1126,7 @@
           <div class="fg"><label>Check-in Time</label><input id="h-checkin" maxlength="50" placeholder="e.g. 2:00 PM"></div>
           <div class="fg"><label>Check-out Time</label><input id="h-checkout" maxlength="50" placeholder="e.g. 12:00 PM"></div>
           <div class="fg wide">
-            <label>Gallery Images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <label>Gallery Images <span class="cms-label-hint">(drag to reorder · ✂ crop · ★ set as cover)</span></label>
             <div class="cms-gal-tools-row">
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('h-gal')">Upload images</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('h-gal')">+ Add by URL</button>
@@ -1123,7 +1232,7 @@
           <div class="fg"><label>Prep Time</label><input id="f-prep" placeholder="e.g. 20 mins"></div>
           <div class="fg wide"><label>Tags <span class="cms-label-hint">(comma separated)</span></label><input id="f-tags" placeholder="spicy, popular, special"></div>
           <div class="fg wide">
-            <label>Gallery Images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <label>Gallery Images <span class="cms-label-hint">(drag to reorder · ✂ crop · ★ set as cover)</span></label>
             <div class="cms-gal-tools-row">
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('f-gal')">Upload images</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('f-gal')">+ Add by URL</button>
@@ -1165,7 +1274,7 @@
   </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• EVENTS & FESTIVALS â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ══════════════ EVENTS & FESTIVALS ══════════════ -->
 <div class="content" id="panel-events">
   <div class="dest-page-header">
     <div class="dest-page-info">
@@ -1194,6 +1303,7 @@
   </div>
   <div class="order-bulk-bar" id="ev-bulkbar" style="display:none"></div>
   <div class="items" id="ev-list"></div>
+  <div class="pager" id="ev-pagination" aria-label="Events pagination"></div>
 </div>
 
 <!-- EVENT CREATE/EDIT MODAL -->
@@ -1258,7 +1368,7 @@
           <div class="fg" id="ev-price-row" style="display:none"><label>Ticket price (NGN)</label><input id="ev-price" type="number" min="0" placeholder="0"></div>
           <div class="fg" id="ev-ticketrow" style="display:none"><label>Ticket URL</label><input id="ev-ticket-url" type="url" placeholder="https://..."></div>
           <div class="fg wide">
-            <label>Gallery images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <label>Gallery images <span class="cms-label-hint">(drag to reorder · ✂ crop · ★ set as cover)</span></label>
             <div class="cms-gal-tools-row">
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('ev-gal')">Upload images</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('ev-gal')">+ Add by URL</button>
@@ -1297,7 +1407,7 @@
   </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• TOUR PACKAGES â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ══════════════ TOUR PACKAGES ══════════════ -->
 <div class="content" id="panel-tours">
   <div class="dest-page-header">
     <div class="dest-page-info">
@@ -1321,6 +1431,7 @@
   </div>
   <div class="order-bulk-bar" id="tr-bulkbar" style="display:none"></div>
   <div class="items" id="tr-list"></div>
+  <div class="pager" id="tr-pagination" aria-label="Tour packages pagination"></div>
 </div>
 
 <!-- TOUR CREATE/EDIT MODAL -->
@@ -1357,7 +1468,7 @@
           </div>
           <div class="fg wide"><label>Description</label><div id="tr-desc" data-ph="What's included in this package..."></div></div>
           <div class="fg wide">
-            <label>Gallery images <span class="cms-label-hint">(drag to reorder Â· âœ‚ crop Â· â˜… set as cover)</span></label>
+            <label>Gallery images <span class="cms-label-hint">(drag to reorder · ✂ crop · ★ set as cover)</span></label>
             <div class="cms-gal-tools-row">
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryPick('tr-gal')">Upload images</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="cmsGalleryAddUrl('tr-gal')">+ Add by URL</button>
@@ -1410,7 +1521,7 @@
 <div class="modal-bg cms-modal-bg" id="itinModal">
   <div class="modal cms-modal modal-wide">
     <div class="dest-modal-header">
-      <h3 class="dest-modal-title">Itinerary Builder â€” <span id="itin-tour-name"></span></h3>
+      <h3 class="dest-modal-title">Itinerary Builder — <span id="itin-tour-name"></span></h3>
       <button class="dest-modal-close" onclick="closeItinModal()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -1426,7 +1537,7 @@
   </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• BANNERS / CAROUSEL â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ══════════════ BANNERS / CAROUSEL ══════════════ -->
 <div class="content" id="panel-banners">
   <div class="dest-page-header">
     <div class="dest-page-info">
@@ -1439,7 +1550,7 @@
     </button>
   </div>
   <div class="cms-list-bar">
-    <span class="cms-list-hint">Drag banners or use â†‘ â†“ to change carousel order, then save the order</span>
+    <span class="cms-list-hint">Drag banners or use ↑ ↓ to change carousel order, then save the order</span>
     <button class="btn btn-ghost btn-sm" id="bn-order-save" onclick="saveBannerOrder()" style="display:none">Save order</button>
   </div>
   <div class="items" id="bn-list"></div>
@@ -1514,7 +1625,7 @@
   </div>
 </div>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAGS & CATEGORIES â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ══════════════ TAGS & CATEGORIES ══════════════ -->
 <div class="content" id="panel-taxonomy">
   <div class="dest-page-header">
     <div class="dest-page-info">
@@ -1549,6 +1660,22 @@
 </div>
 
 <!-- IMAGE CROP MODAL (shared) -->
+<!-- COUPONS & PROMOTIONS -->
+<div class="content" id="panel-coupons">
+  <div class="dest-page-header"><div class="dest-page-info"><h2 class="dest-page-title">Coupons &amp; Promotions</h2><span class="dest-page-count" id="cp-count">0 coupons</span></div><button class="btn btn-accent" onclick="cpOpenModal()">+ Create Coupon</button></div>
+  <div class="drv-tabs cp-tabs"><button class="drv-tab on" id="cp-tab-coupons" onclick="cpShowTab('coupons')">Coupons</button><button class="drv-tab" id="cp-tab-history" onclick="cpShowTab('history')">Redemption History</button></div>
+  <div class="cp-summary" id="cp-summary"></div>
+  <div class="cp-toolbar"><input id="cp-search" placeholder="Search coupon code..." oninput="cpDebouncedLoad()"><select id="cp-filter" onchange="cpLoad(true)"><option value="">All statuses</option><option value="true">Active</option><option value="false">Inactive</option></select><button class="btn btn-ghost btn-sm" onclick="cpLoad(true)">Refresh</button></div>
+  <div class="cp-table-wrap"><table class="cp-table"><thead><tr><th>Code</th><th>Discount</th><th>Service</th><th>Usage</th><th>Validity</th><th>Status</th><th>Actions</th></tr></thead><tbody id="cp-list"></tbody></table></div><div class="cp-empty" id="cp-empty" style="display:none">No coupons found.</div>
+<div class="cp-history-screen" id="cp-history-screen" style="display:none">
+  <div class="order-page-header"><div class="order-page-info"><h2 class="order-page-title">Redemption History</h2><span class="order-page-count" id="cp-history-count">0 redemptions</span></div><button class="btn btn-ghost btn-sm" onclick="cpLoadHistory(true)">Refresh</button></div>
+  <div class="um-toolbar"><input class="search um-search" id="cp-history-search" placeholder="Search coupon, customer or reference..." oninput="cpRenderHistory()"></div>
+  <div class="wl-table-wrap"><table class="wl-table cp-history-screen-table"><thead><tr><th>Date</th><th>Coupon</th><th>Customer</th><th>Service / Reference</th><th>Eligible amount</th><th>Discount</th><th>Final amount</th><th>Status</th></tr></thead><tbody id="cp-history-list"></tbody></table></div>
+  <div class="cp-empty" id="cp-history-empty" style="display:none">No redemption history found.</div>
+</div>
+</div>
+ 
+<div class="modal-bg cms-modal-bg" id="couponModal"><div class="modal cms-modal modal-wide"><div class="dest-modal-header"><h3 class="dest-modal-title" id="cp-modal-title">Create Coupon</h3><button class="dest-modal-close" onclick="cpCloseModal()">×</button></div><div class="dest-modal-body"><form id="cp-form" onsubmit="return false"><input type="hidden" id="cp-edit"><div class="grid"><div class="fg"><label>Coupon code *</label><input id="cp-code" maxlength="50" required placeholder="WELCOME500"></div><div class="fg"><label>Name</label><input id="cp-name" maxlength="255" placeholder="Welcome offer"></div><div class="fg wide"><label>Description</label><textarea id="cp-description" maxlength="2000" placeholder="Optional campaign description"></textarea></div><div class="fg"><label>Discount type *</label><select id="cp-type"><option value="fixed">Fixed amount (₦)</option><option value="percentage">Percentage (%)</option></select></div><div class="fg"><label>Discount value *</label><input id="cp-value" type="number" min="0.01" step="0.01" required></div><div class="fg"><label>Maximum discount (₦)</label><input id="cp-max" type="number" min="0" step="0.01"></div><div class="fg"><label>Service</label><select id="cp-service"><option value="all">All supported services</option><option value="ride">Ride bookings</option><option value="food">Food orders</option></select></div><div class="fg"><label>Total redemptions</label><input id="cp-limit" type="number" min="1" step="1"></div><div class="fg"><label>Per customer limit</label><input id="cp-user-limit" type="number" min="1" step="1"></div><div class="fg"><label>Minimum amount (₦)</label><input id="cp-min" type="number" min="0" step="0.01"></div><div class="fg"><label>Starts at</label><input id="cp-starts" type="datetime-local"></div><div class="fg"><label>Expires at</label><input id="cp-expires" type="datetime-local"></div><div class="fg wide"><div class="tgl-row"><span>Active</span><div class="tgl on" id="cp-active" onclick="this.classList.toggle('on')"></div></div><div class="tgl-row"><span>First-time customers only</span><div class="tgl" id="cp-first" onclick="this.classList.toggle('on')"></div></div></div></div></form></div><div class="food-modal-footer"><button class="btn btn-ghost" onclick="cpCloseModal()">Cancel</button><button class="btn btn-green" id="cp-save" onclick="cpSave()">Save Coupon</button></div></div></div>
 <div class="modal-bg" id="cropModal">
   <div class="modal modal-crop">
     <div class="dest-modal-header">
@@ -1575,8 +1702,8 @@
           <span class="crop-h" data-dir="s"></span>
           <span class="crop-h" data-dir="sw"></span>
           <span class="crop-h" data-dir="w"></span>
-        </div>
-      </div>
+ </div>
+</div>
     </div>
     <div class="food-modal-footer">
       <button class="btn btn-ghost" onclick="cmsCloseCrop()">Cancel</button>
@@ -1607,7 +1734,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-total">â€”</div>
+        <div class="um-stat-value" id="rv-s-total">—</div>
         <div class="um-stat-label">Total Reviews</div>
       </div>
     </div>
@@ -1616,7 +1743,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-visible">â€”</div>
+        <div class="um-stat-value" id="rv-s-visible">—</div>
         <div class="um-stat-label">Visible</div>
       </div>
     </div>
@@ -1625,7 +1752,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-hidden">â€”</div>
+        <div class="um-stat-value" id="rv-s-hidden">—</div>
         <div class="um-stat-label">Hidden</div>
       </div>
     </div>
@@ -1634,7 +1761,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rv-s-reported">â€”</div>
+        <div class="um-stat-value" id="rv-s-reported">—</div>
         <div class="um-stat-label">Reported</div>
       </div>
     </div>
@@ -1702,7 +1829,7 @@
 
   <!-- Error state -->
   <div id="rv-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">âš ï¸</div>
+    <div class="drv-error-icon">⚠️</div>
     <div class="drv-error-title">Failed to load reviews</div>
     <div class="drv-error-text" id="rv-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="loadReviews(true)">Retry</button>
@@ -1714,6 +1841,28 @@
 
   <!-- Pagination -->
   <div class="um-pagination" id="rv-pagination" style="display:none"></div>
+
+  <!-- DRIVER REPORTS MODERATION -->
+  <section class="driver-reports-panel" aria-labelledby="dr-heading">
+    <div class="dr-panel-heading">
+      <div><h3 id="dr-heading">Driver Reports</h3><p>Review passenger allegations without taking automatic disciplinary action.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="loadDriverReports(true)">Refresh</button>
+    </div>
+    <div class="dr-stats" aria-live="polite">
+      <div><strong id="dr-s-pending">—</strong><span>Pending</span></div>
+      <div><strong id="dr-s-review">—</strong><span>Under review</span></div>
+      <div><strong id="dr-s-resolved">—</strong><span>Resolved</span></div>
+      <div><strong id="dr-s-dismissed">—</strong><span>Dismissed</span></div>
+    </div>
+    <div class="um-toolbar dr-toolbar">
+      <input class="search um-search" id="dr-search" placeholder="Search report, passenger, driver or ride..." oninput="drSearch(this.value)">
+      <div class="order-filter-wrap"><select id="dr-status" onchange="drApplyFilters()"><option value="">All statuses</option><option value="pending">Pending</option><option value="under_review">Under review</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option></select></div>
+      <input class="rd-date" id="dr-category" placeholder="Reason/category" oninput="drApplyFilters()">
+      <button type="button" class="btn btn-ghost btn-sm" id="dr-clear" onclick="drClearFilters()" style="display:none">Clear</button>
+    </div>
+    <div class="wl-table-wrap dr-table-wrap"><table class="wl-table dr-table"><thead><tr><th>Report</th><th>Passenger</th><th>Driver</th><th>Reason</th><th>Status</th><th>Submitted</th><th></th></tr></thead><tbody id="dr-list"><tr><td colspan="7"><div class="drv-empty-inline"><div class="drv-empty-inline-text">Reports load when this moderation panel opens.</div></div></td></tr></tbody></table></div>
+    <div class="um-pagination" id="dr-pagination" style="display:none"></div>
+  </section>
 </div>
 
 <!-- ORDERS -->
@@ -1865,7 +2014,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/><path d="M3 11h18"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-total">â€”</div>
+        <div class="um-stat-value" id="rd-s-total">&mdash;</div>
         <div class="um-stat-label">Total Rides</div>
       </div>
     </div>
@@ -1874,7 +2023,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-completed">â€”</div>
+        <div class="um-stat-value" id="rd-s-completed">&mdash;</div>
         <div class="um-stat-label">Completed</div>
       </div>
     </div>
@@ -1883,7 +2032,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-progress">â€”</div>
+        <div class="um-stat-value" id="rd-s-progress">&mdash;</div>
         <div class="um-stat-label">In Progress</div>
       </div>
     </div>
@@ -1892,11 +2041,31 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="rd-s-cancelled">â€”</div>
+        <div class="um-stat-value" id="rd-s-cancelled">&mdash;</div>
         <div class="um-stat-label">Cancelled</div>
       </div>
     </div>
   </div>
+
+  <div class="rd-ops-strip" aria-label="Ride operations views">
+    <button class="btn btn-accent btn-sm rd-ops-tab is-active" type="button" data-rd-ops="active">Active operations</button>
+    <button class="btn btn-ghost btn-sm rd-ops-tab" type="button" data-rd-ops="failed">Failed assignments <span id="rd-failed-count"></span></button>
+    <button class="btn btn-ghost btn-sm rd-ops-tab" type="button" data-rd-ops="disputes">Disputes <span id="rd-dispute-count"></span></button>
+    <button class="btn btn-ghost btn-sm" id="rd-open-dispute" type="button" onclick="openRideDisputeModal()">Open dispute</button>
+  </div>
+  <section class="rd-ops-panel" id="rd-ops-active" aria-labelledby="rd-active-title">
+    <div class="rd-ops-head"><div><p class="eyebrow">Live operations</p><h3 id="rd-active-title">Active rides</h3></div><span class="um-hint" id="rd-ops-updated">Waiting for operations data…</span></div>
+    <div class="rd-ops-columns" aria-hidden="true"><span>Ride</span><span>Customer &amp; driver</span><span>Route</span><span>Location</span><span>Actions</span></div>
+    <div class="rd-ops-grid" id="rd-active-list"><div class="rd-ops-empty">Loading active ride operations…</div></div>
+  </section>
+  <section class="rd-ops-panel" id="rd-ops-failed" hidden aria-labelledby="rd-failed-title">
+    <div class="rd-ops-head"><div><p class="eyebrow">Dispatch recovery</p><h3 id="rd-failed-title">Failed assignments</h3></div></div>
+    <div class="rd-ops-table-wrap" role="region" aria-label="Failed ride assignments" tabindex="0"><table class="wl-table"><thead><tr><th scope="col">Ride</th><th scope="col">Customer</th><th scope="col">Pickup</th><th scope="col">Reason</th><th scope="col">Attempts</th><th scope="col">Last attempt</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody id="rd-failed-list"></tbody></table></div>
+  </section>
+  <section class="rd-ops-panel" id="rd-ops-disputes" hidden aria-labelledby="rd-disputes-title">
+    <div class="rd-ops-head"><div><p class="eyebrow">Cases</p><h3 id="rd-disputes-title">Ride disputes &amp; safety escalations</h3></div></div>
+    <div class="rd-ops-table-wrap" role="region" aria-label="Ride disputes and safety escalations" tabindex="0"><table class="wl-table"><thead><tr><th scope="col">Ride</th><th scope="col">Category</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col">Complaint</th><th scope="col">Updated</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody id="rd-dispute-list"></tbody></table></div>
+  </section>
 
   <!-- Search + date range -->
   <div class="um-toolbar">
@@ -1916,7 +2085,7 @@
 
   <!-- Error state -->
   <div id="rd-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">âš ï¸</div>
+    <div class="drv-error-icon" aria-hidden="true">&#9888;</div>
     <div class="drv-error-title">Failed to load rides</div>
     <div class="drv-error-text" id="rd-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="loadRides(true)">Retry</button>
@@ -1943,6 +2112,14 @@
       </button>
     </div>
     <div class="order-modal-body" id="rideModalBody"></div>
+  </div>
+</div>
+
+<div class="modal-bg order-modal-bg" id="rdOpsModal" aria-hidden="true">
+  <div class="modal order-modal rd-ops-modal" role="dialog" aria-modal="true" aria-labelledby="rdOpsTitle">
+    <div class="order-modal-header"><div class="order-modal-header-info"><h3 class="order-modal-title" id="rdOpsTitle">Ride operation</h3><span class="order-modal-ref" id="rdOpsRef"></span></div><button class="order-modal-close" type="button" onclick="closeRideOpsModal()" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <form class="order-modal-body" id="rdOpsForm"><div id="rdOpsBody"></div><p class="drv-error-text" id="rdOpsError" role="alert"></p></form>
+    <div class="assign-driver-footer" id="rdOpsFooter"><div class="assign-driver-selected" id="rdOpsContext">Ride operations action</div><div class="assign-driver-acts"><button class="btn btn-ghost" type="button" onclick="closeRideOpsModal()">Cancel</button><button class="btn btn-accent" type="submit" form="rdOpsForm" id="rdOpsSubmit">Continue</button></div></div>
   </div>
 </div>
 
@@ -1997,7 +2174,7 @@
   <!-- Live map (Leaflet) -->
   <div class="dri-map-wrap" id="dri-map-wrap" style="display:none">
     <div class="dri-map" id="dri-map"></div>
-    <div class="dri-map-bar" id="dri-map-bar">Loading driver locationsâ€¦</div>
+    <div class="dri-map-bar" id="dri-map-bar">Loading driver locations…</div>
   </div>
 
   <div class="list-bar">
@@ -2234,9 +2411,9 @@
     <div class="fg" style="text-align:left"><label>Audience</label>
       <select id="dri-ann-segment" onchange="driAnnounceSegmentChange()">
         <option value="all">All drivers</option>
-        <option value="online">Online / Offline driversâ€¦</option>
-        <option value="status">By account statusâ€¦</option>
-        <option value="specific">Selected driversâ€¦</option>
+        <option value="online">Online / Offline drivers…</option>
+        <option value="status">By account status…</option>
+        <option value="specific">Selected drivers…</option>
       </select>
     </div>
     <div class="fg" style="text-align:left;margin-top:10px;display:none" id="dri-ann-value-wrap"><label id="dri-ann-value-label">Value</label>
@@ -2244,7 +2421,7 @@
     </div>
     <div class="fg" style="text-align:left;margin-top:10px;display:none" id="dri-ann-pick-wrap">
       <label>Selected drivers</label>
-      <input id="dri-ann-search" placeholder="Search drivers by name or phoneâ€¦" oninput="driAnnounceQueueEstimate()">
+      <input id="dri-ann-search" placeholder="Search drivers by name or phone…" oninput="driAnnounceQueueEstimate()">
       <div class="dri-ann-picked" id="dri-ann-picked"></div>
       <div class="dri-ann-results" id="dri-ann-results"></div>
     </div>
@@ -2298,7 +2475,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-user">â€”</div>
+        <div class="um-stat-value" id="wl-s-user">—</div>
         <div class="um-stat-label">User Wallets</div>
       </div>
     </div>
@@ -2307,7 +2484,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2"/><circle cx="7" cy="15" r="2"/><circle cx="17" cy="15" r="2"/><path d="M9 15h6"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-driver">â€”</div>
+        <div class="um-stat-value" id="wl-s-driver">—</div>
         <div class="um-stat-label">Driver Wallets</div>
       </div>
     </div>
@@ -2316,7 +2493,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-platform">â€”</div>
+        <div class="um-stat-value" id="wl-s-platform">—</div>
         <div class="um-stat-label">Platform Net</div>
       </div>
     </div>
@@ -2325,13 +2502,13 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="wl-s-pending">â€”</div>
+        <div class="um-stat-value" id="wl-s-pending">—</div>
         <div class="um-stat-label">Pending Payouts</div>
       </div>
     </div>
   </div>
 
-  <!-- Sub navigation (inside the panel â€” keeps the main nav clean) -->
+  <!-- Sub navigation (inside the panel — keeps the main nav clean) -->
   <div class="drv-tabs wl-tabs">
     <button class="drv-tab on" data-wl-tab="overview" onclick="wlSwitchTab('overview', this)">Overview</button>
     <button class="drv-tab" data-wl-tab="users" onclick="wlSwitchTab('users', this)">User Wallets</button>
@@ -2347,13 +2524,13 @@
 
   <!-- Error state -->
   <div id="wl-error" class="drv-error" style="display:none">
-    <div class="drv-error-icon">âš ï¸</div>
+    <div class="drv-error-icon">⚠️</div>
     <div class="drv-error-title">Failed to load wallet data</div>
     <div class="drv-error-text" id="wl-error-text"></div>
     <button class="btn btn-accent btn-sm" onclick="wlRetry()">Retry</button>
   </div>
 
-  <!-- â”€â”€ Tab: Overview â”€â”€ -->
+  <!-- ── Tab: Overview ── -->
   <div class="wl-pane" id="wl-pane-overview">
     <div class="ov-two-col">
       <div class="ov-recent-box">
@@ -2377,7 +2554,7 @@
     </div>
   </div>
 
-  <!-- â”€â”€ Tab: User wallets â”€â”€ -->
+  <!-- ── Tab: User wallets ── -->
   <div class="wl-pane" id="wl-pane-users" style="display:none">
     <div class="um-toolbar">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -2389,7 +2566,7 @@
     <div class="um-pagination" id="wl-users-pagination" style="display:none"></div>
   </div>
 
-  <!-- â”€â”€ Tab: Driver wallets â”€â”€ -->
+  <!-- ── Tab: Driver wallets ── -->
   <div class="wl-pane" id="wl-pane-drivers" style="display:none">
     <div class="um-toolbar">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -2401,7 +2578,7 @@
     <div class="um-pagination" id="wl-drivers-pagination" style="display:none"></div>
   </div>
 
-  <!-- â”€â”€ Tab: Withdrawal requests â”€â”€ -->
+  <!-- ── Tab: Withdrawal requests ── -->
   <div class="wl-pane" id="wl-pane-withdrawals" style="display:none">
     <div class="um-stats wl-substats">
       <div class="um-stat-card">
@@ -2495,7 +2672,7 @@
     </div>
     <div class="rv-range-custom" id="rv-range-custom" style="display:none">
       <input type="date" id="rv-range-from" aria-label="From date">
-      <span class="rv-range-sep">â†’</span>
+      <span class="rv-range-sep">→</span>
       <input type="date" id="rv-range-to" aria-label="To date">
       <button class="btn btn-accent btn-sm" onclick="rvApplyCustom()">Apply</button>
     </div>
@@ -2518,12 +2695,12 @@
     </div>
     <div id="rv-ov-content" style="display:none">
       <div class="um-stats rv-kpis">
-        <div class="um-stat-card"><div class="um-stat-icon um-icon-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-revenue">â€”</div><div class="um-stat-label">Platform Revenue</div></div></div>
-        <div class="um-stat-card"><div class="um-stat-icon um-icon-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-gmv">â€”</div><div class="um-stat-label">Total GMV</div></div></div>
-        <div class="um-stat-card"><div class="um-stat-icon um-icon-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-rides">â€”</div><div class="um-stat-label">Rides GMV</div></div></div>
-        <div class="um-stat-card"><div class="um-stat-icon um-icon-red"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-food">â€”</div><div class="um-stat-label">Food GMV</div></div></div>
-        <div class="um-stat-card"><div class="um-stat-icon um-icon-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-deposits">â€”</div><div class="um-stat-label">Wallet Deposits</div></div></div>
-        <div class="um-stat-card"><div class="um-stat-icon um-icon-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-users">â€”</div><div class="um-stat-label">New Users</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-revenue">—</div><div class="um-stat-label">Platform Revenue</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-gmv">—</div><div class="um-stat-label">Total GMV</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-rides">—</div><div class="um-stat-label">Rides GMV</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-red"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-food">—</div><div class="um-stat-label">Food GMV</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-deposits">—</div><div class="um-stat-label">Wallet Deposits</div></div></div>
+        <div class="um-stat-card"><div class="um-stat-icon um-icon-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><div class="um-stat-body"><div class="um-stat-value" id="rv-kpi-users">—</div><div class="um-stat-label">New Users</div></div></div>
       </div>
 
       <div class="rv-charts-grid">
@@ -2560,15 +2737,15 @@
     </div>
     <div id="rv-earn-content" style="display:none">
       <div class="rv-banner" id="rv-earn-banner">
-        <div class="rv-banner-text"><strong id="rv-earn-status-title">Checkingâ€¦</strong><span id="rv-earn-status-sub"></span></div>
-        <span class="tag tag-avail" id="rv-earn-status-tag">â€”</span>
+        <div class="rv-banner-text"><strong id="rv-earn-status-title">Checking…</strong><span id="rv-earn-status-sub"></span></div>
+        <span class="tag tag-avail" id="rv-earn-status-tag">—</span>
       </div>
       <div class="rv-checks" id="rv-earn-checks"></div>
       <div class="rv-kv-grid">
-        <div class="rv-kv-card"><div class="rv-kv-label">Revenue (range)</div><div class="rv-kv-value" id="rv-earn-rev-range">â€”</div></div>
-        <div class="rv-kv-card"><div class="rv-kv-label">Revenue (all time)</div><div class="rv-kv-value" id="rv-earn-rev-total">â€”</div></div>
-        <div class="rv-kv-card"><div class="rv-kv-label">Cash Position</div><div class="rv-kv-value" id="rv-earn-cash">â€”</div></div>
-        <div class="rv-kv-card"><div class="rv-kv-label">Reconciliation</div><div class="rv-kv-value" id="rv-earn-recon">â€”</div></div>
+        <div class="rv-kv-card"><div class="rv-kv-label">Revenue (range)</div><div class="rv-kv-value" id="rv-earn-rev-range">—</div></div>
+        <div class="rv-kv-card"><div class="rv-kv-label">Revenue (all time)</div><div class="rv-kv-value" id="rv-earn-rev-total">—</div></div>
+        <div class="rv-kv-card"><div class="rv-kv-label">Cash Position</div><div class="rv-kv-value" id="rv-earn-cash">—</div></div>
+        <div class="rv-kv-card"><div class="rv-kv-label">Reconciliation</div><div class="rv-kv-value" id="rv-earn-recon">—</div></div>
       </div>
       <div class="rv-note" id="rv-earn-note"></div>
     </div>
@@ -2648,22 +2825,22 @@
         <div class="rv-settings-group">
           <h3>Rides</h3>
           <div class="fg"><label>Commission % of fare</label><input type="number" min="0" max="100" step="0.01" data-key="ride_commission_percent" placeholder="0"></div>
-          <div class="fg"><label>Booking fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="ride_booking_fee" placeholder="200"></div>
-          <div class="fg"><label>Service fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="ride_service_fee" placeholder="100"></div>
+          <div class="fg"><label>Booking fee (₦ flat)</label><input type="number" min="0" step="1" data-key="ride_booking_fee" placeholder="200"></div>
+          <div class="fg"><label>Service fee (₦ flat)</label><input type="number" min="0" step="1" data-key="ride_service_fee" placeholder="100"></div>
         </div>
         <div class="rv-settings-group">
           <h3>Food</h3>
-          <div class="fg"><label>Packaging fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="food_packaging_fee" placeholder="150"></div>
-          <div class="fg"><label>Platform fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="food_platform_fee" placeholder="100"></div>
-          <div class="fg"><label>Service fee (â‚¦ flat)</label><input type="number" min="0" step="1" data-key="food_service_fee" placeholder="100"></div>
-          <div class="fg"><label>Delivery base fee (â‚¦)</label><input type="number" min="0" step="1" data-key="food_delivery_base_fee" placeholder="300"></div>
+          <div class="fg"><label>Packaging fee (₦ flat)</label><input type="number" min="0" step="1" data-key="food_packaging_fee" placeholder="150"></div>
+          <div class="fg"><label>Platform fee (₦ flat)</label><input type="number" min="0" step="1" data-key="food_platform_fee" placeholder="100"></div>
+          <div class="fg"><label>Service fee (₦ flat)</label><input type="number" min="0" step="1" data-key="food_service_fee" placeholder="100"></div>
+          <div class="fg"><label>Delivery base fee (₦)</label><input type="number" min="0" step="1" data-key="food_delivery_base_fee" placeholder="300"></div>
           <div class="fg"><label>Free delivery distance (km)</label><input type="number" min="0" step="1" data-key="food_delivery_free_km" placeholder="2"></div>
-          <div class="fg"><label>Delivery rate (â‚¦/km after free km)</label><input type="number" min="0" step="1" data-key="food_delivery_rate_per_km" placeholder="60"></div>
-          <div class="fg"><label>Delivery max fee (â‚¦)</label><input type="number" min="0" step="1" data-key="food_delivery_max_fee" placeholder="2000"></div>
+          <div class="fg"><label>Delivery rate (₦/km after free km)</label><input type="number" min="0" step="1" data-key="food_delivery_rate_per_km" placeholder="60"></div>
+          <div class="fg"><label>Delivery max fee (₦)</label><input type="number" min="0" step="1" data-key="food_delivery_max_fee" placeholder="2000"></div>
         </div>
         <div class="rv-settings-group">
           <h3>Hotels</h3>
-          <div class="fg"><label>Service fee (â‚¦ flat per booking)</label><input type="number" min="0" step="1" data-key="hotel_service_fee" placeholder="0"></div>
+          <div class="fg"><label>Service fee (₦ flat per booking)</label><input type="number" min="0" step="1" data-key="hotel_service_fee" placeholder="0"></div>
         </div>
       </div>
       <div class="rv-settings-actions">
@@ -2671,7 +2848,7 @@
         <button class="btn btn-ghost" onclick="rvLoadSettings(true, true)">Reset</button>
         <span class="rv-export-status" id="rv-set-status"></span>
       </div>
-      <div class="rv-note">New values apply to future transactions only â€” every transaction keeps a record of the fees it actually charged.</div>
+      <div class="rv-note">New values apply to future transactions only — every transaction keeps a record of the fees it actually charged.</div>
     </div>
   </div>
 </div>
@@ -2698,7 +2875,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="sup-s-unread">â€”</div>
+        <div class="um-stat-value" id="sup-s-unread">—</div>
         <div class="um-stat-label">Unread</div>
       </div>
     </div>
@@ -2707,7 +2884,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="sup-s-open">â€”</div>
+        <div class="um-stat-value" id="sup-s-open">—</div>
         <div class="um-stat-label">Open</div>
       </div>
     </div>
@@ -2716,7 +2893,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="sup-s-pending">â€”</div>
+        <div class="um-stat-value" id="sup-s-pending">—</div>
         <div class="um-stat-label">Pending</div>
       </div>
     </div>
@@ -2725,7 +2902,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="sup-s-resolved">â€”</div>
+        <div class="um-stat-value" id="sup-s-resolved">—</div>
         <div class="um-stat-label">Resolved</div>
       </div>
     </div>
@@ -2734,7 +2911,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </div>
       <div class="um-stat-body">
-        <div class="um-stat-value" id="sup-s-urgent">â€”</div>
+        <div class="um-stat-value" id="sup-s-urgent">—</div>
         <div class="um-stat-label">High Priority</div>
       </div>
     </div>
@@ -2793,7 +2970,7 @@
         <div class="drv-loading-text">Loading conversations...</div>
       </div>
       <div id="sup-error" class="drv-error" style="display:none">
-        <div class="drv-error-icon">âš ï¸</div>
+        <div class="drv-error-icon">⚠️</div>
         <div class="drv-error-title">Failed to load conversations</div>
         <div class="drv-error-text" id="sup-error-text"></div>
         <button class="btn btn-accent btn-sm" onclick="loadSupportInbox(true)">Retry</button>
@@ -2829,9 +3006,21 @@
   <div class="drv-tabs" id="ntf-tabs">
     <button class="drv-tab on" data-ntf-tab="compose" onclick="ntfShowTab('compose')">Compose</button>
     <button class="drv-tab" data-ntf-tab="history" onclick="ntfShowTab('history')">History<span class="wl-tab-badge" id="ntf-hist-badge" style="display:none">0</span></button>
+    <button class="drv-tab" data-ntf-tab="alerts" onclick="ntfShowTab('alerts')">Moderation Alerts<span class="wl-tab-badge" id="ntf-alert-tab-badge" style="display:none">0</span></button>
   </div>
 
-  <!-- â•â•â• COMPOSE â•â•â• -->
+  <!-- ═══ MODERATION ALERTS ═══ -->
+  <div class="ntf-pane" id="ntf-alerts-pane" style="display:none">
+    <div class="mod-alert-toolbar">
+      <div><h3>Moderation alerts</h3><p>Persistent alerts for moderation cases you are authorized to review.</p></div>
+      <div class="mod-alert-actions"><label><input type="checkbox" id="mod-alert-unread-only" onchange="loadModerationAlerts()"> Unread only</label><button type="button" class="btn btn-ghost btn-sm" onclick="markAllModerationAlertsRead()">Mark all read</button><button type="button" class="btn btn-ghost btn-sm" onclick="loadModerationAlerts(true)">Refresh</button></div>
+    </div>
+    <div id="mod-alert-error" class="drv-error" style="display:none"><div class="drv-error-title">Failed to load moderation alerts</div><div class="drv-error-text" id="mod-alert-error-text"></div><button class="btn btn-accent btn-sm" onclick="loadModerationAlerts(true)">Retry</button></div>
+    <div class="mod-alert-list" id="mod-alert-list"></div>
+    <div class="um-pagination" id="mod-alert-pagination" style="display:none"></div>
+  </div>
+
+  <!-- ═══ COMPOSE ═══ -->
   <div class="ntf-pane" id="ntf-compose-pane">
     <div class="ntf-compose-grid">
 
@@ -2931,8 +3120,8 @@
           </div>
 
           <div class="ntf-estimate">
-            <div class="ntf-estimate-value" id="ntf-estimate-value">â€”</div>
-            <div class="ntf-estimate-label">recipients matched Â· <span id="ntf-estimate-devices">â€”</span> with registered devices</div>
+            <div class="ntf-estimate-value" id="ntf-estimate-value">—</div>
+            <div class="ntf-estimate-label">recipients matched · <span id="ntf-estimate-devices">—</span> with registered devices</div>
           </div>
 
           <div class="ntf-side-divider"></div>
@@ -2948,7 +3137,7 @@
     </div>
   </div>
 
-  <!-- â•â•â• HISTORY â•â•â• -->
+  <!-- ═══ HISTORY ═══ -->
   <div class="ntf-pane" id="ntf-history-pane" style="display:none">
     <div class="um-stats ntf-stats">
       <div class="um-stat-card">
@@ -2956,7 +3145,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="ntf-h-total">â€”</div>
+          <div class="um-stat-value" id="ntf-h-total">—</div>
           <div class="um-stat-label">Total</div>
         </div>
       </div>
@@ -2965,7 +3154,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="ntf-h-scheduled">â€”</div>
+          <div class="um-stat-value" id="ntf-h-scheduled">—</div>
           <div class="um-stat-label">Scheduled</div>
         </div>
       </div>
@@ -2974,7 +3163,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="ntf-h-sent">â€”</div>
+          <div class="um-stat-value" id="ntf-h-sent">—</div>
           <div class="um-stat-label">Sent</div>
         </div>
       </div>
@@ -2983,7 +3172,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="ntf-h-failed">â€”</div>
+          <div class="um-stat-value" id="ntf-h-failed">—</div>
           <div class="um-stat-label">Failed</div>
         </div>
       </div>
@@ -2992,7 +3181,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
         </div>
         <div class="um-stat-body">
-          <div class="um-stat-value" id="ntf-h-devices">â€”</div>
+          <div class="um-stat-value" id="ntf-h-devices">—</div>
           <div class="um-stat-label">Devices Reached</div>
         </div>
       </div>
@@ -3029,7 +3218,7 @@
       <div class="drv-loading-text">Loading notifications...</div>
     </div>
     <div id="ntf-error" class="drv-error" style="display:none">
-      <div class="drv-error-icon">âš ï¸</div>
+      <div class="drv-error-icon">⚠️</div>
       <div class="drv-error-title">Failed to load notifications</div>
       <div class="drv-error-text" id="ntf-error-text"></div>
       <button class="btn btn-accent btn-sm" onclick="loadNotificationHistory(true)">Retry</button>
@@ -3048,6 +3237,18 @@
     </button>
   </div>
   <div id="drv-detail-content"></div>
+</div>
+
+<!-- DRIVER BANK ACCOUNT MANAGEMENT -->
+<div class="modal-bg order-modal-bg" id="driverBankModal" aria-hidden="true">
+  <div class="modal order-modal driver-bank-modal" role="dialog" aria-modal="true" aria-labelledby="driverBankModalTitle">
+    <div class="order-modal-header">
+      <div class="order-modal-header-info"><h3 class="order-modal-title" id="driverBankModalTitle">Bank Account</h3><span class="order-modal-ref" id="driverBankModalRef"></span></div>
+      <button class="order-modal-close" type="button" onclick="closeDriverBankModal()" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <form class="order-modal-body" id="driverBankForm"><div id="driverBankBody"></div><p class="drv-error-text" id="driverBankError" role="alert"></p></form>
+    <div class="assign-driver-footer"><div class="assign-driver-selected" id="driverBankContext">Bank account changes are audited.</div><div class="assign-driver-acts"><button class="btn btn-ghost" type="button" onclick="closeDriverBankModal()">Cancel</button><button class="btn btn-accent" type="submit" form="driverBankForm" id="driverBankSubmit">Save account</button></div></div>
+  </div>
 </div>
 
 <!-- AUDIT LOG -->
@@ -3419,7 +3620,7 @@
     <p id="rf-desc">Refund the paid amount back to the customer's wallet. This cannot be undone.</p>
     <div class="wal-summary" id="rf-summary"></div>
     <div class="fg">
-      <label>Amount (â‚¦) â€” leave empty to refund in full</label>
+      <label>Amount (₦) — leave empty to refund in full</label>
       <input type="number" id="rf-amount" min="0.01" step="0.01" placeholder="Full refundable amount">
     </div>
     <div class="fg">
@@ -3505,6 +3706,14 @@
         <span id="rv-reason-confirm-label">Confirm</span>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- DRIVER REPORT DETAILS -->
+<div class="modal-bg order-modal-bg" id="drModal">
+  <div class="modal order-modal dr-modal">
+    <div class="order-modal-header"><div class="order-modal-header-info"><h3 class="order-modal-title" id="dr-modal-title">Driver report</h3><span class="order-modal-ref" id="dr-modal-ref"></span></div><button class="order-modal-close" onclick="drCloseModal()" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="order-modal-body" id="dr-modal-body"></div>
   </div>
 </div>
 
@@ -3688,17 +3897,34 @@
 </div>
 
 <!-- KEYBOARD SHORTCUTS -->
+<div class="modal-bg" id="quickActionsModal" onclick="if(event.target===this)closeQuickActions()">
+  <div class="modal quick-actions-modal" role="dialog" aria-modal="true" aria-labelledby="quickActionsTitle">
+    <div class="quick-actions-head"><div><h3 id="quickActionsTitle">Quick Actions</h3><p>Open an existing create form or common dashboard screen.</p></div><button type="button" class="dest-modal-close" onclick="closeQuickActions()" aria-label="Close">×</button></div>
+    <div class="quick-actions-list" id="quickActionsList"></div>
+    <div class="modal-acts"><span class="shortcut-hint"><kbd>Ctrl Q</kbd> open · <kbd>Esc</kbd> close</span><button type="button" class="btn btn-ghost" onclick="closeQuickActions()">Close</button></div>
+  </div>
+</div>
 <div class="modal-bg" id="shortcutsModal" onclick="if(event.target===this)closeShortcuts()">
   <div class="modal">
     <h3>Keyboard shortcuts</h3>
-    <p>Available anywhere in the panel.</p>
+    <p>Only shortcuts available to your account are shown here.</p>
     <div class="keys">
-      <div class="keys-row"><span>Command palette / search</span><kbd>Ctrl K</kbd></div>
-      <div class="keys-row"><span>Open search</span><kbd>/</kbd></div>
-      <div class="keys-row"><span>Create on this page</span><kbd>N</kbd></div>
-      <div class="keys-row"><span>This help</span><kbd>?</kbd></div>
-      <div class="keys-row"><span>Close palette or help</span><kbd>Esc</kbd></div>
-      <div class="keys-row"><span>Move / open in palette</span><kbd>Up Down Enter</kbd></div>
+      <div class="keys-section">Global navigation</div>
+      <div class="keys-row"><span>Command palette</span><kbd>Ctrl K</kbd></div>
+      <div class="keys-row"><span>Quick Actions</span><kbd>Ctrl Q</kbd></div>
+      <div class="keys-row"><span>Toggle sidebar</span><kbd>Ctrl B</kbd></div>
+      <div class="keys-row"><span>Dashboard / Coupons / Users</span><kbd>Ctrl Shift D/C/U</kbd></div>
+      <div class="keys-row"><span>Activity / audit history</span><kbd>Ctrl Y</kbd></div>
+      <div class="keys-section">Actions</div>
+      <div class="keys-row"><span>Create on the current screen</span><kbd>N</kbd></div>
+      <div class="keys-row"><span>Focus current screen search</span><kbd>/</kbd> or <kbd>F</kbd></div>
+      <div class="keys-row"><span>Save active form</span><kbd>Ctrl S</kbd> or <kbd>Ctrl Enter</kbd></div>
+      <div class="keys-row"><span>Show this guide</span><kbd>?</kbd> or <kbd>Ctrl Shift H</kbd></div>
+      <div class="keys-section">Command palette</div>
+      <div class="keys-row"><span>Move / execute</span><kbd>Up Down Enter</kbd></div>
+      <div class="keys-row"><span>Close active overlay</span><kbd>Esc</kbd></div>
+      <div class="keys-section">Browser-reserved shortcuts</div>
+      <div class="keys-row"><span>Ctrl/Cmd L, O, F, R, Shift N</span><span class="keys-note">Browser behavior preserved</span></div>
     </div>
     <div class="modal-acts">
       <button type="button" class="btn btn-ghost" onclick="closeShortcuts()">Close</button>
@@ -3723,15 +3949,19 @@
 <script defer src="assets/js/tours.js"></script>
 <script defer src="assets/js/banners.js"></script>
 <script defer src="assets/js/taxonomy.js"></script>
+<script defer src="assets/js/coupons.js"></script>
 <script defer src="assets/js/reviews.js"></script>
+<script defer src="assets/js/driverReports.js"></script>
 <script defer src="assets/js/orders.js"></script>
 <script defer src="assets/js/drivers.js"></script>
 <script defer src="assets/js/driverApplications.js"></script>
 <script defer src="assets/js/users.js"></script>
-<script defer src="assets/js/rides.js"></script>
+  <script defer src="assets/js/rides.js"></script>
+  <script defer src="assets/js/rideOperations.js"></script>
 <script defer src="assets/js/wallets.js"></script>
 <script defer src="assets/js/support.js"></script>
 <script defer src="assets/js/notifications.js"></script>
+<script defer src="assets/js/moderationAlerts.js"></script>
 <script defer src="assets/js/revenue.js"></script>
 <script defer src="assets/js/audit.js"></script>
 <script defer src="assets/js/staff.js"></script>
@@ -3740,3 +3970,4 @@
 <script defer src="assets/js/auth.js"></script>
 </body>
 </html>
+
