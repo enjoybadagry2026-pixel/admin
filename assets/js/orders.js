@@ -14,6 +14,8 @@ var orderMapPollTimer = null;
 function orderStatusKey(status) {
   var s = (status || '').toLowerCase().replace(/_/g, ' ').trim();
   if (!s) return 'pending';
+  if (s.indexOf('cancel') >= 0) return 'cancelled';
+  if (s.indexOf('refund') >= 0) return 'refunded';
   if (s.indexOf('declin') >= 0) return 'declined';
   if (s.indexOf('pending') >= 0) return 'pending';
   if (s === 'accepted' || s.indexOf('confirm') >= 0) return 'confirmed';
@@ -37,10 +39,10 @@ function foodOrderStage(status) {
   if (s.indexOf('declin') >= 0) return 'declined';
   if (s.indexOf('process') >= 0 || s.indexOf('prepar') >= 0) return 'processing';
   if (s.indexOf('accept') >= 0 || s.indexOf('confirm') >= 0) return 'accepted';
+  if (s.indexOf('deliver') >= 0) return 'delivered';
   if (s.indexOf('complete') >= 0) return 'completed';
   if (s.indexOf('arriving') >= 0 || s.indexOf('out for') >= 0 ||
       s.indexOf('delivery') >= 0 || s.indexOf('way') >= 0 || s.indexOf('transit') >= 0) return 'delivery';
-  if (s.indexOf('deliver') >= 0) return 'delivered';
   if (s.indexOf('ready') >= 0 || s.indexOf('assign') >= 0) return 'processing';
   if (s.indexOf('cancel') >= 0) return 'cancelled';
   if (s.indexOf('refund') >= 0) return 'refunded';
@@ -62,12 +64,12 @@ function orderStatusBadgeLarge(status) {
 }
 
 function paymentStatusBadge(status) {
-  var s = (status || '').toLowerCase();
+  var s = (status || '').toLowerCase().trim();
   var cls = 'order-status-pending';
   var label = status || '';
   if (s === 'completed' || s === 'paid' || s === 'success') { cls = 'order-status-delivered'; label = 'Paid'; }
   else if (s === 'pending' || s === 'processing') { cls = 'order-status-pending'; label = 'Pending'; }
-  else if (s === 'failed' || s === 'cancelled') { cls = 'order-status-cancelled'; label = 'Failed'; }
+  else if (s === 'failed' || s === 'cancelled' || s === 'expired' || s === 'reversed') { cls = 'order-status-cancelled'; label = s === 'cancelled' ? 'Cancelled' : 'Failed'; }
   else if (s === 'refunded') { cls = 'order-status-cancelled'; label = 'Refunded'; }
   return '<span class="order-card-status ' + cls + '" style="font-size:12px;padding:5px 14px">' + esc(label) + '</span>';
 }

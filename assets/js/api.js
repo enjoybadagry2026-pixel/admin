@@ -1,5 +1,8 @@
 // ═══════════════ CONFIG ═══════════════
-var API_BASE = 'https://api.enjoybadagry.online/api/admin';
+// The API is hosted separately from the admin UI. Local development still
+// talks to the remote API, whose loopback profile must be explicitly enabled.
+// A manual override remains available for staging or a local API instance.
+var API_BASE = window.ADMIN_API_BASE || 'https://api.enjoybadagry.online/api/admin';
 // Admin authentication is cookie-backed. Remove the legacy browser-readable
 // token during migration; the server still accepts bearer tokens for clients
 // that have not migrated yet.
@@ -29,7 +32,10 @@ function apiError(json, fallback) {
       .join('; ');
     if (detail) msg = msg + ' — ' + detail;
   }
-  return new Error(msg);
+  var error = new Error(msg);
+  error.code = json.errorCode || null;
+  error.details = json.errors || null;
+  return error;
 }
 
 async function api(method, path, body, options) {
@@ -47,6 +53,9 @@ async function api(method, path, body, options) {
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include'
   };
+  if (options.headers) {
+    Object.keys(options.headers).forEach(function(key) { opts.headers[key] = options.headers[key]; });
+  }
   if (authToken) opts.headers['Authorization'] = 'Bearer ' + authToken;
   if (body) opts.body = JSON.stringify(body);
   var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -75,6 +84,15 @@ async function api(method, path, body, options) {
     return json;
   } catch (error) {
     if (error.name === 'AbortError') throw new Error('Request timed out. Check your connection and try again.');
+    if (error.status === 428 && error.code === 'STEP_UP_REQUIRED' && !options.skipStepUp && !options.stepUpRetried && typeof window.requestSuperSecurity === 'function') {
+      var details = error.details || {};
+      var grant = await window.requestSuperSecurity({ operation: details.operation, targetHash: details.targetHash });
+      var retryOptions = Object.assign({}, options, {
+        stepUpRetried: true,
+        headers: Object.assign({}, options.headers || {}, { 'X-Admin-Step-Up': grant })
+      });
+      return api(method, path, body, retryOptions);
+    }
     var retryable = method.toUpperCase() === 'GET' && (!error.status || error.status >= 500);
     if (retryable && !options.retried) {
       return api(method, path, body, { timeout: options.timeout, retried: true });
@@ -105,6 +123,10 @@ async function apiUpload(path, formData) {
 // Downloads a binary file (csv/xls/pdf) from an admin endpoint.
 // Returns { filename, rows, truncated }.
 async function apiDownload(path, fallbackName) {
+  if (!adminSessionReady) {
+    await adminAuthReadyPromise;
+    if (!adminSessionReady) throw new Error('Administrator session is not authenticated');
+  }
   var opts = { method: 'GET', headers: {}, credentials: 'include' };
   if (authToken) opts.headers['Authorization'] = 'Bearer ' + authToken;
   var res = await fetch(API_BASE + path, opts);

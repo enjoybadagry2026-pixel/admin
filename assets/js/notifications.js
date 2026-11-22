@@ -290,7 +290,11 @@ function ntfPickerSearch(v) {
     if (ntfType === 'user') {
       api('GET', '/users?q=' + encodeURIComponent(q) + '&limit=8').then(function(res) {
         if (seq !== ntfPickerSeq) return; // superseded by a newer search or type switch
-        var users = (res.data && res.data.users) || [];
+        var users = ((res.data && res.data.users) || []).filter(function(u) {
+          var status = String(u.status || '').toLowerCase();
+          return status !== 'suspended' && status !== 'disabled' &&
+            status !== 'deleted' && status !== 'anonymized' && status !== 'anonymised';
+        });
         ntfRenderPickerResults(users.map(function(u) {
           return {
             id: u.id,

@@ -40,7 +40,7 @@ function umUserStatusBadge(status) {
   var s = (status || 'active').toLowerCase();
   var cls = 'user-badge-active';
   if (s === 'suspended') cls = 'user-badge-suspended';
-  else if (s === 'disabled') cls = 'user-badge-disabled';
+  else if (s === 'disabled' || s === 'deleted' || s === 'anonymized' || s === 'anonymised') cls = 'user-badge-disabled';
   return '<span class="user-badge ' + cls + '">' + esc(status || 'active') + '</span>';
 }
 
@@ -253,9 +253,13 @@ function closeUserModal() {
 
 function umActionButtons(u) {
   var id = esc(u.id || '');
-  var suspended = (u.status || '').toLowerCase() === 'suspended' || (u.status || '').toLowerCase() === 'disabled';
+  var status = (u.status || '').toLowerCase();
+  var suspended = status === 'suspended' || status === 'disabled';
+  var deleted = status === 'deleted' || status === 'anonymized' || status === 'anonymised';
   var html = '<div class="user-acts">';
-  if (suspended) {
+  if (deleted) {
+    html += '<span class="user-badge user-badge-disabled">Historical account</span>';
+  } else if (suspended) {
     html += '<button class="btn btn-green" onclick="unsuspendUser(\'' + id + '\')">' +
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Unsuspend</button>';
   } else {

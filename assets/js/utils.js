@@ -26,11 +26,12 @@ var TAB_META = {
   support:  { label: 'Support Inbox', group: 'Support' },
   notifications: { label: 'Notifications', group: 'Engagement' },
   audit:    { label: 'Audit Log', group: 'Security' },
+  database: { label: 'Database', group: 'Security' },
   staff:    { label: 'Admin Staff', group: 'Security' },
   profile:  { label: 'My Profile', group: 'Account' }
 };
 
-var PANEL_IDS = ['overview', 'users', 'dest', 'hotel', 'food', 'events', 'tours', 'banners', 'taxonomy', 'coupons', 'reviews', 'orders', 'rides', 'drivers', 'applications', 'wallets', 'revenue', 'support', 'notifications', 'audit', 'staff', 'profile'];
+var PANEL_IDS = ['overview', 'users', 'dest', 'hotel', 'food', 'events', 'tours', 'banners', 'taxonomy', 'coupons', 'reviews', 'orders', 'rides', 'drivers', 'applications', 'wallets', 'revenue', 'support', 'notifications', 'audit', 'database', 'staff', 'profile'];
 
 // Permission required to see each tab. '' = every signed-in admin.
 // Mirrors requirePermission(...) in routes/admin.js so the sidebar hides
@@ -56,6 +57,7 @@ var TAB_PERMS = {
   coupons: 'coupons.manage',
   reviews: 'reviews.read',
   audit: 'audit.view',
+  database: 'database.explorer.view',
   staff: 'admins.manage',
   profile: ''
 };
@@ -203,6 +205,7 @@ function switchTab(t) {
   if (t === 'taxonomy' && typeof loadTaxonomyPanel === 'function') loadTaxonomyPanel();
   if (t === 'coupons' && typeof cpLoad === 'function') cpLoad();
   if (t === 'audit' && typeof loadAuditPanel === 'function') loadAuditPanel();
+  if (t === 'database' && typeof loadDatabasePanel === 'function') loadDatabasePanel();
   if (t === 'staff' && typeof loadStaffPanel === 'function') loadStaffPanel();
   if (t === 'profile' && typeof loadProfilePanel === 'function') loadProfilePanel();
 }

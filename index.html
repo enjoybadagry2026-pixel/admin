@@ -195,6 +195,10 @@
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         <span>Audit Log</span>
       </button>
+      <button class="side-item" data-tab="database" onclick="switchTab('database')">
+        <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7"/></svg>
+        <span>Database</span>
+      </button>
       <button class="side-item" data-tab="staff" onclick="switchTab('staff')">
         <svg class="side-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Admin Staff</span>
@@ -730,7 +734,8 @@
           <option value="">All Statuses</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
-          <option value="disabled">Disabled</option>
+           <option value="disabled">Disabled</option>
+           <option value="deleted">Deleted / Historical</option>
         </select>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="loadUsers(true)" title="Refresh users">
@@ -3324,6 +3329,49 @@
   <div class="um-pagination" id="audit-pagination" style="display:none"></div>
 </div>
 
+<!-- READ-ONLY DATABASE EXPLORER -->
+<div class="content" id="panel-database">
+  <div class="order-page-header">
+    <div class="order-page-info">
+      <h2 class="order-page-title">Database Explorer</h2>
+      <span class="order-page-count" id="db-count">Read-only</span>
+    </div>
+    <div class="order-page-actions">
+      <button class="btn btn-ghost btn-sm" type="button" onclick="loadDatabasePanel(true)" title="Refresh database structure">Refresh</button>
+      <button class="btn btn-red btn-sm" id="dbEnvironmentResetBtn" type="button" onclick="dbOpenEnvironmentReset()" style="display:none">Reset Environment Data</button>
+    </div>
+  </div>
+  <div class="db-notice"><strong>Read-only access.</strong> Sensitive credentials, tokens, private messages, and high-risk personal fields are omitted by the server.</div>
+  <div class="db-toolbar">
+    <label class="db-search-label" for="db-table-search">Tables</label>
+    <input class="search db-search" id="db-table-search" type="search" placeholder="Search tables..." autocomplete="off" oninput="dbSearchTables(this.value)">
+  </div>
+  <div id="db-loading" class="drv-loading" style="display:none"><div class="drv-loading-spinner"></div><div class="drv-loading-text">Loading database structure...</div></div>
+  <div id="db-error" class="drv-error" style="display:none"><div class="drv-error-icon">&#9888;&#65039;</div><div class="drv-error-title">Unable to load the database explorer</div><div class="drv-error-text" id="db-error-text"></div><button class="btn btn-accent btn-sm" type="button" onclick="loadDatabasePanel(true)">Retry</button></div>
+  <div class="db-workspace" id="db-workspace">
+    <aside class="db-structure" aria-label="Database structure">
+      <div class="db-structure-head"><span>Structure</span><span class="db-muted" id="db-table-count"></span><button type="button" class="icon-btn db-panel-toggle" onclick="dbToggleStructure()" aria-expanded="true" aria-controls="db-tree" title="Collapse structure">‹</button></div>
+      <div id="db-tree" class="db-tree"></div>
+    </aside>
+    <div class="db-splitter" id="db-nav-splitter" role="separator" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="360" aria-valuenow="220" tabindex="0" aria-label="Resize database navigation" title="Drag to resize"></div>
+    <section class="db-records" aria-label="Database records">
+      <div id="db-records-head" class="db-records-head"><div class="db-records-title"><button type="button" class="btn btn-ghost btn-sm db-reopen-structure" id="db-reopen-structure" onclick="dbToggleStructure()" style="display:none">Structure</button><div><h3 id="db-selected-title">Select a table</h3><span id="db-selected-subtitle" class="db-muted">Choose a table from the structure panel.</span></div></div><div id="db-records-actions"></div></div>
+      <div id="db-meta-tabs" class="db-meta-tabs"></div>
+      <details class="db-schema-details"><summary>Inspect columns, keys, and indexes</summary><div id="db-schema-detail-body" class="db-schema-detail-body"></div></details>
+      <div id="db-records-loading" class="drv-loading" style="display:none"><div class="drv-loading-spinner"></div><div class="drv-loading-text">Loading records...</div></div>
+      <div id="db-records-error" class="drv-error" style="display:none"><div class="drv-error-title">Unable to load records</div><div class="drv-error-text" id="db-records-error-text"></div><button class="btn btn-accent btn-sm" type="button" onclick="dbLoadSelected()">Retry</button></div>
+      <div class="wl-table-wrap db-records-wrap" id="db-records-wrap" role="region" aria-label="Database records" tabindex="0"><table class="wl-table db-table"><caption id="db-table-caption" class="sr-only">Database records</caption><thead id="db-columns"></thead><tbody id="db-rows"></tbody></table></div>
+      <div class="db-empty" id="db-records-empty" style="display:none">This table has no visible records.</div>
+      <div class="um-pagination" id="db-pagination" style="display:none"></div>
+    </section>
+    <div class="db-splitter" id="db-details-splitter" role="separator" aria-orientation="vertical" aria-valuemin="260" aria-valuemax="460" aria-valuenow="320" tabindex="0" aria-label="Resize record details" title="Drag to resize"></div>
+    <aside class="db-details db-details-collapsed" id="db-details" aria-label="Record details"><div class="db-details-empty">Select a record to inspect its permitted fields.</div></aside>
+  </div>
+  <div class="modal-bg" id="dbEditorModal" aria-hidden="true"><div class="modal db-editor-modal" role="dialog" aria-modal="true" aria-labelledby="dbEditorTitle"><h3 id="dbEditorTitle">Database record</h3><p class="db-modal-note" id="dbEditorNote">Only approved CMS fields can be changed.</p><div id="dbEditorFields"></div><div class="decline-err" id="dbEditorError" role="alert"></div><div class="modal-acts"><button type="button" class="btn btn-ghost" onclick="dbCloseEditor()">Cancel</button><button type="button" class="btn btn-accent" id="dbEditorSubmit" onclick="dbSubmitEditor()">Save record</button></div></div></div>
+  <div class="modal-bg" id="dbImportModal" aria-hidden="true"><div class="modal db-editor-modal" role="dialog" aria-modal="true" aria-labelledby="dbImportTitle"><h3 id="dbImportTitle">Import records</h3><p class="db-modal-note">Paste a JSON array of records. The server validates every field before any insert.</p><textarea id="dbImportText" class="db-import-text" placeholder='[{"name":"Example"}]'></textarea><div class="db-import-preview" id="dbImportPreview"></div><div class="decline-err" id="dbImportError" role="alert"></div><div class="modal-acts"><button type="button" class="btn btn-ghost" onclick="dbCloseImport()">Cancel</button><button type="button" class="btn btn-ghost" onclick="dbPreviewImport()">Preview</button><button type="button" class="btn btn-accent" id="dbImportSubmit" onclick="dbSubmitImport()" disabled>Commit import</button></div></div></div>
+  <div class="modal-bg" id="dbEnvironmentResetModal" aria-hidden="true"><div class="modal db-editor-modal db-environment-reset-modal" role="dialog" aria-modal="true" aria-labelledby="dbEnvironmentResetTitle" aria-describedby="dbEnvironmentResetDescription"><h3 id="dbEnvironmentResetTitle">Reset Environment Data</h3><p class="db-modal-note" id="dbEnvironmentResetDescription">This permanently removes application records, Firebase Authentication users, and objects from the selected non-production environment. This cannot be undone and is not a mock-data filter.</p><div class="db-reset-identity"><div><span>Environment</span><strong id="dbEnvironmentName">Verifying…</strong></div><div><span>PostgreSQL</span><strong id="dbEnvironmentDatabase">Verifying…</strong></div><div><span>Firebase Auth</span><strong id="dbEnvironmentFirebase">Verifying…</strong></div><div><span>Object storage</span><strong id="dbEnvironmentStorage">Verifying…</strong></div></div><div class="db-reset-warning">Review your backup and recovery plan before continuing. PostgreSQL, Firebase, and object storage are not one atomic transaction; a partial failure will be reported and will not silently retry.</div><div class="db-reset-status" id="dbEnvironmentResetStatus" aria-live="polite"></div><div class="fg"><label for="dbEnvironmentResetConfirmation">Type this exact phrase to continue: <code id="dbEnvironmentPhrase">Verifying…</code></label><input id="dbEnvironmentResetConfirmation" autocomplete="off" spellcheck="false" aria-describedby="dbEnvironmentResetDescription dbEnvironmentResetStatus"></div><div class="decline-err" id="dbEnvironmentResetError" role="alert"></div><div class="modal-acts"><button type="button" class="btn btn-ghost" onclick="dbCloseEnvironmentReset()">Cancel</button><button type="button" class="btn btn-red" id="dbEnvironmentResetSubmit" onclick="dbSubmitEnvironmentReset()" disabled>Reset Environment Data</button></div></div></div>
+</div>
+
 <!-- ADMIN STAFF -->
 <div class="content" id="panel-staff">
   <div class="order-page-header">
@@ -3446,6 +3494,18 @@
       <div class="pf-actions">
         <button class="btn btn-accent btn-sm" id="pf-pass-save" onclick="pfChangePassword()">Change password</button>
       </div>
+    </div>
+
+    <!-- Active sessions -->
+    <div class="card pf-card" id="pf-security-card">
+      <div class="ntf-card-title">Enjoy Badagry Security Key</div>
+      <p class="pf-note">Use a downloaded <code>.ebask</code> file and a WebAuthn passkey for protected administrator actions. The browser only reads the file when you select it.</p>
+      <div id="pf-ebask-status" class="pf-note">Loading security factors…</div>
+      <input id="pf-ebask-file" type="file" accept=".ebask,application/vnd.enjoybadagry.ebask+json" aria-label="Choose EBASK security file">
+      <div class="fg"><label for="pf-ebask-passphrase">Security-key passphrase</label><input id="pf-ebask-passphrase" type="password" autocomplete="new-password" minlength="12" placeholder="At least 12 characters"></div>
+      <div class="decline-err" id="pf-ebask-err" role="alert"></div>
+      <div class="pf-actions"><button class="btn btn-accent btn-sm" id="pf-ebask-enroll" onclick="pfEnrollEbask()">Generate &amp; Download Key</button><button class="btn btn-ghost btn-sm" onclick="pfRegisterPasskey()">Register Passkey</button></div>
+      <div id="pf-ebask-keys" class="pf-sessions"></div>
     </div>
 
     <!-- Active sessions -->
@@ -3933,12 +3993,36 @@
 </div>
 
 <div id="toast-box"></div>
+
+<!-- SUPER SECURITY: opened automatically for backend-protected operations. -->
+<div class="modal-bg super-security-modal-bg" id="superSecurityModal" aria-hidden="true">
+  <div class="modal super-security-modal" role="dialog" aria-modal="true" aria-labelledby="superSecurityTitle" aria-describedby="superSecurityDescription">
+    <div class="super-security-icon" aria-hidden="true">🔐</div>
+    <h3 id="superSecurityTitle">Security Verification</h3>
+    <p id="superSecurityDescription">Enter your 6-digit security code to authorize this operation.</p>
+    <div class="super-security-action" id="superSecurityAction"></div>
+    <div class="super-security-digits" id="superSecurityDigits" role="group" aria-label="Six-digit security code">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" aria-label="Security digit 1">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 2">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 3">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 4">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 5">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 6">
+    </div>
+    <div class="super-security-error" id="superSecurityError" role="alert" aria-live="assertive"></div>
+    <div class="modal-acts">
+      <button type="button" class="btn btn-ghost" id="superSecurityCancel">Cancel</button>
+      <button type="button" class="btn btn-accent" id="superSecurityVerify">Verify</button>
+    </div>
+  </div>
+</div>
 </div>
 
 <script defer src="assets/js/utils.js"></script>
 <script defer src="assets/js/theme.js"></script>
 <script defer src="assets/js/listkit.js"></script>
 <script defer src="assets/js/api.js"></script>
+<script defer src="assets/js/superSecurity.js"></script>
 <script defer src="assets/js/cms.js"></script>
 <script defer src="assets/js/overview.js"></script>
 <script defer src="assets/js/destinations.js"></script>
@@ -3964,8 +4048,10 @@
 <script defer src="assets/js/moderationAlerts.js"></script>
 <script defer src="assets/js/revenue.js"></script>
 <script defer src="assets/js/audit.js"></script>
+<script defer src="assets/js/database.js"></script>
 <script defer src="assets/js/staff.js"></script>
 <script defer src="assets/js/profile.js"></script>
+<script defer src="assets/js/securityFactors.js"></script>
 <script defer src="assets/js/palette.js"></script>
 <script defer src="assets/js/auth.js"></script>
 </body>

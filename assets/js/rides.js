@@ -59,7 +59,7 @@ function rdStatusBadge(status, large) {
 function rdPaymentClass(key) {
   var k = String(key || '').toLowerCase();
   if (k === 'completed') return 'order-status-delivered';
-  if (k === 'refunded') return 'order-status-preparing';
+  if (k === 'refunded') return 'order-status-cancelled';
   if (k === 'failed' || k === 'expired' || k === 'cancelled' || k === 'reversed') return 'order-status-cancelled';
   return 'order-status-pending';
 }

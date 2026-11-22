@@ -734,7 +734,8 @@ function wlOpenAction(mode, type, id) {
   }
   if (!account) account = { type: type, id: id, name: '', balance: 0 };
 
-  wlAction = { mode: mode, type: type, id: id, name: account.name || '', balance: Number(account.balance) || 0 };
+  wlAction = { mode: mode, type: type, id: id, name: account.name || '', balance: Number(account.balance) || 0,
+    idempotencyKey: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('admin-' + Date.now() + '-' + Math.random().toString(36).slice(2)) };
 
   var modal = document.getElementById('walletActionModal');
   if (!modal) return;
@@ -839,7 +840,7 @@ function confirmWalletAction() {
   confirmBtn.disabled = true;
   confirmBtn.textContent = 'Processing...';
 
-  api('POST', '/wallets/account/' + type + '/' + encodeURIComponent(id) + '/' + (mode === 'topup' ? 'topup' : 'deduct'), body)
+  api('POST', '/wallets/account/' + type + '/' + encodeURIComponent(id) + '/' + (mode === 'topup' ? 'topup' : 'deduct'), body, { headers: { 'Idempotency-Key': wlAction.idempotencyKey } })
     .then(function(res) {
       var d = res.data || {};
       toast(res.message || (mode === 'topup' ? 'Wallet topped up' : 'Wallet deducted'), true);

@@ -697,7 +697,14 @@ function supEnsureSocket() {
       var input = document.getElementById('sup-composer-input');
       if (supTypingActive && input && input.value.trim()) supSendTyping(true);
     };
-    supSocket.onmessage = function(event) { /* support socket is outbound-only for Admin */ };
+     supSocket.onmessage = function(event) {
+       try {
+         var packet = JSON.parse(event.data || '{}');
+         if (packet.type === 'support_message' || packet.type === 'support_status_changed') {
+           supHandleSocketEvent(packet.type, packet.data || {});
+         }
+       } catch (_) { /* ignore malformed websocket frames */ }
+     };
     supSocket.onerror = function() { try { supSocket.close(); } catch (_) {} };
     supSocket.onclose = function() {
       supSocket = null;
@@ -851,7 +858,8 @@ function supSendReply() {
   var payload = {
     message: text,
     imageUrl: supAttach ? supAttach.url : '',
-    internalNote: supNoteMode
+    internalNote: supNoteMode,
+    clientRequestId: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('sup-' + Date.now() + '-' + Math.random().toString(36).slice(2))
   };
 
   var pending = {
@@ -875,6 +883,18 @@ function supSendReply() {
   supRenderMessages();
   supScrollMessages(true);
   supExecuteSend(pending);
+}
+
+function supHandleSocketEvent(type, data) {
+  var id = Number(data.conversationId || 0);
+  if (!id) return;
+  if (type === 'support_status_changed' && supActiveId === id && supActive) {
+    supActive.status = data.status || supActive.status;
+    supActive.statusReason = data.reason || null;
+    supRenderHeader();
+  }
+  if (supActiveId === id && supDetailState === 'ready') supLoadDetailSilent();
+  supSilentRefresh();
 }
 
 function supExecuteSend(pending) {
