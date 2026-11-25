@@ -21,9 +21,12 @@ async function doLogin() {
     // The HttpOnly cookie remains the persistent session mechanism.
     authToken = json.data.token || null;
     resetAdminClientState();
-    resolveAdminAuthGate(true);
-    localStorage.setItem('admin_user', JSON.stringify(json.data.admin));
-    showApp();
+     resolveAdminAuthGate(true);
+     localStorage.setItem('admin_user', JSON.stringify(json.data.admin));
+     var gateHash = json.data.session && json.data.session.factorTargetHash;
+     if (!gateHash || typeof requestAdminFactorGate !== 'function') throw new Error('Administrator security verification is unavailable.');
+     await requestAdminFactorGate(gateHash);
+     showApp();
   } catch (e) {
     showLoginErr(e.message);
   } finally {
@@ -106,9 +109,12 @@ function showApp() {
 async function restoreAdminSession() {
   resetAdminAuthGate();
   try {
-    var res = await api('GET', '/profile', null, { skipAuthWait: true });
     resolveAdminAuthGate(true);
-    if (res.data && res.data.profile) localStorage.setItem('admin_user', JSON.stringify(res.data.profile));
+    var status = await api('GET', '/security/login/status', null, { skipAuthWait: true });
+    if (!status.data || !status.data.verified) {
+      await requestAdminFactorGate(status.data && status.data.targetHash);
+      authToken = null;
+    }
     showApp();
   } catch (_) {
     resolveAdminAuthGate(false);
