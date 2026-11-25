@@ -3312,6 +3312,25 @@ body.sidebar-collapsed .sidebar{transform:translateX(-105%)}body.sidebar-collaps
   .db-security-change-row>strong{grid-column:1 / -1}
 }
 
+/* Identity checks: let content determine height and keep every child inside the panel. */
+.db-security-modal{height:auto;overflow:visible}
+.db-security-modal .db-security-body{height:auto;min-height:0;overflow-y:auto;overflow-x:hidden;align-items:start}
+.db-security-verification{height:auto;min-height:0;overflow:visible}
+.db-security-verification .db-security-section-heading{height:auto;min-height:0;align-items:flex-start;flex-wrap:wrap}
+.db-security-verification .db-security-section-heading>div{min-width:0;flex:1 1 180px}
+.db-security-verification .db-security-progress{flex:0 1 auto;min-width:0;max-width:100%;height:auto;white-space:normal;overflow-wrap:anywhere;text-align:center}
+.db-security-factor-grid{height:auto;min-height:0}
+.db-security-factor{height:auto;min-height:0;grid-template-columns:34px minmax(0,1fr) minmax(0,auto)}
+.db-security-step-state{min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:right}
+.db-security-modal .db-security-changes{height:auto;max-height:360px;overflow:auto}
+
+@media(max-width:520px){
+  .db-security-verification .db-security-section-heading>div{flex-basis:100%}
+  .db-security-verification .db-security-progress{align-self:flex-start}
+  .db-security-factor{grid-template-columns:30px minmax(0,1fr);}
+  .db-security-factor .db-security-step-state{grid-column:2;grid-row:2;text-align:left}
+}
+
 /* Keep the security modal header text inside its top bar. */
 .db-security-header-copy{flex:1 1 0;min-width:0;overflow:hidden;padding-right:6px}
 .db-security-header-copy>span,.db-security-header-copy>h3,.db-security-header-copy>p{display:block;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;white-space:normal}

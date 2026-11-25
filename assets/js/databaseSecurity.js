@@ -17,7 +17,8 @@
     else if (failed) setFooterStatus(done + ' of 3 verified — action failed', 'failed');
     else if (working) setFooterStatus('Verifying… ' + done + ' of 3');
     else setFooterStatus(done ? done + ' of 3 verified' : 'Not verified', '');
-    var run = id('dbSecurityPasskeyRun'); if (run) run.disabled = !!(working || (pending && pending.verified));
+    var passcodeReady = id('dbSecurityStepPasscode') && id('dbSecurityStepPasscode').dataset.state === 'verified';
+    var run = id('dbSecurityPasskeyRun'); if (run) run.disabled = !!(!passcodeReady || working || (pending && pending.verified));
   }
   function showError(message) { var el = id('dbSecurityError'); if (el) el.textContent = message || ''; }
   function close(result, failure) { var modal = id('dbSecurityModal'); if (modal) { modal.classList.remove('on'); modal.setAttribute('aria-hidden', 'true'); } var current = pending; pending = null; if (current) failure ? current.reject(failure) : current.resolve(result); }
@@ -69,10 +70,11 @@
   function code() { return Array.prototype.map.call(document.querySelectorAll('#dbSecurityDigits input'), function (el) { return el.value; }).join(''); }
   function reset() {
     document.querySelectorAll('#dbSecurityDigits input').forEach(function (el) { el.value = ''; el.disabled = false; });
-    ['Passcode', 'Passkey', 'Ebask'].forEach(function (name) { setStep(name, 'pending', 'Pending'); });
+    setStep('Passcode', 'pending', 'Pending'); setStep('Passkey', 'pending', 'Waiting for passcode'); setStep('Ebask', 'pending', 'Pending');
     var file = id('dbSecurityFile'); if (file) { file.value = ''; file.disabled = false; }
     var pass = id('dbSecurityPassphrase'); if (pass) { pass.value = ''; pass.disabled = false; }
     var verify = id('dbSecurityVerify'); if (verify) { verify.disabled = false; verify.textContent = 'Verify security factors'; }
+    pending.options = null; pending.passkeyResponse = null;
     var save = id('dbSecuritySave'); if (save) save.disabled = true;
     var status = id('dbSecurityStatus'); if (status) status.textContent = 'Verification has not started.';
     showError(''); updateProgress();
@@ -93,9 +95,10 @@
       setStep('Passcode', 'working', 'Checking…'); current = 'Passcode';
       var passcodeResult = await api('POST', '/security/verify', { operation: pending.operation, targetHash: pending.targetHash, passcode: code() }, { skipStepUp: true });
       setStep('Passcode', 'verified', 'Verified');
-      var options = (await api('POST', '/security/database/options', { operation: pending.operation, targetHash: pending.targetHash, keyId: file.keyId })).data;
-      setStep('Passkey', 'working', 'Waiting…'); current = 'Passkey';
-      var passkeyResponse = await window.pfAuthenticatePasskey(options.passkeyOptions); setStep('Passkey', 'verified', 'Verified');
+      var options = pending.options || (await api('POST', '/security/database/options', { operation: pending.operation, targetHash: pending.targetHash, keyId: file.keyId })).data;
+      pending.options = options;
+      var passkeyResponse = pending.passkeyResponse;
+      if (!passkeyResponse) { setStep('Passkey', 'working', 'Waiting…'); current = 'Passkey'; passkeyResponse = await window.pfAuthenticatePasskey(options.passkeyOptions); pending.passkeyResponse = passkeyResponse; setStep('Passkey', 'verified', 'Verified'); }
       setStep('Ebask', 'working', 'Waiting…'); current = 'Ebask';
       var signature = await window.ebaskSignChallenge(options.ebask, file, passphrase); setStep('Ebask', 'verified', 'Verified');
       var result = await api('POST', '/security/database/complete', { operation: pending.operation, targetHash: pending.targetHash, passcodeGrant: passcodeResult.data.grant, reason: '', passkeyResponse: passkeyResponse, ebask: { challengeId: options.ebask.challengeId, operation: pending.operation, targetHash: pending.targetHash, signature: signature } });
@@ -107,6 +110,7 @@
       else if (code_.indexOf('WEBAUTHN') === 0) setStep('Passkey', 'failed', 'Failed');
       else if (code_.indexOf('EBASK') === 0) setStep('Ebask', 'failed', 'Failed');
       else ['Passcode', 'Passkey', 'Ebask'].forEach(function (name) { var el = id('dbSecurityStep' + name); if (el && el.dataset.state === 'working') setStep(name, 'failed', 'Failed'); });
+      pending.options = null; pending.passkeyResponse = null;
       if (id('dbSecurityStatus')) id('dbSecurityStatus').textContent = 'Verification failed. No database change was saved.';
       document.querySelectorAll('#dbSecurityDigits input,#dbSecurityFile,#dbSecurityPassphrase').forEach(function (el) { el.disabled = false; }); if (verifyButton) { verifyButton.disabled = false; verifyButton.textContent = 'Try verification again'; }
       if (passkeyRun) passkeyRun.disabled = false;
