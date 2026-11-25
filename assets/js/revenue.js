@@ -204,14 +204,16 @@ function rvRenderOverview() {
   var d = revState.summary;
   var t = revState.series;
   if (!d || !t) return;
+  d.revenue = d.revenue || {}; d.gmv = d.gmv || {}; d.cash = d.cash || {}; d.users = d.users || {};
+  function money(value) { return value === null || value === undefined || !isFinite(Number(value)) ? '—' : fmtNaira(value); }
 
   if (d.range) revSetLabel(d.range.from + ' → ' + d.range.to);
 
-  revSetText('rv-kpi-revenue', fmtNaira(d.revenue.total));
-  revSetText('rv-kpi-gmv', fmtNaira(d.gmv.total));
-  revSetText('rv-kpi-rides', fmtNaira(d.gmv.rides));
-  revSetText('rv-kpi-food', fmtNaira(d.gmv.food));
-  revSetText('rv-kpi-deposits', fmtNaira(d.cash.deposits));
+  revSetText('rv-kpi-revenue', money(d.revenue.total));
+  revSetText('rv-kpi-gmv', money(d.gmv.total));
+  revSetText('rv-kpi-rides', money(d.gmv.rides));
+  revSetText('rv-kpi-food', money(d.gmv.food));
+  revSetText('rv-kpi-deposits', money(d.cash.deposits));
   revSetText('rv-kpi-users', fmtNum(d.users.newInRange));
 
   // Revenue by source
@@ -219,7 +221,7 @@ function rvRenderOverview() {
   if (srcEl) {
     var parts = [
       { label: 'Ride commission', v: d.revenue.rideCommission },
-      { label: 'Food platform fees', v: d.revenue.foodFees },
+      { label: 'Food platform fees', v: d.revenue.foodFees && typeof d.revenue.foodFees === 'object' ? d.revenue.foodFees.total : d.revenue.foodFees },
       { label: 'Hotel service fees', v: d.revenue.hotelServiceFee }
     ];
     var total = Number(d.revenue.total) || parts.reduce(function(a, p) { return a + (Number(p.v) || 0); }, 0);
@@ -422,7 +424,7 @@ function rvRenderEarnings() {
       recon.textContent = 'Balanced';
       recon.className = 'rv-kv-value rv-kv-ok';
     } else {
-      recon.textContent = 'Î” ' + fmtNaira(Math.abs(d.integrity.delta));
+      recon.textContent = 'Δ ' + fmtNaira(Math.abs(d.integrity.delta));
       recon.className = 'rv-kv-value rv-kv-bad';
     }
   }
@@ -507,7 +509,7 @@ async function rvLoadRefunds(page, force) {
     l.page = page;
     l.pagination = res.pagination || null;
     l.loaded = true;
-    rvRenderRefunds(res.data.refunds || []);
+    rvRenderRefunds(res.data && Array.isArray(res.data.refunds) ? res.data.refunds : []);
   } catch (e) {
     var body = document.getElementById('rv-refunds-body');
     if (body) {
@@ -588,8 +590,8 @@ async function rvLoadSettings(force) {
   rvSetPaneState('set', 'loading');
   try {
     var res = await api('GET', '/settings/fees');
-    revState.settings = res.data.values;
-    revState.settingsDefaults = res.data.defaults;
+    revState.settings = res.data && res.data.values || {};
+    revState.settingsDefaults = res.data && res.data.defaults || {};
     rvFillSettings();
     rvSetPaneState('set', 'ready');
   } catch (e) {
@@ -640,7 +642,7 @@ async function rvSaveSettings() {
   if (statusEl) { statusEl.textContent = 'Saving…'; statusEl.className = 'rv-export-status'; }
   try {
     var res = await api('PUT', '/settings/fees', patch);
-    revState.settings = res.data.values;
+      revState.settings = res.data && res.data.values || {};
     rvFillSettings();
     if (statusEl) { statusEl.textContent = 'Saved ✓ (applies to future transactions)'; statusEl.className = 'rv-export-status ok'; }
     toast('Fee settings updated');

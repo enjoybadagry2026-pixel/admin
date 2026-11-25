@@ -68,6 +68,7 @@ function renderTaxonomy() {
 }
 
 async function txCreate(kind) {
+  if (!hasPerm('content.taxonomy.write')) { toast('You do not have permission to manage taxonomy.', false); return; }
   var input = document.getElementById(kind === 'cat' ? 'tx-cat-new' : 'tx-tag-new');
   var name = input.value.trim();
   if (!name) { toast('Type a name first', false); return; }
@@ -85,6 +86,7 @@ async function txCreate(kind) {
 }
 
 function txRenameStart(kind, id) {
+  if (!hasPerm('content.taxonomy.write')) { toast('You do not have permission to manage taxonomy.', false); return; }
   var row = document.getElementById('tx-' + kind + '-' + id);
   if (!row) return;
   var span = row.querySelector('.tax-name');
@@ -132,6 +134,7 @@ function txRenameCancel(kind, id, original) {
 }
 
 async function txToggle(kind, id, active) {
+  if (!hasPerm('content.taxonomy.write')) { toast('You do not have permission to manage taxonomy.', false); return; }
   try {
     load(true);
     await api('PUT', (kind === 'cat' ? '/categories/' : '/tags/') + id, { active: active });
@@ -145,6 +148,7 @@ async function txToggle(kind, id, active) {
 }
 
 function txDelete(kind, id) {
+  if (!hasPerm('content.taxonomy.write')) { toast('You do not have permission to manage taxonomy.', false); return; }
   var list = kind === 'cat' ? txCats : txTags;
   var rec = list.filter(function(r) { return r.id === id; })[0];
   var label = kind === 'cat' ? 'Category' : 'Tag';
@@ -164,4 +168,3 @@ function txDelete(kind, id) {
     }
   });
 }
-

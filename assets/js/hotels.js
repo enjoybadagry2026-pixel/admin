@@ -1,4 +1,4 @@
-// ═══════════════ HOTELS ═══════════════
+// HOTELS
 
 // Shared with hotelBookings.js so the panel header count follows the open tab.
 var hotelCountText = '0 hotels';
@@ -122,13 +122,13 @@ function renderHotels(hotels) {
   if (document.getElementById('h-insights')) loadInsightsInto('h-insights');
 }
 
-// ═══════════════ MODAL CONTROLS ═══════════════
+// MODAL CONTROLS
 
 // Fields kept as a local draft while a new hotel is being written.
 var HOTEL_DRAFT_FIELDS = ['h-name', 'h-cat', 'h-addr', 'h-maps', 'h-coords', 'h-phone',
   'h-email', 'h-web', 'h-checkin', 'h-checkout', 'h-rating', 'h-rate', 'h-status'];
 
-function openHotelModal() {
+function openHotelModal() { if (!hasPerm('content.hotels.write')) { toast('You do not have permission to manage hotels.', false); return; }
   resetHotel();
   cmsGalleryInit('h-gal', 'h-cover');
   draftBind('hotel', HOTEL_DRAFT_FIELDS);
@@ -142,7 +142,7 @@ function openHotelModal() {
 
 function closeHotelModal() {
   document.getElementById('hotelModal').classList.remove('on');
-  document.body.style.overflow = '';
+  if (!document.querySelector('.modal-bg.on')) document.body.style.overflow = '';
 }
 
 // Close modal on backdrop click
@@ -165,9 +165,9 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// ═══════════════ CRUD ═══════════════
+// CRUD
 
-async function saveHotel() {
+async function saveHotel() { if (!hasPerm('content.hotels.write')) { toast('You do not have permission to manage hotels.', false); return; }
   var editId = document.getElementById('h-edit').value;
   var name = document.getElementById('h-name').value.trim();
   var cat = document.getElementById('h-cat').value;
@@ -301,3 +301,5 @@ function prevHotel(id) {
   var h = cachedHotels[id];
   if (h) toast(h.name + (h.rating ? ' \u00B7 ' + h.rating : '') + (h.featured ? ' \u2605' : ''), true);
 }
+
+

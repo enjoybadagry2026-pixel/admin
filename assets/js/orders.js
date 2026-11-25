@@ -13,36 +13,32 @@ var orderMapPollTimer = null;
 
 function orderStatusKey(status) {
   var s = (status || '').toLowerCase().replace(/_/g, ' ').trim();
-  if (!s) return 'pending';
-  if (s.indexOf('cancel') >= 0) return 'cancelled';
+  if (!s) return 'unknown';
   if (s.indexOf('refund') >= 0) return 'refunded';
+  if (s.indexOf('cancel') >= 0) return 'cancelled';
   if (s.indexOf('declin') >= 0) return 'declined';
   if (s.indexOf('pending') >= 0) return 'pending';
   if (s === 'accepted' || s.indexOf('confirm') >= 0) return 'confirmed';
   if (s.indexOf('process') >= 0 || s.indexOf('prepar') >= 0) return 'processing';
-  if (s.indexOf('ready') >= 0) return 'ready';
-  if (s.indexOf('assign') >= 0) return 'assigned';
-  if (s.indexOf('arriving') >= 0 || s.indexOf('out for') >= 0 ||
-      s.indexOf('way') >= 0 || s.indexOf('transit') >= 0 ||
-      s.indexOf('delivery') >= 0) return 'ondelivery';
-  if (s.indexOf('refund') >= 0) return 'refunded';
-  if (s.indexOf('deliver') >= 0) return 'delivered';
   if (s.indexOf('complete') >= 0) return 'completed';
-  if (s.indexOf('cancel') >= 0) return 'cancelled';
-  return 'pending';
+  if (s === 'delivered') return 'delivered';
+  if (s.indexOf('delivery') >= 0 || s.indexOf('assign') >= 0 || s.indexOf('ready') >= 0 || s.indexOf('arriving') >= 0 || s.indexOf('out for') >= 0 || s.indexOf('way') >= 0 || s.indexOf('transit') >= 0) return 'ondelivery';
+  return 'unknown';
 }
 
 // Workflow stage of a food order — drives which actions are available
 function foodOrderStage(status) {
   var s = (status || '').toLowerCase().replace(/_/g, ' ').trim();
   if (!s || s === 'pending' || s.indexOf('pending') >= 0) return 'pending';
+  if (s.indexOf('refund') >= 0) return 'refunded';
+  if (s.indexOf('cancel') >= 0) return 'cancelled';
   if (s.indexOf('declin') >= 0) return 'declined';
   if (s.indexOf('process') >= 0 || s.indexOf('prepar') >= 0) return 'processing';
   if (s.indexOf('accept') >= 0 || s.indexOf('confirm') >= 0) return 'accepted';
-  if (s.indexOf('deliver') >= 0) return 'delivered';
-  if (s.indexOf('complete') >= 0) return 'completed';
   if (s.indexOf('arriving') >= 0 || s.indexOf('out for') >= 0 ||
       s.indexOf('delivery') >= 0 || s.indexOf('way') >= 0 || s.indexOf('transit') >= 0) return 'delivery';
+  if (s === 'delivered') return 'delivered';
+  if (s.indexOf('complete') >= 0) return 'completed';
   if (s.indexOf('ready') >= 0 || s.indexOf('assign') >= 0) return 'processing';
   if (s.indexOf('cancel') >= 0) return 'cancelled';
   if (s.indexOf('refund') >= 0) return 'refunded';
@@ -176,6 +172,11 @@ function onOrderSearch(v) {
 }
 
 function renderOrders(orders) {
+  Object.keys(orderBulkSelected).forEach(function(id) {
+    var selected = orders && orders[id];
+    var stage = selected && foodOrderStage(selected.status);
+    if (!selected || ['pending', 'accepted', 'processing', 'completed'].indexOf(stage) < 0) delete orderBulkSelected[id];
+  });
   orders = orders || {};
   kitList('orders', { sort: 'created', dir: 'desc', limit: 24 });
   var rows = [];
@@ -754,7 +755,10 @@ var BULK_ACTION_STAGES = {
 };
 
 function bulkSelectedIds() {
-  return Object.keys(orderBulkSelected).filter(function(id) { return !!cachedOrders[id]; });
+  return Object.keys(orderBulkSelected).filter(function(id) {
+    var order = cachedOrders[id];
+    return !!order && ['pending', 'accepted', 'processing', 'completed'].indexOf(foodOrderStage(order.status)) >= 0;
+  });
 }
 
 function toggleBulkOrder(id, checked) {
@@ -786,8 +790,8 @@ function renderBulkBar() {
   });
   function bulkBtn(action, label, cls) {
     var n = stages[BULK_ACTION_STAGES[action]] || 0;
-    return '<button type="button" class="btn btn-sm ' + cls + '"' + (n ? '' : ' disabled') +
-      ' onclick="runBulkOrderAction(\'' + action + '\')">' + label + (n ? ' (' + n + ')' : '') + '</button>';
+    return n ? '<button type="button" class="btn btn-sm ' + cls +
+      '" onclick="runBulkOrderAction(\'' + action + '\')">' + label + ' (' + n + ')</button>' : '';
   }
   bar.style.display = 'flex';
   bar.innerHTML =

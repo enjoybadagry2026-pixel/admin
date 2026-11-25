@@ -72,14 +72,21 @@ function adminPermissions() {
 
 /**
  * True when the signed-in admin holds `code`.
- * No code = always allowed. Permissions unknown (session written before RBAC)
- * = allowed, so the UI never locks out — the server still enforces 403s.
+ * Unknown permissions fail closed. The backend remains the authoritative
+ * authorization layer, but the UI should not expose actions it cannot verify.
  */
 function hasPerm(code) {
   if (!code) return true;
   var perms = adminPermissions();
-  if (perms === null) return true;
+  if (perms === null) return false;
   return perms.indexOf('*') >= 0 || perms.indexOf(code) >= 0;
+}
+
+function isSuperAdmin() {
+  try {
+    var user = JSON.parse(localStorage.getItem('admin_user') || '{}') || {};
+    return user.role === 'super_admin';
+  } catch (_) { return false; }
 }
 
 /** Hide sidebar entries the admin cannot use; drop now-empty groups. */

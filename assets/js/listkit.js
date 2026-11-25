@@ -176,8 +176,10 @@ function kitRenderPager(container, key, pagination, onChange, opts) {
   var currentSize = (pagination.limit || kitList(key).limit);
 
   el.style.display = '';
+  var first = pagination.total ? ((page - 1) * (pagination.limit || currentSize) + 1) : 0;
+  var last = pagination.total ? Math.min(page * (pagination.limit || currentSize), pagination.total) : 0;
   el.innerHTML =
-    '<span class="pager-info">Page ' + page + ' of ' + total + ' &middot; ' + pagination.total + ' record' + (pagination.total === 1 ? '' : 's') + '</span>' +
+    '<span class="pager-info">Showing ' + first + '–' + last + ' of ' + pagination.total + ' record' + (pagination.total === 1 ? '' : 's') + ' &middot; Page ' + page + ' of ' + total + '</span>' +
     '<label class="pager-size">Per page <select data-kit-size aria-label="Rows per page">' +
       sizeOpts.map(function(n) {
         return '<option value="' + n + '"' + (n === currentSize ? ' selected' : '') + '>' + n + '</option>';

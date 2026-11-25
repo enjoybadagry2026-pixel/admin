@@ -1,4 +1,4 @@
-// ═══════════════ EVENTS & FESTIVALS ═══════════════
+﻿// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"� EVENTS & FESTIVALS �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
 
 var cachedEvents = null;
 var evLoaded = false;
@@ -62,8 +62,8 @@ function renderEvents() {
       '</div>' +
       '<div class="cms-card-img-wrap">' +
         (ev.coverImage
-          ? '<img class="cms-card-img" src="' + esc(ev.coverImage) + '" onerror="this.outerHTML=\'<div class=cms-card-img-fallback>🎉</div>\'">'
-          : '<div class="cms-card-img-fallback">🎉</div>') +
+           ? '<img class="cms-card-img" src="' + esc(ev.coverImage) + '" onerror="this.outerHTML=\'<div class=cms-card-img-fallback>\uD83C\uDF89</div>\'">'
+           : '<div class="cms-card-img-fallback">\uD83C\uDF89</div>') +
         '<div class="cms-card-overlay"></div>' +
         (when ? '<div class="cms-card-chips">' + when + '</div>' : '') +
       '</div>' +
@@ -89,7 +89,7 @@ function renderEvents() {
     '</div>';
   }).join('');
 
-  list.innerHTML = html || '<div class="cms-empty"><div class="cms-empty-icon">🎉</div><div class="cms-empty-title">No events found</div><div class="cms-empty-text">' +
+  list.innerHTML = html || '<div class="cms-empty"><div class="cms-empty-icon">\uD83C\uDF89</div><div class="cms-empty-title">No events found</div><div class="cms-empty-text">' +
     (q || statusF || scopeF ? 'Try adjusting the filters.' : 'Create your first event or festival to get started.') + '</div>' +
     '<button class="btn btn-accent" onclick="openEventModal()">+ Create Event</button></div>';
 
@@ -99,7 +99,7 @@ function renderEvents() {
   bulkRender('ev');
 }
 
-// ═══════════════ MODAL CONTROLS ═══════════════
+// MODAL CONTROLS
 
 function openEventModal(editId) {
   resetEvent();
@@ -154,7 +154,7 @@ function evFreeToggle() {
 
 function editEvent(id) { openEventModal(id); }
 
-async function saveEvent() {
+async function saveEvent() { if (!hasPerm('content.events.write')) { toast('You do not have permission to manage events.', false); return; }
   var name = document.getElementById('ev-name').value.trim();
   var start = document.getElementById('ev-start').value;
   var end = document.getElementById('ev-end').value;
@@ -262,3 +262,4 @@ document.addEventListener('keydown', function(e) {
     if (bg && bg.classList.contains('on')) closeEventModal();
   }
 });
+

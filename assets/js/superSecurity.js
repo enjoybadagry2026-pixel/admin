@@ -1,4 +1,4 @@
-// ═══════════════ SUPER SECURITY STEP-UP ═══════════════
+// SUPER SECURITY STEP-UP
 (function () {
   'use strict';
 
@@ -6,6 +6,7 @@
   var inputs;
   var pending = null;
   var request = null;
+  var previousFocus = null;
 
   function byId(id) { return document.getElementById(id); }
   function messageFor(operation) {
@@ -16,7 +17,7 @@
   function setBusy(busy) {
     Array.prototype.forEach.call(inputs || [], function (input) { input.disabled = busy; });
     var verify = byId('superSecurityVerify'); var cancel = byId('superSecurityCancel');
-    if (verify) { verify.disabled = busy; verify.textContent = busy ? 'Verifying…' : 'Verify'; }
+    if (verify) { verify.disabled = busy || !/^\\d{6}$/.test(code()); verify.textContent = busy ? 'Verifying…' : 'Verify'; }
     if (cancel) cancel.disabled = busy;
   }
   function close(result, error) {
@@ -26,6 +27,8 @@
     var current = pending; pending = null; request = null;
     clear(); setBusy(false);
     if (current) error ? current.reject(error) : current.resolve(result);
+     if (previousFocus && typeof previousFocus.focus === 'function') { previousFocus.focus(); }
+     previousFocus = null;
   }
   function cancel() {
     var error = new Error('Security verification cancelled.'); error.code = 'SUPER_SECURITY_CANCELLED';
@@ -59,7 +62,8 @@
     Array.prototype.forEach.call(inputs, function (input, index) {
       input.addEventListener('keydown', function (event) {
         if (event.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
-        if (event.key === 'Enter') { event.preventDefault(); verify(); }
+        if (event.key === 'Escape') { event.preventDefault(); if (!pending) return; cancel(); return; }
+         if (event.key === 'Enter') { event.preventDefault(); verify(); }
       });
       input.addEventListener('input', function () {
         input.value = input.value.replace(/\D/g, '').slice(-1);
@@ -88,7 +92,7 @@
       byId('superSecurityAction').textContent = 'Action: ' + messageFor(request.operation);
       byId('superSecurityError').textContent = '';
       clear(); setBusy(false);
-      modal.classList.add('on'); modal.setAttribute('aria-hidden', 'false');
+      modal.classList.add('on'); modal.setAttribute('aria-hidden', 'false'); modal.setAttribute('aria-modal', 'true');
       if (inputs && inputs[0]) inputs[0].focus();
     });
   };
@@ -96,3 +100,9 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 }());
+
+
+
+
+
+

@@ -1670,13 +1670,13 @@
   <div class="dest-page-header"><div class="dest-page-info"><h2 class="dest-page-title">Coupons &amp; Promotions</h2><span class="dest-page-count" id="cp-count">0 coupons</span></div><button class="btn btn-accent" onclick="cpOpenModal()">+ Create Coupon</button></div>
   <div class="drv-tabs cp-tabs"><button class="drv-tab on" id="cp-tab-coupons" onclick="cpShowTab('coupons')">Coupons</button><button class="drv-tab" id="cp-tab-history" onclick="cpShowTab('history')">Redemption History</button></div>
   <div class="cp-summary" id="cp-summary"></div>
-  <div class="cp-toolbar"><input id="cp-search" placeholder="Search coupon code..." oninput="cpDebouncedLoad()"><select id="cp-filter" onchange="cpLoad(true)"><option value="">All statuses</option><option value="true">Active</option><option value="false">Inactive</option></select><button class="btn btn-ghost btn-sm" onclick="cpLoad(true)">Refresh</button></div>
-  <div class="cp-table-wrap"><table class="cp-table"><thead><tr><th>Code</th><th>Discount</th><th>Service</th><th>Usage</th><th>Validity</th><th>Status</th><th>Actions</th></tr></thead><tbody id="cp-list"></tbody></table></div><div class="cp-empty" id="cp-empty" style="display:none">No coupons found.</div>
+  <div class="cp-toolbar"><input id="cp-search" placeholder="Search coupon code..." oninput="cpDebouncedLoad()"><select id="cp-filter" onchange="cpFilterChanged()"><option value="">All statuses</option><option value="true">Active</option><option value="false">Inactive</option></select><div id="cp-sort"></div><button class="btn btn-ghost btn-sm" onclick="cpLoad(true)">Refresh</button></div>
+  <div class="cp-table-wrap"><table class="cp-table"><thead><tr><th>Code</th><th>Discount</th><th>Service</th><th>Usage</th><th>Validity</th><th>Status</th><th>Actions</th></tr></thead><tbody id="cp-list"></tbody></table></div><div class="cp-empty" id="cp-empty" style="display:none">No coupons found.</div><div class="pager" id="cp-pager"></div>
 <div class="cp-history-screen" id="cp-history-screen" style="display:none">
   <div class="order-page-header"><div class="order-page-info"><h2 class="order-page-title">Redemption History</h2><span class="order-page-count" id="cp-history-count">0 redemptions</span></div><button class="btn btn-ghost btn-sm" onclick="cpLoadHistory(true)">Refresh</button></div>
-  <div class="um-toolbar"><input class="search um-search" id="cp-history-search" placeholder="Search coupon, customer or reference..." oninput="cpRenderHistory()"></div>
+   <div class="um-toolbar"><input class="search um-search" id="cp-history-search" placeholder="Search coupon, customer or reference..." oninput="cpDebouncedHistoryLoad()"></div>
   <div class="wl-table-wrap"><table class="wl-table cp-history-screen-table"><thead><tr><th>Date</th><th>Coupon</th><th>Customer</th><th>Service / Reference</th><th>Eligible amount</th><th>Discount</th><th>Final amount</th><th>Status</th></tr></thead><tbody id="cp-history-list"></tbody></table></div>
-  <div class="cp-empty" id="cp-history-empty" style="display:none">No redemption history found.</div>
+   <div class="cp-empty" id="cp-history-empty" style="display:none">No redemption history found.</div><div class="pager" id="cp-history-pager"></div>
 </div>
 </div>
  
@@ -3329,19 +3329,19 @@
   <div class="um-pagination" id="audit-pagination" style="display:none"></div>
 </div>
 
-<!-- READ-ONLY DATABASE EXPLORER -->
+<!-- DATABASE MANAGEMENT -->
 <div class="content" id="panel-database">
   <div class="order-page-header">
     <div class="order-page-info">
       <h2 class="order-page-title">Database Explorer</h2>
-      <span class="order-page-count" id="db-count">Read-only</span>
+      <span class="order-page-count" id="db-count">Restricted management</span>
     </div>
     <div class="order-page-actions">
       <button class="btn btn-ghost btn-sm" type="button" onclick="loadDatabasePanel(true)" title="Refresh database structure">Refresh</button>
       <button class="btn btn-red btn-sm" id="dbEnvironmentResetBtn" type="button" onclick="dbOpenEnvironmentReset()" style="display:none">Reset Environment Data</button>
     </div>
   </div>
-  <div class="db-notice"><strong>Read-only access.</strong> Sensitive credentials, tokens, private messages, and high-risk personal fields are omitted by the server.</div>
+  <div class="db-notice"><strong>Restricted database management.</strong> Browsing is read-only by default; approved tables may support permission-controlled edits, imports, exports, and deletes. Sensitive credentials, tokens, private messages, and high-risk personal fields are omitted by the server.</div>
   <div class="db-toolbar">
     <label class="db-search-label" for="db-table-search">Tables</label>
     <input class="search db-search" id="db-table-search" type="search" placeholder="Search tables..." autocomplete="off" oninput="dbSearchTables(this.value)">
@@ -3496,17 +3496,26 @@
       </div>
     </div>
 
-    <!-- Active sessions -->
-    <div class="card pf-card" id="pf-security-card">
-      <div class="ntf-card-title">Enjoy Badagry Security Key</div>
-      <p class="pf-note">Use a downloaded <code>.ebask</code> file and a WebAuthn passkey for protected administrator actions. The browser only reads the file when you select it.</p>
-      <div id="pf-ebask-status" class="pf-note">Loading security factors…</div>
-      <input id="pf-ebask-file" type="file" accept=".ebask,application/vnd.enjoybadagry.ebask+json" aria-label="Choose EBASK security file">
-      <div class="fg"><label for="pf-ebask-passphrase">Security-key passphrase</label><input id="pf-ebask-passphrase" type="password" autocomplete="new-password" minlength="12" placeholder="At least 12 characters"></div>
-      <div class="decline-err" id="pf-ebask-err" role="alert"></div>
-      <div class="pf-actions"><button class="btn btn-accent btn-sm" id="pf-ebask-enroll" onclick="pfEnrollEbask()">Generate &amp; Download Key</button><button class="btn btn-ghost btn-sm" onclick="pfRegisterPasskey()">Register Passkey</button></div>
-      <div id="pf-ebask-keys" class="pf-sessions"></div>
-    </div>
+    <!-- Security factors -->
+    <section class="card pf-card pf-security-card" id="pf-security-card" aria-labelledby="pf-security-title">
+      <div class="pf-security-hero">
+        <div class="pf-security-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 5.2-3.4 8.4-8 10-4.6-1.6-8-4.8-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <div class="pf-security-hero-copy"><div class="pf-eyebrow">Administrator protection</div><h3 id="pf-security-title">Enjoy Badagry Security</h3><p>Manage the factors that protect sensitive administrator actions.</p></div>
+        <span class="pf-security-posture" id="pf-security-posture" data-state="loading">Checking status</span>
+      </div>
+      <div id="pf-security-loading" class="pf-security-loading" aria-live="polite"><span class="pf-spinner"></span><span>Checking your security factors…</span></div>
+      <div id="pf-security-body" style="display:none">
+        <div class="pf-factor-grid" aria-label="Security factor status">
+          <article class="pf-factor-card"><div class="pf-factor-top"><span class="pf-factor-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h2"/></svg></span><span class="pf-status" id="pf-passcode-state">Checking</span></div><h4>Six-digit security passcode</h4><p>Required before protected security changes can proceed.</p></article>
+          <article class="pf-factor-card"><div class="pf-factor-top"><span class="pf-factor-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m11 12 7-7M15 5l2 2M13 7l2 2"/></svg></span><span class="pf-status" id="pf-passkey-state">Checking</span></div><h4>Hardware passkey</h4><p>Windows Hello or a compatible security key with user verification.</p></article>
+          <article class="pf-factor-card"><div class="pf-factor-top"><span class="pf-factor-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10H7z"/><path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M17 9h4M3 15h4M17 15h4"/></svg></span><span class="pf-status" id="pf-ebask-state">Checking</span></div><h4>Enjoy Badagry Security Key</h4><p>An encrypted <code>.ebask</code> file held securely by you.</p></article>
+        </div>
+        <div class="pf-security-columns">
+          <section class="pf-method-panel" aria-labelledby="pf-ebask-title"><div class="pf-panel-heading"><div><div class="pf-eyebrow">Encrypted key file</div><h4 id="pf-ebask-title">EBASK security key</h4></div><span class="pf-panel-mark">.ebask</span></div><p class="pf-panel-copy">Generate a protected file for high-assurance actions. The private key is encrypted with your passphrase and is never uploaded by this page.</p><div class="pf-file-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg><span>Store the downloaded file and passphrase separately. The file cannot be recovered.</span></div><div class="pf-passphrase-wrap"><label for="pf-ebask-passphrase">Security-key passphrase</label><div class="pf-input-action"><input id="pf-ebask-passphrase" type="password" autocomplete="new-password" minlength="12" placeholder="At least 12 characters"><button type="button" class="pf-input-toggle" id="pf-ebask-passphrase-toggle" aria-label="Show passphrase" onclick="pfTogglePassphrase()">Show</button></div><span class="pf-field-hint" id="pf-ebask-passphrase-hint">Use at least 12 characters. Never reuse your admin password.</span></div><div class="pf-inline-message" id="pf-ebask-message" role="status" aria-live="polite"></div><div class="pf-actions pf-security-actions"><button class="btn btn-accent" id="pf-ebask-enroll" onclick="pfEnrollEbask()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Generate &amp; download key</span></button></div><div id="pf-ebask-keys" class="pf-key-list"></div></section>
+          <section class="pf-method-panel" aria-labelledby="pf-passkey-title"><div class="pf-panel-heading"><div><div class="pf-eyebrow">Browser-backed credential</div><h4 id="pf-passkey-title">Hardware passkey</h4></div><span class="pf-panel-mark pf-panel-mark-key"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m11 12 7-7M15 5l2 2M13 7l2 2"/></svg></span></div><p class="pf-panel-copy">Use Windows Hello, a platform authenticator, or a compatible hardware key. Your browser will ask you to verify the registration.</p><div class="pf-passkey-note"><strong>Before you register</strong><span>Use the approved HTTPS admin address, or the configured loopback development address. Super Security verification is required.</span></div><div class="pf-inline-message" id="pf-ebask-err" role="alert" aria-live="assertive"></div><div class="pf-actions pf-security-actions"><button class="btn btn-ghost pf-passkey-button" id="pf-passkey-register" onclick="pfRegisterPasskey()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m11 12 7-7M15 5l2 2M13 7l2 2"/></svg><span>Register a passkey</span></button></div><div id="pf-passkey-keys" class="pf-key-list"></div></section>
+        </div>
+      </div>
+    </section>
 
     <!-- Active sessions -->
     <div class="card pf-card">
@@ -3997,7 +4006,7 @@
 <!-- SUPER SECURITY: opened automatically for backend-protected operations. -->
 <div class="modal-bg super-security-modal-bg" id="superSecurityModal" aria-hidden="true">
   <div class="modal super-security-modal" role="dialog" aria-modal="true" aria-labelledby="superSecurityTitle" aria-describedby="superSecurityDescription">
-    <div class="super-security-icon" aria-hidden="true">🔐</div>
+    <div class="super-security-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 5.2-3.4 8.4-8 10-4.6-1.6-8-4.8-8-10V6l8-3Z"/><rect x="9" y="10" width="6" height="5" rx="1"/><path d="M10 10V8a2 2 0 0 1 4 0v2"/></svg></div>
     <h3 id="superSecurityTitle">Security Verification</h3>
     <p id="superSecurityDescription">Enter your 6-digit security code to authorize this operation.</p>
     <div class="super-security-action" id="superSecurityAction"></div>
@@ -4016,6 +4025,34 @@
     </div>
   </div>
 </div>
+</div>
+
+<div class="modal-bg db-security-modal-bg" id="dbSecurityModal" aria-hidden="true">
+  <div class="modal db-security-modal" role="dialog" aria-modal="true" aria-labelledby="dbSecurityTitle" aria-describedby="dbSecurityDescription">
+    <header class="db-security-header">
+      <div class="db-security-header-icon" aria-hidden="true">&#128274;</div>
+      <div class="db-security-header-copy"><span class="db-security-eyebrow">Protected database action</span><h3 id="dbSecurityTitle">Security verification required</h3><p id="dbSecurityDescription">Verify all three security factors before saving this change.</p></div>
+      <button type="button" class="icon-btn db-security-close" id="dbSecurityCancel" aria-label="Cancel and close">×</button>
+    </header>
+    <main class="db-security-body">
+      <section class="db-security-review" aria-labelledby="dbSecurityReviewTitle">
+        <div class="db-security-section-heading"><div><span class="db-security-eyebrow">Review before save</span><h4 id="dbSecurityReviewTitle">Database change summary</h4></div><span class="db-security-operation" id="dbSecurityOperation">Database change</span></div>
+        <div class="db-security-meta"><div><span>Table</span><strong id="dbSecurityTable">—</strong></div><div><span>Record</span><strong id="dbSecurityRecord">—</strong></div><div><span>Reason</span><strong id="dbSecurityReasonSummary">Not provided</strong></div></div>
+        <div id="dbSecurityChanges" class="db-security-changes" aria-live="polite"></div>
+      </section>
+      <section class="db-security-verification" aria-labelledby="dbSecurityFactorsTitle">
+        <div class="db-security-section-heading"><div><span class="db-security-eyebrow">Identity checks</span><h4 id="dbSecurityFactorsTitle">Complete all three checks</h4></div><strong id="dbSecurityProgress" class="db-security-progress">0 of 3 security checks complete</strong></div>
+        <div class="db-security-factor-grid">
+          <article class="db-security-factor"><div class="db-security-factor-icon">123</div><div class="db-security-factor-copy"><h5>Six-digit passcode</h5><p>Enter the Super Admin security code.</p></div><strong id="dbSecurityStepPasscode" class="db-security-step-state pending">Pending</strong><div class="super-security-digits" id="dbSecurityDigits" role="group" aria-label="Six-digit security code"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" aria-label="Security digit 1"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 2"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 3"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 4"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 5"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Security digit 6"></div></article>
+          <article class="db-security-factor"><div class="db-security-factor-icon">&#8982;</div><div class="db-security-factor-copy"><h5>Hardware passkey</h5><p>Use Windows Hello or a compatible security key.</p></div><strong id="dbSecurityStepPasskey" class="db-security-step-state pending">Pending</strong><button type="button" class="btn btn-ghost db-security-factor-run" id="dbSecurityPasskeyRun" disabled>Use passkey</button></article>
+          <article class="db-security-factor"><div class="db-security-factor-icon">.eb</div><div class="db-security-factor-copy"><h5>Enjoy Badagry Security Key</h5><p>Unlock your registered encrypted key file.</p></div><strong id="dbSecurityStepEbask" class="db-security-step-state pending">Pending</strong><label class="db-security-label" for="dbSecurityFile">Registered .ebask file</label><input id="dbSecurityFile" type="file" accept=".ebask,application/json"><label class="db-security-label" for="dbSecurityPassphrase">Key passphrase</label><input id="dbSecurityPassphrase" type="password" class="db-security-passphrase" minlength="12" autocomplete="off" placeholder="Enter passphrase"></article>
+        </div>
+        <div class="db-security-status" id="dbSecurityStatus" aria-live="polite">Verification has not started.</div>
+        <div class="super-security-error" id="dbSecurityError" role="alert" aria-live="assertive"></div>
+      </section>
+    </main>
+    <footer class="db-security-footer"><span class="db-security-footer-note">No database change is sent until all checks pass.</span><strong class="db-security-footer-status" id="dbSecurityFooterStatus" aria-live="polite">Not verified</strong><div class="modal-acts"><button type="button" class="btn btn-ghost" id="dbSecurityCancelFooter">Cancel</button><button type="button" class="btn btn-ghost" id="dbSecurityVerify">Verify security factors</button><button type="button" class="btn btn-accent" id="dbSecuritySave" disabled>Save Changes</button></div></footer>
+  </div>
 </div>
 
 <script defer src="assets/js/utils.js"></script>
@@ -4052,8 +4089,10 @@
 <script defer src="assets/js/staff.js"></script>
 <script defer src="assets/js/profile.js"></script>
 <script defer src="assets/js/securityFactors.js"></script>
+<script defer src="assets/js/databaseSecurity.js"></script>
 <script defer src="assets/js/palette.js"></script>
 <script defer src="assets/js/auth.js"></script>
 </body>
 </html>
+
 

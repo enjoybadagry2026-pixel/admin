@@ -1,4 +1,4 @@
-// ═══════════════ TOUR PACKAGES + ITINERARY ═══════════════
+﻿// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"� TOUR PACKAGES + ITINERARY �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
 
 var cachedTours = null;
 var toursLoaded = false;
@@ -21,8 +21,9 @@ async function loadToursPanel() {
     load(true);
     var res = await api('GET', '/tours' + kitQuery(kitParams('tours', { search: q, status: status })));
     if (request !== trRequestSeq) return;
-    cachedTours = res.data.tours || [];
-    if (Array.isArray(res.data.itemTypes) && res.data.itemTypes.length) TOUR_ITEM_TYPES = res.data.itemTypes;
+    var data = res.data || {};
+    cachedTours = Array.isArray(data.tours) ? data.tours : [];
+    if (Array.isArray(data.itemTypes) && data.itemTypes.length) TOUR_ITEM_TYPES = data.itemTypes;
     state.pagination = res.pagination || { page: 1, limit: cachedTours.length || state.limit, total: cachedTours.length, totalPages: 1 };
     toursLoaded = true;
     load(false);
@@ -47,9 +48,9 @@ function renderTours() {
   var html = visible.map(function(t) {
     var chips = [];
     if (t.durationLabel || t.durationDays) {
-      chips.push('<span class="cms-card-chip">🕐 ' + esc(t.durationLabel || (t.durationDays + ' day(s)')) + '</span>');
+       chips.push('<span class="cms-card-chip">\uD83D\uDD52 ' + esc(t.durationLabel || (t.durationDays + ' day(s)')) + '</span>');
     }
-    if (t.maxGroupSize) chips.push('<span class="cms-card-chip">👥 max ' + t.maxGroupSize + '</span>');
+    if (t.maxGroupSize) chips.push('<span class="cms-card-chip">\uD83D\uDC65 max ' + t.maxGroupSize + '</span>');
     return '<div class="cms-card" onclick="editTour(\'' + t.id + '\')">' +
       '<div class="cms-card-check" onclick="event.stopPropagation()">' +
         '<input type="checkbox" class="bulk-check" ' + (bulkStore.tr && bulkStore.tr.selected[t.id] ? 'checked' : '') +
@@ -57,8 +58,8 @@ function renderTours() {
       '</div>' +
       '<div class="cms-card-img-wrap">' +
         (t.coverImage
-          ? '<img class="cms-card-img" src="' + esc(t.coverImage) + '" onerror="this.outerHTML=\'<div class=cms-card-img-fallback>🧭</div>\'">'
-          : '<div class="cms-card-img-fallback">🧭</div>') +
+          ? '<img class="cms-card-img" src="' + esc(t.coverImage) + '" onerror="this.outerHTML=\'<div class=cms-card-img-fallback>\uD83D\uDDFA\uFE0F</div>\'">'
+          : '<div class="cms-card-img-fallback">\uD83D\uDDFA\uFE0F</div>') +
         '<div class="cms-card-overlay"></div>' +
         (chips.length ? '<div class="cms-card-chips">' + chips.join('') + '</div>' : '') +
       '</div>' +
@@ -66,7 +67,7 @@ function renderTours() {
         '<div class="cms-card-name">' + esc(t.name) + '</div>' +
         '<div class="cms-card-meta">' +
           '<span class="cms-price">' + fmtNaira(t.price) + '</span>' +
-          '<span class="cms-card-meta-item">' + (t.availability !== false ? '● Accepting bookings' : '● Bookings paused') + '</span>' +
+           '<span class="cms-card-meta-item">' + (t.availability !== false ? '\u25CF Accepting bookings' : '\u25CF Bookings paused') + '</span>' +
         '</div>' +
         '<div class="cms-card-badges">' + cmsStatusBadge(t) + '</div>' +
         '<div class="cms-card-acts">' +
@@ -83,7 +84,7 @@ function renderTours() {
     '</div>';
   }).join('');
 
-  list.innerHTML = html || '<div class="cms-empty"><div class="cms-empty-icon">🧭</div><div class="cms-empty-title">No tour packages found</div><div class="cms-empty-text">' +
+  list.innerHTML = html || '<div class="cms-empty"><div class="cms-empty-icon">\uD83D\uDDFA\uFE0F</div><div class="cms-empty-title">No tour packages found</div><div class="cms-empty-text">' +
     (q || statusF ? 'Try adjusting the filters.' : 'Create your first package to get started.') + '</div>' +
     '<button class="btn btn-accent" onclick="openTourModal()">+ Create Package</button></div>';
 
@@ -93,7 +94,7 @@ function renderTours() {
   bulkRender('tr');
 }
 
-// ═══════════════ MODAL CONTROLS ═══════════════
+// MODAL CONTROLS
 
 function openTourModal(editId) {
   resetTour();
@@ -132,7 +133,7 @@ function closeTourModal() {
 
 function editTour(id) { openTourModal(id); }
 
-async function saveTour() {
+async function saveTour() { if (!hasPerm('content.tours.write')) { toast('You do not have permission to manage tours.', false); return; }
   var name = document.getElementById('tr-name').value.trim();
   var price = document.getElementById('tr-price').value;
   var cover = document.getElementById('tr-cover').value.trim();
@@ -218,7 +219,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// ═══════════════ ITINERARY BUILDER ═══════════════
+// ITINERARY BUILDER
 
 var itinTourId = null;
 
@@ -235,7 +236,7 @@ async function openItinModal(tourId) {
     load(true);
     var res = await api('GET', '/tours/' + id);
     load(false);
-    days = (res.data.tour && res.data.tour.itinerary) || [];
+    days = res.data && res.data.tour && Array.isArray(res.data.tour.itinerary) ? res.data.tour.itinerary : [];
   } catch (e) {
     load(false);
     toast('Failed to load itinerary: ' + e.message, false);

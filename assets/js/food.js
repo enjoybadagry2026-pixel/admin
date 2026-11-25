@@ -1,4 +1,4 @@
-// ═══════════════ FOODS ═══════════════
+﻿// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"� FOODS �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
 
 // Client-side sort keys, mirroring the fields GET /foods returns.
 var FOOD_SORT_OPTIONS = [
@@ -66,8 +66,8 @@ function renderFood(foods, places) {
       '</div>' +
       '<div class="food-card-img-wrap">' +
         (f.image
-          ? '<img class="food-card-img" src="'+esc(f.image)+'" onerror="this.outerHTML=\'<div class=food-card-img-fallback>🍽️</div>\'">'
-          : '<div class="food-card-img-fallback">🍽️</div>'
+           ? '<img class="food-card-img" src="'+esc(f.image)+'" onerror="this.outerHTML=\'<div class=food-card-img-fallback>\uD83C\uDF7D\uFE0F</div>\'">'
+           : '<div class="food-card-img-fallback">\uD83C\uDF7D\uFE0F</div>'
         ) +
         '<div class="food-card-overlay"></div>' +
         (f.featured ? '<div class="food-card-badge">⭐ Featured</div>' : '') +
@@ -82,7 +82,7 @@ function renderFood(foods, places) {
         '</div>' +
         (tags.length ? '<div class="food-card-tags">' + tags.map(function(t){return '<span class="tag">'+esc(t)+'</span>'}).join('') + '</div>' : '') +
         '<div style="margin-bottom:8px">' +
-          '<span class="food-card-status '+(f.available !== false ? 'food-card-status-available' : 'food-card-status-unavailable')+'">'+(f.available !== false ? '● Available' : '● Unavailable')+'</span>' +
+           '<span class="food-card-status '+(f.available !== false ? 'food-card-status-available' : 'food-card-status-unavailable')+'">'+(f.available !== false ? '\u25CF Available' : '\u25CF Unavailable')+'</span>' +
         '</div>' +
         '<div class="cms-card-badges">' + cmsStatusBadge(f) + '</div>' +
         '<div class="food-card-acts">' +
@@ -101,7 +101,7 @@ function renderFood(foods, places) {
     var noMatch = !!search && Object.keys(foods).length > 0;
     html = noMatch
       ? '<div class="food-empty"><div class="food-empty-icon">\uD83D\uDD0D</div><div class="food-empty-title">No food items match your search</div><div class="food-empty-text">Try a different name or category.</div></div>'
-      : '<div class="food-empty"><div class="food-empty-icon">🍽️</div><div class="food-empty-title">No food items yet</div><div class="food-empty-text">Add your first menu item to start managing the food catalog.</div></div>';
+       : '<div class="food-empty"><div class="food-empty-icon">\uD83C\uDF7D\uFE0F</div><div class="food-empty-title">No food items yet</div><div class="food-empty-text">Add your first menu item to start managing the food catalog.</div></div>';
     html += '<div id="f-insights" style="margin-top:16px"></div>';
   }
   document.getElementById('f-list').innerHTML = html;
@@ -180,7 +180,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-async function saveFood() {
+async function saveFood() { if (!hasPerm('content.food.write')) { toast('You do not have permission to manage food.', false); return; }
   var name = document.getElementById('f-name').value.trim();
   var cat = document.getElementById('f-cat').value;
   var img = document.getElementById('f-img').value.trim();
@@ -274,3 +274,4 @@ function prevFood(id) {
   var f = cachedFoods[id];
   if (f) toast(f.name + (f.price ? ' \u2014 ' + fmtNaira(f.price) : ''), true);
 }
+

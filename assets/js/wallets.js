@@ -812,6 +812,7 @@ function walValidate() {
 }
 
 function confirmWalletAction() {
+  if (!hasPerm('wallets.manage')) { toast('You do not have permission to manage wallets.', false); return; }
   if (!wlAction) return;
   var mode = wlAction.mode;
   var type = wlAction.type;
@@ -882,6 +883,7 @@ function wlFindWithdrawal(id) {
 }
 
 function wlApproveWithdrawal(id) {
+  if (!hasPerm('wallets.manage')) { toast('You do not have permission to manage withdrawals.', false); return; }
   var w = wlFindWithdrawal(id);
   if (!w) return;
   wlWithdrawAction = { mode: 'approve', withdrawal: w };

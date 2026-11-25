@@ -1,4 +1,4 @@
-// ═══════════════ BANNERS / CAROUSEL ═══════════════
+﻿// �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"� BANNERS / CAROUSEL �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
 
 var cachedBanners = null;
 var bnLoaded = false;
@@ -34,7 +34,7 @@ function renderBanners() {
     badges += b.active
       ? '<span class="bn-badge on">Active</span>'
       : '<span class="bn-badge off">Inactive</span>';
-    if (b.live) badges += '<span class="bn-badge live">● Live now</span>';
+    if (b.live) badges += '<span class="bn-badge live">\u25CF Live now</span>';
     var cta = b.ctaType && b.ctaType !== 'none'
       ? '<span class="cms-card-meta-item">Button: ' + esc(b.ctaLabel || b.ctaType) + '</span>' : '';
     var window_ = '';
@@ -50,7 +50,7 @@ function renderBanners() {
       '</div>' +
       (b.imageUrl
         ? '<img class="bn-img" src="' + esc(b.imageUrl) + '" alt="" onerror="this.style.display=\'none\'">'
-        : '<div class="cms-card-img-fallback">🖼️</div>') +
+         : '<div class="cms-card-img-fallback">\uD83D\uDDBC\uFE0F</div>') +
       '<div class="bn-info">' +
         '<div class="bn-title">' + esc(b.title) + '</div>' +
         (b.subtitle ? '<div class="bn-sub">' + esc(b.subtitle) + '</div>' : '') +
@@ -65,7 +65,7 @@ function renderBanners() {
     '</div>';
   }).join('');
 
-  list.innerHTML = html || '<div class="cms-empty"><div class="cms-empty-icon">🖼️</div><div class="cms-empty-title">No banners yet</div><div class="cms-empty-text">Add a banner to populate the homepage carousel.</div>' +
+   list.innerHTML = html || '<div class="cms-empty"><div class="cms-empty-icon">\uD83D\uDDBC\uFE0F</div><div class="cms-empty-title">No banners yet</div><div class="cms-empty-text">Add a banner to populate the homepage carousel.</div>' +
     '<button class="btn btn-accent" onclick="openBannerModal()">+ Add Banner</button></div>';
 
   document.getElementById('bn-count').textContent = (cachedBanners || []).length + ' banner' +
@@ -115,7 +115,7 @@ function bnMove(i, dir) {
   renderBanners();
 }
 
-async function saveBannerOrder() {
+async function saveBannerOrder() { if (!hasPerm('content.banners.write')) { toast('You do not have permission to manage banners.', false); return; }
   if (!cachedBanners) return;
   var ids = cachedBanners.map(function(b) { return b.id; });
   try {
@@ -131,7 +131,7 @@ async function saveBannerOrder() {
   }
 }
 
-// ═══════════════ MODAL CONTROLS ═══════════════
+// MODAL CONTROLS
 
 function openBannerModal(editId) {
   resetBanner();
@@ -166,7 +166,7 @@ function closeBannerModal() {
 
 function editBanner(id) { openBannerModal(id); }
 
-async function saveBanner() {
+async function saveBanner() { if (!hasPerm('content.banners.write')) { toast('You do not have permission to manage banners.', false); return; }
   var title = document.getElementById('bn-title').value.trim();
   var img = document.getElementById('bn-img').value.trim();
   if (!title || !img) { toast('Title and banner image are required', false); return; }
@@ -240,3 +240,5 @@ document.addEventListener('keydown', function(e) {
     if (bg && bg.classList.contains('on')) closeBannerModal();
   }
 });
+
+

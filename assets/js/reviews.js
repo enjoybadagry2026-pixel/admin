@@ -661,6 +661,7 @@ function rvActionConfig(kind, action) {
 }
 
 function promptReviewAction(kind, action, replyId) {
+  if (!hasPerm('reviews.moderate')) { toast('You do not have permission to moderate reviews.', false); return; }
   if (!rvDetail || !rvActive) return;
   var cfg = rvActionConfig(kind, action);
   if (!cfg) return;
@@ -669,6 +670,7 @@ function promptReviewAction(kind, action, replyId) {
 }
 
 function promptResolveReport(reportId) {
+  if (!hasPerm('reviews.moderate')) { toast('You do not have permission to resolve reports.', false); return; }
   if (!rvDetail || !rvActive) return;
   var cfg = rvActionConfig('report', 'resolve');
   if (!cfg) return;
@@ -708,6 +710,7 @@ function closeReviewReason() {
 }
 
 async function submitReviewReason() {
+  if (!hasPerm('reviews.moderate')) { toast('You do not have permission to moderate reviews.', false); return; }
   if (rvActionBusy || !rvPendingAction || !rvActive) return;
   var cfg = rvActionConfig(rvPendingAction.kind, rvPendingAction.action);
   var ta = document.getElementById('rv-reason');

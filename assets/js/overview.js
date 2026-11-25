@@ -19,7 +19,7 @@ async function loadOverviewStats() {
 
   try {
     var res = await api('GET', '/stats');
-    var d = res.data;
+    var d = res.data || {};
     renderOverviewStats(d);
     loadOvRevenue();
     loadOvLicenseAlert();
@@ -40,40 +40,43 @@ async function loadOverviewStats() {
 }
 
 function renderOverviewStats(d) {
+  d = d || {};
+  var users = d.users || {}, drivers = d.drivers || {}, rides = d.rides || {}, wallets = d.wallets || {}, revenue = d.revenue || {}, foodOrders = d.foodOrders || {}, content = d.content || {};
+  function money(value) { return value === null || value === undefined || !isFinite(Number(value)) ? '—' : fmtNaira(value); }
   // Users
-  setText('ov-u-total', fmtNum(d.users.total));
-  setText('ov-u-active', fmtNum(d.users.active));
-  setText('ov-u-onboarded', fmtNum(d.users.onboarded));
-  setText('ov-u-today', fmtNum(d.users.today));
+  setText('ov-u-total', fmtNum(users.total));
+  setText('ov-u-active', fmtNum(users.active));
+  setText('ov-u-onboarded', fmtNum(users.onboarded));
+  setText('ov-u-today', fmtNum(users.today));
 
   // Drivers
-  setText('ov-dr-total', fmtNum(d.drivers.total));
-  setText('ov-dr-online', fmtNum(d.drivers.online));
-  setText('ov-dr-onride', fmtNum(d.drivers.onRide));
-  setText('ov-dr-suspended', fmtNum(d.drivers.suspended));
+  setText('ov-dr-total', fmtNum(drivers.total));
+  setText('ov-dr-online', fmtNum(drivers.online));
+  setText('ov-dr-onride', fmtNum(drivers.onRide));
+  setText('ov-dr-suspended', fmtNum(drivers.suspended));
 
   // Rides
-  setText('ov-r-total', fmtNum(d.rides.total));
-  setText('ov-r-completed', fmtNum(d.rides.completed));
-  setText('ov-r-pending', fmtNum(d.rides.pending));
-  setText('ov-r-cancelled', fmtNum(d.rides.cancelled));
+  setText('ov-r-total', fmtNum(rides.total));
+  setText('ov-r-completed', fmtNum(rides.completed));
+  setText('ov-r-pending', fmtNum(rides.pending));
+  setText('ov-r-cancelled', fmtNum(rides.cancelled));
 
   // Financials
-  setText('ov-f-fare', fmtNaira(d.rides.totalFare));
-  setText('ov-f-wallet', fmtNaira(d.wallets.totalBalance));
-  setText('ov-f-earnings', fmtNaira(d.revenue.totalDriverEarnings));
-  setText('ov-f-rating', d.revenue.avgDriverRating ? Number(d.revenue.avgDriverRating).toFixed(1) + '/5' : '—');
+  setText('ov-f-fare', money(rides.totalFare));
+  setText('ov-f-wallet', money(wallets.totalBalance));
+  setText('ov-f-earnings', money(revenue.totalDriverEarnings));
+  setText('ov-f-rating', revenue.avgDriverRating !== null && revenue.avgDriverRating !== undefined && isFinite(Number(revenue.avgDriverRating)) ? Number(revenue.avgDriverRating).toFixed(1) + '/5' : '—');
 
   // Food Orders
-  setText('ov-fo-total', fmtNum(d.foodOrders.total));
-  setText('ov-fo-completed', fmtNum(d.foodOrders.completed));
-  setText('ov-fo-pending', fmtNum(d.foodOrders.pending));
-  setText('ov-fo-cancelled', fmtNum(d.foodOrders.cancelled));
+  setText('ov-fo-total', fmtNum(foodOrders.total));
+  setText('ov-fo-completed', fmtNum(foodOrders.completed));
+  setText('ov-fo-pending', fmtNum(foodOrders.pending));
+  setText('ov-fo-cancelled', fmtNum(foodOrders.cancelled));
 
   // Content
-  setText('ov-c-dest', fmtNum(d.content.destinations));
-  setText('ov-c-hotels', fmtNum(d.content.hotels));
-  setText('ov-c-foods', fmtNum(d.content.foods));
+  setText('ov-c-dest', fmtNum(content.destinations));
+  setText('ov-c-hotels', fmtNum(content.hotels));
+  setText('ov-c-foods', fmtNum(content.foods));
 
   // Recent Users
   renderRecentUsers(d.recentUsers || []);
@@ -246,7 +249,7 @@ async function loadOvLicenseAlert() {
   if (!el) return;
   try {
     var res = await api('GET', '/drivers/license-alerts');
-    var sum = res.data.summary || {};
+    var sum = res.data && res.data.summary || {};
     if (!sum.total) { el.style.display = 'none'; return; }
     el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
       '<span><strong>' + (sum.expired || 0) + '</strong> licences expired · <strong>' + (sum.expiring || 0) + '</strong> expiring within ' + (sum.windowDays || 30) + ' days</span>' +

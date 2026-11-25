@@ -33,9 +33,10 @@ function loadProfilePanel(force) {
       pfPermissions = Array.isArray(data.permissions) ? data.permissions : [];
       pfSessions = (results[1].data && results[1].data.sessions) || [];
       pfState.loaded = true;
-      pfShowState('ready');
-      renderProfile();
-      renderPfSessions();
+       pfShowState('ready');
+       renderProfile();
+       renderPfSessions();
+       if (typeof pfLoadSecurity === 'function') pfLoadSecurity();
     })
     .catch(function(e) {
       pfShowState('error', e.message);

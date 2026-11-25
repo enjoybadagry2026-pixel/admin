@@ -1,4 +1,4 @@
-// ═══════════════ READ-ONLY DATABASE EXPLORER ═══════════════
+// ═══════════════ DATABASE MANAGEMENT ═══════════════
 (function () {
   'use strict';
 
@@ -120,7 +120,7 @@
       renderTree();
       setDisplay('db-workspace', true);
       var resetButton = byId('dbEnvironmentResetBtn'); if (resetButton) resetButton.style.display = typeof hasPerm === 'function' && hasPerm('environment.reset') ? '' : 'none';
-      var count = byId('db-count'); if (count) count.textContent = state.tables.length + ' tables · Read-only';
+      var count = byId('db-count'); if (count) count.textContent = state.tables.length + ' tables · Restricted management';
     } catch (error) {
       showError('db-error-text', error.message); setDisplay('db-error', true);
     } finally { state.loading = false; setDisplay('db-loading', false); }
@@ -180,18 +180,18 @@
   function renderRecordsHeader() {
     var title = byId('db-selected-title'); var subtitle = byId('db-selected-subtitle');
     if (title) title.textContent = state.selected ? state.selected.table : 'Select a table';
-    if (subtitle) subtitle.textContent = state.selected ? state.selected.schema + ' schema · read-only records' : 'Choose a table from the structure panel.';
+    if (subtitle) subtitle.textContent = state.selected ? state.selected.schema + ' schema · permitted records' : 'Choose a table from the structure panel.';
     var actions = byId('db-records-actions');
     if (!actions) return;
     if (!state.selected) { actions.innerHTML = ''; return; }
-    var eligible = ['content_categories', 'content_tags'].indexOf(state.selected.table) >= 0;
-    var canWrite = eligible && typeof hasPerm === 'function' && hasPerm('database.insert');
-    var canExport = eligible && typeof hasPerm === 'function' && hasPerm('database.export');
-    var canImport = eligible && typeof hasPerm === 'function' && hasPerm('database.import');
+     var eligible = !!(state.metadata && state.metadata.writableColumns && state.metadata.writableColumns.length);
+     var canWrite = eligible && typeof isSuperAdmin === 'function' && isSuperAdmin() && typeof hasPerm === 'function' && hasPerm('database.insert');
+     var canExport = ['content_categories', 'content_tags'].indexOf(state.selected.table) >= 0 && typeof hasPerm === 'function' && hasPerm('database.export');
+     var canImport = eligible && typeof isSuperAdmin === 'function' && isSuperAdmin() && typeof hasPerm === 'function' && hasPerm('database.import');
     var visibleColumns = state.metadata && state.metadata.columns ? state.metadata.columns.filter(function (column) { return column.visible; }) : [];
     var filterOptions = visibleColumns.map(function (column) { return '<option value="' + escValue(column.column_name) + '">' + escValue(column.column_name) + '</option>'; }).join('');
     var columnOptions = visibleColumns.map(function (column) { return '<label class="db-column-option"><input type="checkbox" ' + (state.columnVisibility[column.column_name] !== false ? 'checked' : '') + ' onchange="dbToggleColumn(\'' + escValue(column.column_name) + '\',this.checked)"> ' + escValue(column.column_name) + '</label>'; }).join('');
-    var bulk = eligible && typeof hasPerm === 'function' && hasPerm('database.bulk_manage') && state.selectedRows.length ? '<button class="btn btn-ghost btn-sm" type="button" onclick="dbOpenEditor(\'bulk\')">Bulk edit (' + state.selectedRows.length + ')</button><button class="btn btn-red btn-sm" type="button" onclick="dbRunBulkDelete()">Bulk delete</button>' : '';
+     var bulk = eligible && typeof isSuperAdmin === 'function' && isSuperAdmin() && typeof hasPerm === 'function' && hasPerm('database.bulk_manage') && state.selectedRows.length ? '<button class="btn btn-ghost btn-sm" type="button" onclick="dbOpenEditor(\'bulk\')">Bulk edit (' + state.selectedRows.length + ')</button><button class="btn btn-red btn-sm" type="button" onclick="dbRunBulkDelete()">Bulk delete</button>' : '';
     actions.innerHTML = '<div class="db-action-row">' + bulk + (canWrite ? '<button class="btn btn-accent btn-sm" type="button" onclick="dbOpenEditor(\'create\')">Add record</button>' : '') + (canImport ? '<button class="btn btn-ghost btn-sm" type="button" onclick="dbOpenImport()">Import</button>' : '') + (canExport ? '<button class="btn btn-ghost btn-sm" type="button" onclick="dbExport(\'csv\')">Export CSV</button><button class="btn btn-ghost btn-sm" type="button" onclick="dbExport(\'json\')">JSON</button>' : '') + '<select class="db-sort-select" aria-label="Sort records" onchange="dbSetSort(this.value)"><option value="">Sort by...</option>' + visibleColumns.map(function (column) { return '<option value="' + escValue(column.column_name) + '"' + (state.sort === column.column_name ? ' selected' : '') + '>' + escValue(column.column_name) + '</option>'; }).join('') + '</select><select class="db-sort-direction" aria-label="Sort direction" onchange="dbSetDirection(this.value)"><option value="asc"' + (state.direction === 'asc' ? ' selected' : '') + '>Ascending</option><option value="desc"' + (state.direction === 'desc' ? ' selected' : '') + '>Descending</option></select><details class="db-columns-menu"><summary>Columns</summary><div>' + columnOptions + '</div></details></div><div class="db-filter-row"><select id="db-filter-column" aria-label="Filter column"><option value="">Filter column</option>' + filterOptions + '</select><select id="db-filter-operator" aria-label="Filter operator"><option value="contains">contains</option><option value="eq">equals</option><option value="neq">not equal</option><option value="gte">at least</option><option value="lte">at most</option></select><label class="sr-only" for="db-filter-value">Filter records</label><input id="db-filter-value" placeholder="Filter records..." onkeydown="if(event.key===\'Enter\')dbApplyFilter()"><button class="btn btn-ghost btn-sm" type="button" onclick="dbApplyFilter()">Apply</button></div>';
   }
 
@@ -244,9 +244,10 @@
   window.dbToggleRow = function (index, checked) { state.selectedRows = checked ? state.selectedRows.concat([index]) : state.selectedRows.filter(function (item) { return item !== index; }); renderRecordsHeader(); };
   window.dbToggleAll = function (checked) { state.selectedRows = checked ? state.rows.map(function (_, index) { return index; }) : []; renderRecords((state.metadata ? state.metadata.columns.filter(function (c) { return c.visible; }) : [])); renderRecordsHeader(); };
   window.dbRunBulkDelete = function () {
+     if (!isSuperAdmin() || !hasPerm('database.bulk_manage') || !hasPerm('database.delete')) { toast('Only the Super Admin can delete database records.', false); return; }
     var key = state.metadata && state.metadata.columns.find(function (column) { return column.is_primary_key; });
     if (!key || !state.selectedRows.length) return;
-    showDel('Delete ' + state.selectedRows.length + ' selected records from ' + state.selected.table + '? This cannot be undone.', async function () { try { await api('DELETE', '/database/bulk/delete', { schema: state.selected.schema, table: state.selected.table, rows: state.selectedRows.map(function (index) { return { keyValue: state.rows[index][key.column_name], expectedUpdatedAt: state.rows[index].updated_at }; }), confirm: true }); toast('Bulk delete completed', true); state.selectedRows = []; dbLoadSelected(); } catch (error) { toast(error.message, false); } });
+     showDel('Delete ' + state.selectedRows.length + ' selected records from ' + state.selected.table + '? This cannot be undone.', async function () { window.dbPendingReview = { original: state.selectedRows.map(function (index) { return state.rows[index]; }), proposed: null }; try { await api('DELETE', '/database/bulk/delete', { schema: state.selected.schema, table: state.selected.table, rows: state.selectedRows.map(function (index) { return { keyValue: state.rows[index][key.column_name], expectedUpdatedAt: state.rows[index].updated_at }; }), confirm: true }); toast('Bulk delete completed', true); state.selectedRows = []; dbLoadSelected(); } catch (error) { toast(error.message, false); } finally { window.dbPendingReview = null; } });
   };
 
   window.dbOpenRecord = async function (index) {
@@ -263,20 +264,22 @@
         record = response.data || row;
       } catch (_) { record = row; }
     }
-    var columns = state.metadata ? state.metadata.columns.filter(function (column) { return column.visible; }) : Object.keys(record).map(function (name) { return { column_name: name }; });
-    var eligible = ['content_categories', 'content_tags'].indexOf(state.selected.table) >= 0;
-    var editable = eligible && typeof hasPerm === 'function' && hasPerm('database.update');
-    var removable = eligible && typeof hasPerm === 'function' && hasPerm('database.delete');
+     var columns = state.metadata ? state.metadata.columns.filter(function (column) { return column.visible; }) : Object.keys(record).map(function (name) { return { column_name: name }; });
+     var eligible = !!(state.metadata && state.metadata.writableColumns && state.metadata.writableColumns.length);
+     var editable = eligible && typeof isSuperAdmin === 'function' && isSuperAdmin() && typeof hasPerm === 'function' && hasPerm('database.update');
+     var removable = eligible && typeof isSuperAdmin === 'function' && isSuperAdmin() && typeof hasPerm === 'function' && hasPerm('database.delete');
     details.innerHTML = '<div class="db-details-head"><div><span class="db-muted">Record details</span><h3>' + escValue(state.selected.table) + '</h3></div><button type="button" class="icon-btn" onclick="dbCloseRecord()" aria-label="Close record details">×</button></div><div class="db-detail-list">' + columns.map(function (column) { return '<div class="db-detail-row"><div class="db-detail-label">' + escValue(column.column_name) + (column.is_primary_key ? ' <span class="db-key">PK</span>' : '') + '</div>' + prettyValue(record[column.column_name]) + '</div>'; }).join('') + '</div><div class="db-detail-actions">' + (editable ? '<button class="btn btn-ghost btn-sm" onclick="dbOpenEditor(\'edit\', window.dbCurrentRecord)">Edit</button><button class="btn btn-ghost btn-sm" onclick="dbOpenEditor(\'duplicate\', window.dbCurrentRecord)">Duplicate</button>' : '') + (removable ? '<button class="btn btn-red btn-sm" onclick="dbDeleteCurrent()">Delete</button>' : '') + '</div>';
     window.dbCurrentRecord = record;
   };
   window.dbCloseRecord = function () { var details = byId('db-details'); if (details) { details.classList.add('db-details-collapsed'); details.innerHTML = '<div class="db-details-empty">Select a record to inspect its permitted fields.</div>'; applyPanelState(); } };
 
   window.dbOpenEditor = function (mode, row) {
+    var permission = mode === 'create' || mode === 'duplicate' ? 'database.insert' : 'database.update';
+     if (!isSuperAdmin() || !hasPerm(permission)) { toast('Only the Super Admin can edit database records.', false); return; }
     if (!state.metadata) return;
     var fields = byId('dbEditorFields'); var title = byId('dbEditorTitle');
     var primary = state.metadata.columns.find(function (column) { return column.is_primary_key; });
-    var writable = state.metadata.columns.filter(function (column) { return column.visible && !column.is_primary_key && !/^(created_at|updated_at)$/.test(column.column_name) && ['name', 'active', 'sort_order'].indexOf(column.column_name) >= 0; });
+     var writable = state.metadata.columns.filter(function (column) { return column.writable; });
     window.dbEditorMode = mode; window.dbEditorRow = row || {};
     if (title) title.textContent = mode === 'edit' ? 'Edit record' : mode === 'duplicate' ? 'Duplicate record' : mode === 'bulk' ? 'Bulk edit records' : 'Add record';
     fields.innerHTML = writable.map(function (column) {
@@ -289,26 +292,29 @@
   };
   window.dbCloseEditor = function () { var modal = byId('dbEditorModal'); if (modal) modal.classList.remove('on'); };
   window.dbSubmitEditor = async function () {
-    var values = {}; (state.metadata.columns || []).filter(function (column) { return column.visible && !column.is_primary_key && !/^(created_at|updated_at)$/.test(column.column_name) && ['name', 'active', 'sort_order'].indexOf(column.column_name) >= 0; }).forEach(function (column) { var el = byId('db-field-' + column.column_name); if (el) values[column.column_name] = el.value; });
+     if (!isSuperAdmin() || !hasPerm(window.dbEditorMode === 'create' || window.dbEditorMode === 'duplicate' ? 'database.insert' : 'database.update')) { toast('Only the Super Admin can edit database records.', false); return; }
+     var values = {}; (state.metadata.columns || []).filter(function (column) { return column.writable; }).forEach(function (column) { var el = byId('db-field-' + column.column_name); if (el) values[column.column_name] = el.value; });
     var body = { schema: state.selected.schema, table: state.selected.table, values: values };
     var mode = window.dbEditorMode;
     if (mode === 'edit') {
       var key = state.metadata.columns.find(function (column) { return column.is_primary_key; });
       body.keyValue = window.dbEditorRow[key.column_name]; body.expectedUpdatedAt = window.dbEditorRow.updated_at;
     }
-    var button = byId('dbEditorSubmit'); if (button) { button.disabled = true; button.textContent = 'Saving...'; }
-    try { if (mode === 'bulk') { await api('PATCH', '/database/bulk/update', { schema: state.selected.schema, table: state.selected.table, rows: state.selectedRows.map(function (index) { return { keyValue: state.rows[index][state.metadata.columns.find(function (column) { return column.is_primary_key; }).column_name], expectedUpdatedAt: state.rows[index].updated_at, values: values }; }), confirm: true }); } else { await api(mode === 'edit' ? 'PATCH' : 'POST', '/database/rows', body); } dbCloseEditor(); state.selectedRows = []; toast(mode === 'edit' ? 'Record updated' : mode === 'bulk' ? 'Bulk update completed' : 'Record created', true); dbLoadSelected(); } catch (error) { showError('dbEditorError', error.message); } finally { if (button) { button.disabled = false; button.textContent = mode === 'edit' ? 'Save changes' : 'Create record'; } }
+     var button = byId('dbEditorSubmit'); if (button) { button.disabled = true; button.textContent = 'Saving...'; }
+     window.dbPendingReview = { original: mode === 'edit' ? window.dbEditorRow : mode === 'bulk' ? state.selectedRows.map(function (index) { return state.rows[index]; }) : null, proposed: values };
+     try { if (mode === 'bulk') { await api('PATCH', '/database/bulk/update', { schema: state.selected.schema, table: state.selected.table, rows: state.selectedRows.map(function (index) { return { keyValue: state.rows[index][state.metadata.columns.find(function (column) { return column.is_primary_key; }).column_name], expectedUpdatedAt: state.rows[index].updated_at, values: values }; }), confirm: true }); } else { await api(mode === 'edit' ? 'PATCH' : 'POST', '/database/rows', body); } dbCloseEditor(); state.selectedRows = []; toast(mode === 'edit' ? 'Record updated' : mode === 'bulk' ? 'Bulk update completed' : 'Record created', true); dbLoadSelected(); } catch (error) { showError('dbEditorError', error.message); } finally { window.dbPendingReview = null; if (button) { button.disabled = false; button.textContent = mode === 'edit' ? 'Save changes' : 'Create record'; } }
   };
   window.dbDeleteCurrent = function () {
+     if (!isSuperAdmin() || !hasPerm('database.delete')) { toast('Only the Super Admin can delete database records.', false); return; }
     var row = window.dbCurrentRecord; var key = state.metadata.columns.find(function (column) { return column.is_primary_key; });
     if (!row || !key || typeof showDel !== 'function') return;
-    showDel('Delete this record from ' + state.selected.table + '? This cannot be undone.', async function () { try { await api('DELETE', '/database/rows', { schema: state.selected.schema, table: state.selected.table, keyValue: row[key.column_name], expectedUpdatedAt: row.updated_at, confirm: true }); dbCloseRecord(); toast('Record deleted', true); dbLoadSelected(); } catch (error) { toast(error.message, false); } });
+     showDel('Delete this record from ' + state.selected.table + '? This cannot be undone.', async function () { window.dbPendingReview = { original: row, proposed: null }; try { await api('DELETE', '/database/rows', { schema: state.selected.schema, table: state.selected.table, keyValue: row[key.column_name], expectedUpdatedAt: row.updated_at, confirm: true }); dbCloseRecord(); toast('Record deleted', true); dbLoadSelected(); } catch (error) { toast(error.message, false); } finally { window.dbPendingReview = null; } });
   };
   window.dbExport = async function (format) { try { await apiDownload('/database/export?' + query({ schema: state.selected.schema, table: state.selected.table, format: format }), state.selected.table + '-export.' + format); toast('Export downloaded', true); } catch (error) { toast(error.message, false); } };
-  window.dbOpenImport = function () { var modal = byId('dbImportModal'); if (modal) modal.classList.add('on'); };
+   window.dbOpenImport = function () { if (!isSuperAdmin() || !hasPerm('database.import')) { toast('Only the Super Admin can import database records.', false); return; } var modal = byId('dbImportModal'); if (modal) modal.classList.add('on'); };
   window.dbCloseImport = function () { var modal = byId('dbImportModal'); if (modal) modal.classList.remove('on'); };
   window.dbPreviewImport = async function () { try { var rows = JSON.parse(byId('dbImportText').value); var result = await api('POST', '/database/import/preview', { schema: state.selected.schema, table: state.selected.table, rows: rows }); window.dbImportRows = rows; byId('dbImportPreview').textContent = result.data.rowCount + ' valid rows ready to import.'; byId('dbImportSubmit').disabled = false; } catch (error) { showError('dbImportError', error.message); } };
-  window.dbSubmitImport = async function () { try { await api('POST', '/database/import/commit', { schema: state.selected.schema, table: state.selected.table, rows: window.dbImportRows, confirm: true }); dbCloseImport(); toast('Import completed', true); dbLoadSelected(); } catch (error) { showError('dbImportError', error.message); } };
+   window.dbSubmitImport = async function () { if (!isSuperAdmin() || !hasPerm('database.import')) { showError('dbImportError', 'Only the Super Admin can import database records.'); return; } window.dbPendingReview = { original: null, proposed: window.dbImportRows }; try { await api('POST', '/database/import/commit', { schema: state.selected.schema, table: state.selected.table, rows: window.dbImportRows, confirm: true }); dbCloseImport(); toast('Import completed', true); dbLoadSelected(); } catch (error) { showError('dbImportError', error.message); } finally { window.dbPendingReview = null; } };
   window.dbOpenEnvironmentReset = async function () {
     if (typeof hasPerm === 'function' && !hasPerm('environment.reset')) { toast('You do not have permission to reset this environment.', false); return; }
     var modal = byId('dbEnvironmentResetModal'); if (!modal) return;

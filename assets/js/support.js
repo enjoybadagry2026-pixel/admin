@@ -20,6 +20,8 @@ var supStats = null;
 var supSearchTimer = null;
 
 var supActiveId = null;
+var supReturnFocus = null;
+var supOpening = false;
 var supActive = null;
 var supMessages = [];
 var supDetailState = 'empty';   // empty | loading | ready | error
@@ -237,7 +239,7 @@ function supItemHtml(c) {
   var tags = supStatusTag(c.status) + supPrioTag(c.priority, false) +
     '<span class="tag sup-tag-cat">' + esc(supCategoryLabel(c.category)) + '</span>';
 
-  return '<div class="' + cls + '" onclick="openSupportConversation(' + c.id + ')" role="button" tabindex="0">' +
+  return '<div class="' + cls + '" onclick="openSupportConversation(' + c.id + ', this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openSupportConversation(' + c.id + ', this)}" role="button" tabindex="0" aria-label="Open support conversation ' + esc(c.subject || c.ticketId || '') + '">' +
     supAvatar(c, 'sup-item-avatar') +
     '<div class="sup-item-main">' +
       '<div class="sup-item-row">' +
@@ -363,9 +365,11 @@ function supSetLayoutThread(open) {
   if (layout) layout.classList.toggle('thread-open', !!open);
 }
 
-function openSupportConversation(id) {
+function openSupportConversation(id, opener) {
   id = parseInt(id, 10);
   if (!id) return;
+  if (supOpening) return;
+  if (opener && opener.focus) supReturnFocus = opener;
   if (supActiveId === id && supDetailState === 'ready') { supSetLayoutThread(true); return; }
   supStopTyping();
 
@@ -386,10 +390,13 @@ function openSupportConversation(id) {
   var pane = document.getElementById('sup-thread-pane');
   if (pane && window.innerWidth <= 1024) pane.scrollIntoView({ block: 'start', behavior: 'smooth' });
 
+  supOpening = true;
   api('GET', '/support/conversations/' + id).then(function(res) {
     if (supActiveId !== id) return;
-    supActive = res.data.conversation;
-    supMessages = res.data.messages || [];
+    var data = res.data || {};
+    if (!data.conversation) throw new Error('The server returned an incomplete support conversation.');
+    supActive = data.conversation;
+    supMessages = Array.isArray(data.messages) ? data.messages : [];
     supDetailState = 'ready';
     supRenderThread();
     supScrollMessages(true);
@@ -399,7 +406,7 @@ function openSupportConversation(id) {
     supDetailState = 'error';
     supDetailError = e.message;
     supRenderThread();
-  });
+  }).finally(function() { supOpening = false; });
 }
 
 // Silently re-fetches the open thread (polling / after sending) so new
@@ -434,6 +441,8 @@ function supMarkListRead(id) {
 
 function supBackToList() {
   supSetLayoutThread(false);
+  if (supReturnFocus && document.contains(supReturnFocus)) supReturnFocus.focus();
+  supReturnFocus = null;
 }
 
 function supStatusActions(status) {
