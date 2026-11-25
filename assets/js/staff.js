@@ -73,6 +73,7 @@ function renderStaff() {
       '<button class="btn btn-ghost btn-sm" onclick="staffOpenDetail(' + a.id + ')">Details</button>';
     if (!a.isSelf) {
       actions += ' <button class="btn btn-ghost btn-sm" onclick="staffOpenReset(' + a.id + ')">Reset PW</button>';
+      if (typeof isSuperAdmin === 'function' && isSuperAdmin() && a.enrollmentState !== 'enrolled') actions += ' <button class="btn btn-ghost btn-sm" onclick="staffAuthorizeEnrollment(' + a.id + ')">Authorize security</button>';
     }
 
     html += '<tr' + (a.isSelf ? ' class="st-self"' : '') + '>' +
@@ -113,6 +114,12 @@ function renderStaff() {
 
   var newBtn = document.querySelector('#panel-staff .order-page-actions .btn-accent');
   if (newBtn) newBtn.style.display = hasPerm('admins.manage') ? '' : 'none';
+}
+
+async function staffAuthorizeEnrollment(adminId) {
+  if (!isSuperAdmin()) return toast('Only a fully verified Super Admin can authorize enrollment.', false);
+  try { await api('POST', '/admins/' + encodeURIComponent(adminId) + '/security-enrollment/authorize', {}); toast('Security enrollment authorized.', true); loadStaffPanel(true); }
+  catch (e) { toast(e.message || 'Enrollment authorization failed.', false); }
 }
 
 // ─── Create / edit form ─────────────────────────

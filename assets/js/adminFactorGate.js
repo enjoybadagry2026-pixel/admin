@@ -42,6 +42,30 @@
     document.querySelectorAll('#adminGateDigits input').forEach(function (input, index, all) { input.addEventListener('input', function () { input.value = input.value.replace(/\D/g, '').slice(-1); if (input.value && all[index + 1]) all[index + 1].focus(); }); input.addEventListener('keydown', function (event) { if (event.key === 'Backspace' && !input.value && all[index - 1]) all[index - 1].focus(); }); });
     var file = id('adminGateFile'); if (file) file.addEventListener('change', function () { var display = id('adminGateFileName'); if (display) display.textContent = file.files && file.files[0] ? file.files[0].name : 'No file selected'; });
   }
+  window.showAdminFactorSetup = function (configured) {
+    var modal = id('adminFactorGateModal'); if (!modal) return;
+    var title = id('adminFactorGateTitle'); if (title) title.textContent = 'Security setup required';
+    var copy = modal.querySelector('.admin-factor-gate-copy p'); if (copy) copy.textContent = 'This administrator must complete security enrollment before accessing EB-Admin.';
+    var labels = { passcode: 'Six-digit passcode', passkey: 'Hardware passkey', ebask: 'Enjoy Badagry Security Key (.ebask)' };
+    ['Passcode', 'Passkey', 'Ebask'].forEach(function (name) { var key = name.toLowerCase(); var el = id('adminGate' + name + 'State'); if (el) { el.textContent = configured && configured[key] ? 'Configured' : 'Setup required'; el.className = 'admin-factor-gate-state ' + (configured && configured[key] ? 'verified' : 'failed'); } });
+    var button = id('adminFactorGateVerify'); if (button) button.style.display = 'none';
+    var errorBox = id('adminFactorGateError'); if (errorBox) errorBox.textContent = 'Ask a fully verified Super Admin to authorize security enrollment for this account. Dashboard access remains locked until all three methods are configured.';
+    var digits = id('adminGateDigits'); if (digits) digits.style.display = 'none';
+    var file = id('adminGateFile'); if (file) file.disabled = true;
+    var pass = id('adminGatePassphrase'); if (pass) pass.disabled = true;
+    var modalProgress = id('adminFactorGateProgress'); if (modalProgress) modalProgress.firstChild.textContent = 'Setup required';
+    modal.classList.add('on'); modal.setAttribute('aria-hidden', 'false');
+  };
+  window.resetAdminFactorGate = function () {
+    var modal = id('adminFactorGateModal'); if (modal) { modal.classList.remove('on'); modal.setAttribute('aria-hidden', 'true'); }
+    var title = id('adminFactorGateTitle'); if (title) title.textContent = 'Security verification required';
+    var copy = modal && modal.querySelector('.admin-factor-gate-copy p'); if (copy) copy.textContent = 'Complete all three security checks to access EB-Admin.';
+    var button = id('adminFactorGateVerify'); if (button) button.style.display = '';
+    var digits = id('adminGateDigits'); if (digits) digits.style.display = '';
+    var file = id('adminGateFile'); if (file) file.disabled = false;
+    var pass = id('adminGatePassphrase'); if (pass) pass.disabled = false;
+    state = null;
+  };
   window.requestAdminFactorGate = function (targetHash) { return new Promise(function (resolve, reject) { state = { targetHash: targetHash, resolve: resolve, reject: reject, busy: false }; reset(); var modal = id('adminFactorGateModal'); modal.classList.add('on'); modal.setAttribute('aria-hidden', 'false'); id('adminGateDigits').querySelector('input').focus(); }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 }());

@@ -23,7 +23,9 @@ async function doLogin() {
     resetAdminClientState();
      resolveAdminAuthGate(true);
      localStorage.setItem('admin_user', JSON.stringify(json.data.admin));
-     var gateHash = json.data.session && json.data.session.factorTargetHash;
+      var gateStatus = await api('GET', '/security/login/status', null, { skipAuthWait: true });
+      if (gateStatus.data && gateStatus.data.setupRequired) { showRestrictedEnrollmentApp(gateStatus.data); return; }
+      var gateHash = gateStatus.data && gateStatus.data.targetHash || (json.data.session && json.data.session.factorTargetHash);
      if (!gateHash || typeof requestAdminFactorGate !== 'function') throw new Error('Administrator security verification is unavailable.');
      await requestAdminFactorGate(gateHash);
      showApp();
@@ -63,6 +65,7 @@ function doLogout() {
 }
 
 function resetAdminClientState() {
+  if (typeof resetAdminFactorGate === 'function') resetAdminFactorGate();
   if (typeof invalidateDataLoadSession === 'function') invalidateDataLoadSession();
   if (typeof cachedPlaces !== 'undefined') cachedPlaces = {};
   if (typeof cachedFoods !== 'undefined') cachedFoods = {};
@@ -105,12 +108,27 @@ function showApp() {
   });
 }
 
+function showRestrictedEnrollmentApp(status) {
+  window.adminEnrollmentRestricted = true;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  var banner = document.getElementById('adminEnrollmentBanner');
+  if (!banner) { banner = document.createElement('div'); banner.id = 'adminEnrollmentBanner'; banner.className = 'admin-enrollment-banner'; var appHeader = document.querySelector('#app > header'); if (appHeader) appHeader.after(banner); else document.getElementById('app').prepend(banner); }
+  var expiry = status && status.enrollmentExpiresAt ? new Date(status.enrollmentExpiresAt).getTime() : 0;
+  banner.innerHTML = '<div><strong>Complete your security setup</strong><p>Your administrative account has restricted access. Complete all three security methods before the enrollment deadline.</p><small id="adminEnrollmentCountdown"></small></div><button type="button" class="btn btn-accent" id="adminEnrollmentSetupButton">Complete Security Setup</button>';
+  var setupButton = document.getElementById('adminEnrollmentSetupButton'); if (setupButton) setupButton.onclick = function () { if (typeof switchTab === 'function') switchTab('profile'); var securityCard = document.getElementById('pf-security-card'); if (securityCard) securityCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  var update = function () { var remaining = Math.max(0, expiry - Date.now()); var el = document.getElementById('adminEnrollmentCountdown'); if (el) el.textContent = remaining ? 'Enrollment time remaining: ' + new Date(remaining).toISOString().slice(11, 19) : 'Enrollment period expired. Contact a Super Admin.'; };
+  update(); window.clearInterval(window.adminEnrollmentTimer); window.adminEnrollmentTimer = window.setInterval(update, 1000);
+  refreshAdminSessionData().then(function () { if (typeof pfLoadSecurity === 'function') pfLoadSecurity(); }).catch(function () {});
+}
+
 // ═══════════════ INIT ═══════════════
 async function restoreAdminSession() {
   resetAdminAuthGate();
   try {
     resolveAdminAuthGate(true);
     var status = await api('GET', '/security/login/status', null, { skipAuthWait: true });
+    if (status.data && status.data.setupRequired) { showRestrictedEnrollmentApp(status.data); return; }
     if (!status.data || !status.data.verified) {
       await requestAdminFactorGate(status.data && status.data.targetHash);
       authToken = null;
