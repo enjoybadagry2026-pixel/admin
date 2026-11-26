@@ -101,8 +101,8 @@
       if (!passkeyResponse) { setStep('Passkey', 'working', 'Waiting…'); current = 'Passkey'; passkeyResponse = await window.pfAuthenticatePasskey(options.passkeyOptions); pending.passkeyResponse = passkeyResponse; setStep('Passkey', 'verified', 'Verified'); }
       setStep('Ebask', 'working', 'Waiting…'); current = 'Ebask';
       var signature = await window.ebaskSignChallenge(options.ebask, file, passphrase); setStep('Ebask', 'verified', 'Verified');
-      var result = await api('POST', '/security/database/complete', { operation: pending.operation, targetHash: pending.targetHash, passcodeGrant: passcodeResult.data.grant, reason: '', passkeyResponse: passkeyResponse, ebask: { challengeId: options.ebask.challengeId, operation: pending.operation, targetHash: pending.targetHash, signature: signature } });
-      pending.grant = result.data.grant; pending.verified = true; if (verifyButton) { verifyButton.disabled = true; verifyButton.textContent = 'Security verified'; } if (id('dbSecurityStatus')) id('dbSecurityStatus').textContent = 'All three checks passed. Review the change and save.'; updateProgress();
+       var result = await api('POST', '/security/database/complete', { operation: pending.operation, targetHash: pending.targetHash, passcodeGrant: passcodeResult.data.grant, reason: pending.reason || '', passkeyResponse: passkeyResponse, ebask: { challengeId: options.ebask.challengeId, operation: pending.operation, targetHash: pending.targetHash, signature: signature } });
+     pending.grant = result.data.grant; pending.verified = true; if (verifyButton) { verifyButton.disabled = true; verifyButton.textContent = 'Security verified'; } if (id('dbSecurityStatus')) id('dbSecurityStatus').textContent = 'All three checks passed. Review the change and save.'; updateProgress();
     } catch (e) {
       showError(e && e.message ? e.message : 'Security verification failed. No change was saved.');
       var code_ = e && e.code || '';
@@ -121,7 +121,7 @@
     modal.addEventListener('keydown', function (event) { if (event.key === 'Escape' && pending) close(null, Object.assign(new Error('Security verification cancelled.'), { code: 'DATABASE_SECURITY_CANCELLED' })); });
     id('dbSecurityVerify').addEventListener('click', verify);
     var passkeyRun = id('dbSecurityPasskeyRun'); if (passkeyRun) passkeyRun.addEventListener('click', verify);
-    id('dbSecuritySave').addEventListener('click', function () { if (pending && pending.verified) close({ grant: pending.grant, reason: '' }, null); });
+     id('dbSecuritySave').addEventListener('click', function () { if (pending && pending.verified) close({ grant: pending.grant, reason: pending.reason || '' }, null); });
     ['dbSecurityCancel', 'dbSecurityCancelFooter'].forEach(function (name) { var el = id(name); if (el) el.addEventListener('click', function () { if (pending) close(null, Object.assign(new Error('Security verification cancelled.'), { code: 'DATABASE_SECURITY_CANCELLED' })); }); });
     document.querySelectorAll('#dbSecurityDigits input').forEach(function (input, index, all) {
       input.addEventListener('keydown', function (event) { if (event.key === 'Backspace' && !input.value && all[index - 1]) all[index - 1].focus(); if (event.key === 'Enter') verify(); });
@@ -129,6 +129,6 @@
       input.addEventListener('paste', function (event) { var value = (event.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6); if (!value) return; event.preventDefault(); all.forEach(function (field, fieldIndex) { field.value = value[fieldIndex] || ''; }); all[Math.min(value.length, 6) - 1].focus(); });
     });
   }
-  window.requestDatabaseSecurity = function (details) { if (pending) return Promise.reject(new Error('Another database security verification is already in progress.')); var modal = id('dbSecurityModal'); if (!modal) return Promise.reject(new Error('Database security modal is unavailable.')); return new Promise(function (resolve, reject) { pending = { resolve: resolve, reject: reject, operation: details.operation, targetHash: details.targetHash, verified: false, grant: null }; reset(); renderSummary(details); modal.classList.add('on'); modal.setAttribute('aria-hidden', 'false'); var first = document.querySelector('#dbSecurityDigits input'); if (first) first.focus(); }); };
+   window.requestDatabaseSecurity = function (details) { if (pending) return Promise.reject(new Error('Another database security verification is already in progress.')); var modal = id('dbSecurityModal'); if (!modal) return Promise.reject(new Error('Database security modal is unavailable.')); return new Promise(function (resolve, reject) { pending = { resolve: resolve, reject: reject, operation: details.operation, targetHash: details.targetHash, reason: details.body && details.body.reason || '', verified: false, grant: null }; reset(); renderSummary(details); modal.classList.add('on'); modal.setAttribute('aria-hidden', 'false'); var first = document.querySelector('#dbSecurityDigits input'); if (first) first.focus(); }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 }());

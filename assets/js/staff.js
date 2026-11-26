@@ -346,6 +346,21 @@ function stActivityRows(activity) {
   return html + '</div>';
 }
 
+function stGracePanel(admin) {
+  var expires = admin.enrollmentExpiresAt ? new Date(admin.enrollmentExpiresAt) : null;
+  var expired = !!(expires && expires.getTime() <= Date.now()) || admin.enrollmentState === 'locked';
+  var active = !expired && admin.enrollmentState === 'grace';
+  var status = admin.enrollmentState === 'enrolled' ? 'Completed' : expired ? 'Expired / locked' : active ? 'Active' : (admin.enrollmentState || 'Pending');
+  var missing = ['passcode', 'passkey', 'ebask'].filter(function (key) { return !(admin.factorStatus && admin.factorStatus[key]); }).map(function (key) { return key === 'passcode' ? 'Personal passcode' : key === 'passkey' ? 'WebAuthn passkey' : '.ebask key'; });
+  var renewal = admin.enrollmentRenewalCount || 0;
+  var html = '<section class="std-enrollment-panel"><div class="std-enrollment-head"><div><div class="std-label">Security enrollment</div><h4>Grace period</h4></div><span class="std-enrollment-status ' + (expired ? 'is-expired' : active ? 'is-active' : admin.enrollmentState === 'enrolled' ? 'is-complete' : '') + '">' + esc(status) + '</span></div>' +
+    '<div class="std-enrollment-grid"><div><span>Started</span><strong>' + (admin.enrollmentStartedAt ? esc(fmtDate(admin.enrollmentStartedAt)) : 'Not started') + '</strong></div><div><span>Expires</span><strong>' + (expires ? esc(fmtDate(admin.enrollmentExpiresAt)) : '—') + '</strong></div><div><span>Renewals</span><strong>' + renewal + '</strong></div><div><span>Last renewed</span><strong>' + (admin.enrollmentLastRenewedAt ? esc(fmtDate(admin.enrollmentLastRenewedAt)) : 'Never') + (admin.enrollmentLastRenewedByName ? '<small>by ' + esc(admin.enrollmentLastRenewedByName) + '</small>' : '') + '</strong></div></div>' +
+    (missing.length ? '<p class="std-enrollment-missing"><b>Missing methods:</b> ' + esc(missing.join(', ')) + '</p>' : '') +
+    (admin.enrollmentLockReason ? '<p class="std-enrollment-reason"><b>Restriction reason:</b> ' + esc(admin.enrollmentLockReason) + '</p>' : '') +
+    (expired && isSuperAdmin() && !admin.isSelf ? '<button class="btn btn-accent btn-sm" onclick="staffOpenGraceRenewal(' + admin.id + ')">Renew Grace Period</button>' : '') + '</section>';
+  return html;
+}
+
 function staffOpenDetail(id) {
   var target = null;
   stAdmins.forEach(function(a) { if (a.id === id) target = a; });
@@ -375,6 +390,7 @@ function staffOpenDetail(id) {
           '<div class="um-stat-card"><div class="um-stat-body"><div class="um-stat-value">' + (target.failedLoginCount || 0) + '</div><div class="um-stat-label">Failed logins</div></div></div>' +
         '</div>' +
       '</div>' +
+      stGracePanel(target) +
       '<div class="ntf-card-title std-section">Active sessions</div>' + stSessionRows(sessions, id) +
       '<div class="ntf-card-title std-section">Recent activity</div>' + stActivityRows(activity);
   }).catch(function(e) {
@@ -386,6 +402,29 @@ function staffOpenDetail(id) {
       '<button class="btn btn-accent btn-sm" onclick="staffOpenDetail(' + id + ')">Retry</button>' +
     '</div>';
   });
+}
+
+function staffOpenGraceRenewal(adminId) {
+  var target = stAdmins.find(function (admin) { return admin.id === adminId; });
+  if (!target || target.isSelf || !isSuperAdmin()) return toast('Only the designated Super Admin can renew another administrator\'s grace period.', false);
+  var existing = document.getElementById('staffGraceRenewModal'); if (existing) existing.remove();
+  var missing = ['passcode', 'passkey', 'ebask'].filter(function (key) { return !(target.factorStatus && target.factorStatus[key]); }).map(function (key) { return key === 'passcode' ? 'Personal six-digit passcode' : key === 'passkey' ? 'WebAuthn passkey' : '.ebask security key'; });
+  var bg = document.createElement('div'); bg.className = 'modal-bg staff-grace-renew-bg on'; bg.id = 'staffGraceRenewModal';
+  bg.innerHTML = '<div class="modal staff-grace-renew-modal" role="dialog" aria-modal="true" aria-labelledby="staffGraceRenewTitle"><div class="staff-grace-renew-head"><span class="pf-eyebrow">Security enrollment</span><h3 id="staffGraceRenewTitle">Renew Grace Period</h3><p>Grant this administrator one additional six-hour enrollment window. Existing security credentials will be preserved.</p></div><div class="staff-grace-renew-body"><div class="staff-grace-target"><strong>' + esc(target.fullName || target.email) + '</strong><span>' + esc(target.email) + ' · ' + esc(target.roleLabel || target.role) + '</span></div><div class="staff-grace-review"><div><span>Previous expiry</span><strong>' + (target.enrollmentExpiresAt ? esc(fmtDate(target.enrollmentExpiresAt)) : '—') + '</strong></div><div><span>Missing methods</span><strong>' + esc(missing.join(', ') || 'None') + '</strong></div><div><span>New duration</span><strong>6 hours</strong></div></div><div class="fg"><label for="staffGraceRenewReason">Reason for renewal</label><textarea id="staffGraceRenewReason" maxlength="1000" rows="4" placeholder="Explain why this administrator needs another enrollment period"></textarea><small>This reason is required and will be recorded in the security audit log.</small></div><p class="staff-grace-warning">All active sessions for this administrator will be signed out and they will need to authenticate again.</p></div><div class="staff-grace-renew-foot"><button class="btn btn-ghost" onclick="staffCloseGraceRenewal()">Cancel</button><button class="btn btn-accent" id="staffGraceRenewConfirm" onclick="staffConfirmGraceRenewal(' + adminId + ')">Authorize &amp; Renew</button></div></div>';
+  document.body.appendChild(bg); document.body.style.overflow = 'hidden';
+  var reason = document.getElementById('staffGraceRenewReason'); if (reason) reason.focus();
+}
+
+function staffCloseGraceRenewal() { var modal = document.getElementById('staffGraceRenewModal'); if (modal) modal.remove(); if (!document.querySelector('.modal-bg.on')) document.body.style.overflow = ''; }
+function staffConfirmGraceRenewal(adminId) {
+  var reason = (document.getElementById('staffGraceRenewReason') || {}).value || '';
+  var button = document.getElementById('staffGraceRenewConfirm');
+  if (reason.trim().length < 5) return toast('Enter a clear reason for the renewal.', false);
+  if (button) { button.disabled = true; button.textContent = 'Preparing verification…'; }
+  staffCloseGraceRenewal();
+  api('POST', '/admins/' + encodeURIComponent(adminId) + '/security-enrollment/grace-renew', { reason: reason.trim() }).then(function () {
+    toast('Enrollment grace period renewed.'); loadStaffPanel(true); staffOpenDetail(adminId);
+  }).catch(function (error) { toast(error.message || 'Grace period renewal failed.', false); });
 }
 
 function closeStaffDetail() {

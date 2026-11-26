@@ -2810,12 +2810,43 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   .pf-page-header{grid-template-columns:minmax(0,1fr);gap:20px}.pf-identity{flex-direction:row}.pf-id-facts{grid-template-columns:1fr}.pf-card{padding:24px 20px}
 }
 @media(max-width:560px){.pf-identity{gap:20px;flex-direction:column}.pf-avatar{width:56px;height:56px;flex-basis:56px;font-size:19px}.pf-id-info{width:100%}.pf-card{padding:24px 20px}}
-html[data-enrollment-restricted="true"] .side-item,html[data-enrollment-restricted="true"] .side-group{display:none!important}
+html[data-enrollment-restricted="true"] .sidebar,html[data-enrollment-restricted="true"] .side-item,html[data-enrollment-restricted="true"] .side-group{display:none!important}
 html[data-enrollment-restricted="true"] #panel-profile{display:block!important}
+html[data-enrollment-restricted="true"] header .hdr-right>.btn{display:none!important}
 html[data-enrollment-restricted="true"] .content:not(#panel-profile){display:none!important}
 html[data-enrollment-restricted="true"] #searchTrigger,html[data-enrollment-restricted="true"] #shortcutsBtn,html[data-enrollment-restricted="true"] #mod-alert-trigger,html[data-enrollment-restricted="true"] #mod-alert-popover,html[data-enrollment-restricted="true"] #connState{display:none!important}
 .pf-enrollment-waiting{position:fixed;inset:0;z-index:9900;display:grid;place-items:center;padding:24px;background:var(--bg);overflow:auto}.pf-enrollment-waiting section{width:min(100%,520px);padding:32px;background:var(--card);border:1px solid var(--border);border-radius:12px}.pf-enrollment-waiting h2{margin:0;font-size:20px;line-height:1.4}.pf-enrollment-waiting p{margin:20px 0 28px;color:var(--text2);line-height:1.6;font-size:14px}
 html[data-enrollment-restricted="true"] #panel-profile .pf-password-card,html[data-enrollment-restricted="true"] #panel-profile #pf-edit-toggle,html[data-enrollment-restricted="true"] #panel-profile .pf-sessions-card,html[data-enrollment-restricted="true"] #panel-profile .pf-permissions-card{display:none!important}
+.std-enrollment-panel{margin:22px 0 26px;padding:20px;border:1px solid var(--border);border-radius:12px;background:var(--input)}.std-enrollment-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.std-enrollment-head h4{margin:2px 0 0;font-size:16px;font-weight:600;color:var(--text)}.std-label{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em}.std-enrollment-status{padding:6px 9px;border:1px solid var(--border);border-radius:999px;color:var(--text2);font-size:11px;font-weight:700;white-space:nowrap}.std-enrollment-status.is-active{color:var(--green);border-color:color-mix(in srgb,var(--green) 30%,var(--border))}.std-enrollment-status.is-expired{color:var(--red);border-color:color-mix(in srgb,var(--red) 30%,var(--border))}.std-enrollment-status.is-complete{color:var(--green)}.std-enrollment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;margin:20px 0}.std-enrollment-grid>div{display:flex;flex-direction:column;gap:5px;min-width:0}.std-enrollment-grid span{font-size:11px;color:var(--text2)}.std-enrollment-grid strong{font-size:12px;color:var(--text);font-weight:600;overflow-wrap:anywhere}.std-enrollment-grid small{display:block;margin-top:3px;color:var(--text2);font-size:10px;font-weight:400}.std-enrollment-missing,.std-enrollment-reason{margin:14px 0 0;color:var(--text2);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.std-enrollment-missing b,.std-enrollment-reason b{color:var(--text)}.std-enrollment-panel>.btn{margin-top:20px}.staff-grace-renew-bg{z-index:9750;padding:20px}.staff-grace-renew-modal{width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 40px);overflow:auto;padding:0;text-align:left}.staff-grace-renew-head{padding:26px 28px 22px;border-bottom:1px solid var(--border)}.staff-grace-renew-head h3{margin:5px 0 7px;font-size:20px}.staff-grace-renew-head p{margin:0;color:var(--text2);font-size:12px;line-height:1.55}.staff-grace-renew-body{padding:24px 28px}.staff-grace-target{display:flex;flex-direction:column;gap:5px;margin-bottom:20px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--input)}.staff-grace-target strong{font-size:14px;color:var(--text);overflow-wrap:anywhere}.staff-grace-target span{font-size:12px;color:var(--text2);overflow-wrap:anywhere}.staff-grace-review{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:24px}.staff-grace-review>div{display:flex;flex-direction:column;gap:5px;min-width:0}.staff-grace-review span{font-size:11px;color:var(--text2)}.staff-grace-review strong{font-size:12px;color:var(--text);overflow-wrap:anywhere}.staff-grace-renew-body .fg{gap:8px;margin-bottom:20px}.staff-grace-renew-body textarea{width:100%;min-height:96px;resize:vertical;box-sizing:border-box}.staff-grace-renew-body small{color:var(--text2);font-size:11px;line-height:1.4}.staff-grace-warning{margin:0;padding:12px;border:1px solid color-mix(in srgb,var(--accent) 25%,var(--border));border-radius:9px;background:var(--accent-glow);color:var(--text2);font-size:11px;line-height:1.5}.staff-grace-renew-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 28px;border-top:1px solid var(--border)}
+@media(max-width:560px){.std-enrollment-grid,.staff-grace-review{grid-template-columns:1fr}.staff-grace-renew-head,.staff-grace-renew-body{padding:20px}.staff-grace-renew-foot{padding:14px 20px}.staff-grace-renew-foot .btn{flex:1}}
+
+/* Profile security method forms: explicit vertical rhythm, never inline flow. */
+#panel-profile .pf-method-panel{height:auto;min-height:0;overflow:visible}
+#panel-profile .pf-panel-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;min-width:0}
+#panel-profile .pf-panel-heading>div,#panel-profile .pf-panel-heading h4{min-width:0}
+#panel-profile .pf-panel-heading h4{overflow-wrap:anywhere}
+#panel-profile .pf-panel-mark{max-width:100%;white-space:nowrap;flex-shrink:0}
+#panel-profile .pf-field{display:flex;flex-direction:column;gap:8px;min-width:0;margin-top:22px}
+#panel-profile .pf-field:first-child{margin-top:0}
+#panel-profile .pf-field>label{color:var(--text);font-size:13px;font-weight:600;line-height:1.35}
+#panel-profile .pf-field>input,#panel-profile .pf-field .pf-input-action input{display:block;width:100%;min-width:0;min-height:46px;height:auto;padding:12px 14px;border:1px solid var(--input-border);border-radius:var(--radius-sm);background:var(--input);color:var(--text);font:inherit;font-size:14px;box-sizing:border-box}
+#panel-profile .pf-field .pf-input-action input{padding-right:64px}
+#panel-profile .pf-field-hint{margin:0;font-size:12px;line-height:1.5}
+#panel-profile .pf-passcode-panel .pf-panel-copy{max-width:58ch;margin-bottom:26px}
+#panel-profile .pf-passcode-panel .pf-actions{justify-content:flex-start;margin-top:28px}
+#panel-profile .pf-passcode-panel .pf-inline-message{margin-top:18px}
+
+@media(max-width:760px){
+  #panel-profile .pf-security-columns{grid-template-columns:minmax(0,1fr);gap:20px}
+  #panel-profile .pf-method-panel{padding:22px 20px}
+  #panel-profile .pf-security-actions .btn{width:100%}
+}
+@media(max-width:420px){
+  #panel-profile #pf-security-body{padding-inline:16px}
+  #panel-profile .pf-method-panel{padding:20px 16px}
+  #panel-profile .pf-panel-heading{grid-template-columns:minmax(0,1fr);gap:10px}
+  #panel-profile .pf-panel-mark{justify-self:start}
+}
 
 /* ══════════════════════════════════════════════════════════════════
    THEME / CONNECTION / COMMAND PALETTE / LIST KIT / UNDO TOAST
