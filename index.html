@@ -3423,17 +3423,18 @@
 
 <!-- MY PROFILE -->
 <div class="content" id="panel-profile">
-  <div class="order-page-header">
-    <div class="order-page-info">
-      <h2 class="order-page-title">My Profile</h2>
-      <span class="order-page-count" id="pf-count">Account &amp; security</span>
+  <div class="pf-page-header">
+    <div class="pf-page-info">
+      <span class="pf-eyebrow">Account center</span>
+      <h2 class="pf-page-title">My Profile</h2>
+      <span class="pf-page-summary" id="pf-count">Account &amp; security</span>
     </div>
-    <div class="order-page-actions">
+    <div class="pf-page-actions">
       <button class="btn btn-ghost btn-sm" onclick="loadProfilePanel(true)" title="Reload profile">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Refresh
       </button>
-      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+      <button class="btn btn-ghost btn-sm pf-signout" onclick="doLogout()"><span>Sign Out</span></button>
     </div>
   </div>
 
@@ -3450,11 +3451,11 @@
 
   <div class="pf-grid" id="pf-grid" style="display:none">
     <!-- Identity + edit -->
-    <div class="card pf-card">
+    <div class="card pf-card pf-account-card">
       <div class="ntf-card-title">Account</div>
       <div class="pf-identity" id="pf-identity"></div>
       <div class="pf-sub" id="pf-edit-toggle">
-        <button class="btn btn-ghost btn-sm" onclick="pfToggleEdit()">Edit name &amp; phone</button>
+        <button class="btn btn-ghost btn-sm" id="pf-edit-button" onclick="pfToggleEdit()">Edit name &amp; phone</button>
       </div>
       <div id="pf-edit-form" style="display:none">
         <div class="fg">
@@ -3474,7 +3475,7 @@
     </div>
 
     <!-- Change password -->
-    <div class="card pf-card">
+    <div class="card pf-card pf-password-card">
       <div class="ntf-card-title">Change Password</div>
       <p class="pf-note">Changing your password signs you out of every other device.</p>
       <div class="fg">
@@ -3518,7 +3519,7 @@
     </section>
 
     <!-- Active sessions -->
-    <div class="card pf-card">
+    <div class="card pf-card pf-sessions-card">
       <div class="ntf-card-title">Active Sessions <span class="pf-count" id="pf-sess-count">0</span></div>
       <div class="pf-sessions" id="pf-sessions"></div>
       <div class="pf-actions" id="pf-revoke-others-wrap" style="display:none">
@@ -3527,7 +3528,7 @@
     </div>
 
     <!-- Permissions -->
-    <div class="card pf-card">
+    <div class="card pf-card pf-permissions-card">
       <div class="ntf-card-title">Your Permissions</div>
       <p class="pf-note" id="pf-role-note"></p>
       <div class="pf-perms" id="pf-perms"></div>

@@ -91,6 +91,11 @@ function isSuperAdmin() {
 
 /** Hide sidebar entries the admin cannot use; drop now-empty groups. */
 function applyNavPermissions() {
+  if (window.adminEnrollmentRestricted === true) {
+    document.querySelectorAll('.side-item[data-tab], .side-nav .side-group').forEach(function (el) { el.style.display = 'none'; });
+    if (typeof switchTab === 'function') switchTab('profile');
+    return;
+  }
   var activeTab = null;
   document.querySelectorAll('.side-item[data-tab]').forEach(function(b) {
     var tab = b.getAttribute('data-tab');
@@ -160,6 +165,7 @@ window.addEventListener('resize', function() {
 });
 
 function switchTab(t) {
+  if (window.adminEnrollmentRestricted === true) t = 'profile';
   var current = document.querySelector('.content.on');
   if (current && current.id !== 'panel-' + t && window.ebHasUnsavedChanges && window.ebHasUnsavedChanges() &&
       !window.confirm('You have unsaved changes. Leave this section and discard them?')) return;

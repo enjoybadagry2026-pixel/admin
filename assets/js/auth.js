@@ -65,6 +65,15 @@ function doLogout() {
 }
 
 function resetAdminClientState() {
+  clearEnrollmentPresentation();
+  window.adminProfileSessionVersion = (window.adminProfileSessionVersion || 0) + 1;
+  if (typeof pfState !== 'undefined') pfState = { loading: false, loaded: false };
+  if (typeof pfProfile !== 'undefined') pfProfile = null;
+  if (typeof pfPermissions !== 'undefined') pfPermissions = [];
+  if (typeof pfSessions !== 'undefined') pfSessions = [];
+  document.querySelectorAll('#panel-profile input').forEach(function (input) { input.value = ''; });
+  var identity = document.getElementById('pf-identity');
+  if (identity) identity.textContent = '';
   if (typeof resetAdminFactorGate === 'function') resetAdminFactorGate();
   if (typeof invalidateDataLoadSession === 'function') invalidateDataLoadSession();
   if (typeof cachedPlaces !== 'undefined') cachedPlaces = {};
@@ -93,6 +102,7 @@ async function refreshAdminSessionData() {
 }
 
 function showApp() {
+  clearEnrollmentPresentation();
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   refreshAdminSessionData().then(function() {
@@ -108,9 +118,51 @@ function showApp() {
   });
 }
 
-function showRestrictedEnrollmentApp(status) {
+function clearEnrollmentPresentation() {
+  window.adminEnrollmentRestricted = false;
+  delete document.documentElement.dataset.enrollmentRestricted;
+  window.clearInterval(window.adminEnrollmentTimer);
+  ['adminEnrollmentBanner', 'adminEnrollmentWaiting'].forEach(function (id) {
+    var element = document.getElementById(id); if (element) element.remove();
+  });
+  if (typeof pfApplyRestrictedState === 'function') pfApplyRestrictedState();
+}
+
+async function showRestrictedEnrollmentApp(status) {
   window.adminEnrollmentRestricted = true;
+  document.documentElement.dataset.enrollmentRestricted = 'true';
   document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  var waiting = document.getElementById('adminEnrollmentWaiting');
+  if (!waiting) {
+    waiting = document.createElement('div');
+    waiting.id = 'adminEnrollmentWaiting';
+    waiting.className = 'pf-enrollment-waiting';
+    waiting.innerHTML = '<section role="dialog" aria-modal="true" aria-labelledby="pf-authorization-title"><h2 id="pf-authorization-title">Security Enrollment Authorization Required</h2><p role="status">Checking your enrollment authorization…</p><div class="pf-page-actions"><button type="button" class="btn btn-accent">Retry</button><button type="button" class="btn btn-ghost">Sign Out</button></div></section>';
+    document.body.appendChild(waiting);
+    waiting.querySelector('.btn-accent').onclick = function () { showRestrictedEnrollmentApp(status); };
+    waiting.querySelector('.btn-ghost').onclick = doLogout;
+  }
+  var retry = waiting.querySelector('.btn-accent');
+  retry.disabled = true;
+  var sessionVersion = window.adminProfileSessionVersion || 0;
+  try {
+    var authorization = await api('GET', '/security/enrollment/status');
+    if (sessionVersion !== (window.adminProfileSessionVersion || 0)) return;
+    if (!authorization.data || !Number.isFinite(Date.parse(authorization.data.expires_at)) || Date.parse(authorization.data.expires_at) <= Date.now()) {
+      throw new Error('A Super Admin must authorize your security enrollment before you can configure the required security methods.');
+    }
+  } catch (error) {
+    if (sessionVersion !== (window.adminProfileSessionVersion || 0)) return;
+    waiting.querySelector('p').textContent = error.message || 'Enrollment authorization could not be checked. Please retry.';
+    retry.disabled = false;
+    retry.focus();
+    return;
+  }
+  waiting.remove();
+  document.querySelectorAll('.content.on').forEach(function (panel) { panel.classList.remove('on'); });
+  document.getElementById('panel-profile').classList.add('on');
+  if (typeof pfApplyRestrictedState === 'function') pfApplyRestrictedState();
   document.getElementById('app').style.display = 'block';
   var banner = document.getElementById('adminEnrollmentBanner');
   if (!banner) { banner = document.createElement('div'); banner.id = 'adminEnrollmentBanner'; banner.className = 'admin-enrollment-banner'; var appHeader = document.querySelector('#app > header'); if (appHeader) appHeader.after(banner); else document.getElementById('app').prepend(banner); }
@@ -119,7 +171,9 @@ function showRestrictedEnrollmentApp(status) {
   var setupButton = document.getElementById('adminEnrollmentSetupButton'); if (setupButton) setupButton.onclick = function () { if (typeof switchTab === 'function') switchTab('profile'); var securityCard = document.getElementById('pf-security-card'); if (securityCard) securityCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   var update = function () { var remaining = Math.max(0, expiry - Date.now()); var el = document.getElementById('adminEnrollmentCountdown'); if (el) el.textContent = remaining ? 'Enrollment time remaining: ' + new Date(remaining).toISOString().slice(11, 19) : 'Enrollment period expired. Contact a Super Admin.'; };
   update(); window.clearInterval(window.adminEnrollmentTimer); window.adminEnrollmentTimer = window.setInterval(update, 1000);
-  refreshAdminSessionData().then(function () { if (typeof pfLoadSecurity === 'function') pfLoadSecurity(); }).catch(function () {});
+  refreshAdminSessionData().then(function () {
+    // applyNavPermissions selects Profile and loads its security status.
+  }).catch(function (error) { if (typeof pfShowState === 'function') pfShowState('error', error.message); });
 }
 
 // ═══════════════ INIT ═══════════════

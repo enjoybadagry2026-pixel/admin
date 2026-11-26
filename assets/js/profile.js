@@ -26,8 +26,19 @@ function loadProfilePanel(force) {
   pfState.loading = true;
   pfShowState('loading');
 
-  Promise.all([api('GET', '/profile'), api('GET', '/profile/sessions')])
+  var restricted = window.adminEnrollmentRestricted === true;
+  var sessionVersion = window.adminProfileSessionVersion || 0;
+  Promise.resolve().then(async function () {
+    if (restricted) {
+      var authorization = await api('GET', '/security/enrollment/status');
+      if (!authorization.data || Date.parse(authorization.data.expires_at) <= Date.now()) {
+        throw new Error('Security enrollment authorization is required. Ask a Super Admin to authorize your enrollment, then retry.');
+      }
+    }
+    return Promise.all([api('GET', '/profile'), restricted ? Promise.resolve({ data: { sessions: [] } }) : api('GET', '/profile/sessions')]);
+  })
     .then(function(results) {
+      if (sessionVersion !== (window.adminProfileSessionVersion || 0)) return;
       var data = results[0].data || {};
       pfProfile = data.profile || null;
       pfPermissions = Array.isArray(data.permissions) ? data.permissions : [];
@@ -39,10 +50,12 @@ function loadProfilePanel(force) {
        if (typeof pfLoadSecurity === 'function') pfLoadSecurity();
     })
     .catch(function(e) {
+      if (sessionVersion !== (window.adminProfileSessionVersion || 0)) return;
       pfShowState('error', e.message);
       toast('Error: ' + e.message, false);
     })
     .finally(function() {
+      if (sessionVersion !== (window.adminProfileSessionVersion || 0)) return;
       pfState.loading = false;
     });
 }
@@ -64,10 +77,10 @@ function renderProfile() {
           '<span class="tag tag-pending">' + esc(p.roleLabel || p.role) + '</span>' +
           (p.active ? '<span class="tag tag-confirmed">Active</span>' : '<span class="tag tag-cancelled">Disabled</span>') +
         '</div>' +
-        '<div class="pf-id-facts">' +
-          '<span>Last login: ' + (p.lastLogin ? esc(fmtDate(p.lastLogin)) : '—') + '</span>' +
-          '<span>Password changed: ' + (p.passwordChangedAt ? esc(fmtDate(p.passwordChangedAt)) : '—') + '</span>' +
-          '<span>Member since: ' + (p.createdAt ? esc(fmtDate(p.createdAt)) : '—') + '</span>' +
+         '<div class="pf-id-facts">' +
+           '<span><b>Last login</b>' + (p.lastLogin ? esc(fmtDate(p.lastLogin)) : '—') + '</span>' +
+           '<span><b>Password changed</b>' + (p.passwordChangedAt ? esc(fmtDate(p.passwordChangedAt)) : '—') + '</span>' +
+           '<span><b>Member since</b>' + (p.createdAt ? esc(fmtDate(p.createdAt)) : '—') + '</span>' +
         '</div>' +
       '</div>';
   }
@@ -78,7 +91,11 @@ function renderProfile() {
   if (phoneInput && !phoneInput.value) phoneInput.value = p.phone || '';
 
   var count = document.getElementById('pf-count');
-  if (count) count.textContent = (p.roleDescription || p.roleLabel || p.role || '') + ' · ' + pfPermissions.length + ' permissions';
+  var wildcard = pfPermissions.indexOf('*') >= 0;
+  if (count) {
+    count.textContent = (p.roleDescription || p.roleLabel || p.role || '') + ' · ' + (wildcard ? 'All permissions' : pfPermissions.length + (pfPermissions.length === 1 ? ' permission' : ' permissions'));
+    count.title = count.textContent;
+  }
 
   var note = document.getElementById('pf-role-note');
   if (note) {
@@ -91,16 +108,35 @@ function renderProfile() {
     if (!pfPermissions.length) {
       permsHost.innerHTML = '<p class="pf-note">No permissions are attached to your role yet.</p>';
     } else if (pfPermissions.indexOf('*') >= 0) {
-      permsHost.innerHTML = '<span class="pf-perm pf-perm-all">All permissions (*)</span>';
+       permsHost.innerHTML = '<span class="pf-perm pf-perm-all">All permissions</span><span class="pf-perm-source">Granted by Super Admin role</span>';
     } else {
       permsHost.innerHTML = pfPermissions.slice().sort().map(function(c) {
         return '<span class="pf-perm">' + esc(c) + '</span>';
       }).join('');
     }
   }
+
+  pfApplyRestrictedState();
+}
+
+function pfApplyRestrictedState() {
+  var restricted = window.adminEnrollmentRestricted === true;
+  var editButton = document.getElementById('pf-edit-button');
+  var editToggle = document.getElementById('pf-edit-toggle');
+  var editForm = document.getElementById('pf-edit-form');
+  var passwordCard = document.querySelector('.pf-password-card');
+  if (editButton) editButton.disabled = restricted;
+  if (editToggle) { editToggle.hidden = restricted; editToggle.title = restricted ? 'Profile editing is unavailable during security enrollment' : ''; }
+  if (editForm && restricted) editForm.style.display = 'none';
+  if (passwordCard) { passwordCard.hidden = restricted; passwordCard.classList.toggle('pf-restricted-disabled', restricted); }
+  document.querySelectorAll('.pf-sessions-card,.pf-permissions-card').forEach(function (card) { card.hidden = restricted; });
+  ['pf-cur-pass','pf-new-pass','pf-new-pass2','pf-pass-save'].forEach(function (id) {
+    var el = document.getElementById(id); if (el) el.disabled = restricted;
+  });
 }
 
 function pfToggleEdit() {
+  if (window.adminEnrollmentRestricted === true) return;
   var form = document.getElementById('pf-edit-form');
   var toggle = document.getElementById('pf-edit-toggle');
   var err = document.getElementById('pf-edit-err');
@@ -119,6 +155,7 @@ function pfToggleEdit() {
 }
 
 function pfSaveProfile() {
+  if (window.adminEnrollmentRestricted === true) return;
   var err = document.getElementById('pf-edit-err');
   var save = document.getElementById('pf-edit-save');
   if (err) err.textContent = '';
@@ -175,6 +212,7 @@ function pfPassHint() {
 }
 
 function pfChangePassword() {
+  if (window.adminEnrollmentRestricted === true) return;
   var err = document.getElementById('pf-pass-err');
   var save = document.getElementById('pf-pass-save');
   if (err) err.textContent = '';
